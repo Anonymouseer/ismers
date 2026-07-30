@@ -1,0 +1,145 @@
+import { useState, useMemo } from 'react';
+import Sidebar from '../../../components/layout/Sidebar';
+import CandidateCard from '../components/CandidateCard';
+import CandidateModal from '../components/CandidateModal';
+import { APPLICATIONS, JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
+import './RecruitmentSelectionPage.css';
+
+function buildInitialApplications() {
+  return APPLICATIONS.map((raw, i) => {
+    const idx = PIPELINE_ORDER.indexOf(raw.status);
+    const alreadyPast = idx >= PIPELINE_ORDER.indexOf('interview') || raw.status === 'rejected';
+    return {
+      ...raw,
+      id: `app-${i + 1}`,
+      checklist: { requirements: alreadyPast, identity: alreadyPast, history: alreadyPast, reference: alreadyPast },
+      docStatus: { resume: alreadyPast, certificate: alreadyPast, portfolio: alreadyPast },
+      recruiterRating: 0,
+    };
+  });
+}
+
+export default function RecruitmentSelectionPage() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [applications, setApplications] = useState(buildInitialApplications);
+  const [search, setSearch] = useState('');
+  const [jobFilter, setJobFilter] = useState('all');
+  const [scoreFilter, setScoreFilter] = useState('all');
+  const [selectedId, setSelectedId] = useState(null);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return applications.filter((a) => {
+      if (jobFilter !== 'all' && a.jobId !== jobFilter) return false;
+      if (scoreFilter === 'high' && a.score < 80) return false;
+      if (scoreFilter === 'mid' && (a.score < 60 || a.score >= 80)) return false;
+      if (scoreFilter === 'low' && a.score >= 60) return false;
+      if (q && !a.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [applications, search, jobFilter, scoreFilter]);
+
+  function updateApplication(id, updater) {
+    setApplications((prev) => prev.map((a) => (a.id === id ? updater(a) : a)));
+  }
+
+  const selectedApp = selectedId ? applications.find((a) => a.id === selectedId) : null;
+  const selectedJob = selectedApp ? jobById(selectedApp.jobId) : null;
+
+  return (
+    <div className="app">
+      <Sidebar
+        activeItem="recruitment-selection"
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((v) => !v)}
+      />
+
+      <div className={`main${collapsed ? ' collapsed' : ''}`}>
+        <div className="topbar">
+          <div className="crumb">COMPANY NAME &nbsp;›&nbsp; <b>Recruitment &amp; Selection</b></div>
+          <div className="search">
+            <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+            Search Anything...
+          </div>
+          <div className="top-right">
+            <div className="icon-btn">
+              <svg className="icon" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+            </div>
+            <div className="who">
+              <div className="avatar">N</div>
+              <div>
+                <div className="who-name">Name of Administrator</div>
+                <div className="who-date">Today, JULY 30, 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="title-row">
+          <h1 className="page-title">Recruitment &amp; Selection</h1>
+          <div className="page-sub">{filtered.length} applications in the pipeline</div>
+        </div>
+
+        <div className="filter-bar">
+          <div className="filter-search">
+            <svg className="icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+            <input
+              type="text"
+              placeholder="Search applicants..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <select className="chip" value={jobFilter} onChange={(e) => setJobFilter(e.target.value)}>
+            <option value="all">All Job Orders</option>
+            {JOB_ORDERS.map((j) => (
+              <option key={j.id} value={j.id}>{j.title} — {j.client}</option>
+            ))}
+          </select>
+          <select className="chip" value={scoreFilter} onChange={(e) => setScoreFilter(e.target.value)}>
+            <option value="all">Any AI Score</option>
+            <option value="high">80+ (Strong match)</option>
+            <option value="mid">60–79 (Moderate match)</option>
+            <option value="low">Below 60</option>
+          </select>
+        </div>
+
+        <div className="board-wrap">
+          <div className="board">
+            {STAGES.map((stage) => {
+              const stageApps = filtered.filter((a) => a.status === stage.key);
+              return (
+                <div className="col" key={stage.key}>
+                  <div className="col-head">
+                    <div className="col-dot" style={{ background: stage.dot }} />
+                    <div className="col-title">{stage.label}</div>
+                    <div className="col-count">{stageApps.length}</div>
+                  </div>
+                  <div className="col-body">
+                    {stageApps.length ? (
+                      stageApps.map((a) => (
+                        <CandidateCard key={a.id} app={a} job={jobById(a.jobId)} onSelect={() => setSelectedId(a.id)} />
+                      ))
+                    ) : (
+                      <div className="col-empty">No applicants here</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {selectedApp && (
+        <CandidateModal
+          app={selectedApp}
+          job={selectedJob}
+          applications={applications}
+          onClose={() => setSelectedId(null)}
+          onUpdate={updateApplication}
+        />
+      )}
+    </div>
+  );
+}

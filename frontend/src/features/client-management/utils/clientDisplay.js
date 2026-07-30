@@ -1,0 +1,65 @@
+export const COLORS = ['#149E6E', '#3D7DD6', '#D98A2B', '#8B6FD1', '#D45B5B', '#2AA9A9'];
+export const COLOR_SOFT = [
+  'var(--green-soft)', 'var(--blue-soft)', 'var(--amber-soft)',
+  'var(--purple-soft)', 'var(--red-soft)', '#E4F5F5',
+];
+
+export function colorFor(i) {
+  return COLORS[i % COLORS.length];
+}
+
+export function softFor(i) {
+  return COLOR_SOFT[i % COLOR_SOFT.length];
+}
+
+const SOFT_MAP = {
+  'var(--green)': 'var(--green-soft)',
+  'var(--blue)': 'var(--blue-soft)',
+  'var(--amber)': 'var(--amber-soft)',
+  'var(--purple)': 'var(--purple-soft)',
+  'var(--red)': 'var(--red-soft)',
+};
+
+export function softForColor(cssVar) {
+  return SOFT_MAP[cssVar] || 'var(--bg)';
+}
+
+export function initials(name) {
+  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+// Raw SVG path markup for each client "card icon" key. Rendered via
+// dangerouslySetInnerHTML since this content is static and authored by us
+// (not user input) — mirrors the original template-string approach.
+export const CARD_ICONS = {
+  box: '<path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+  headset: '<path d="M4 13v-1a8 8 0 0 1 16 0v1"/><rect x="2.5" y="13" width="5" height="7" rx="1.5"/><rect x="16.5" y="13" width="5" height="7" rx="1.5"/><path d="M20 20a4 4 0 0 1-4 3h-2"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V20a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H4a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H10a1.7 1.7 0 0 0 1-1.6V4a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V10a1.7 1.7 0 0 0 1.6 1H20a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.6 1Z"/>',
+  bag: '<path d="M6 7h12l1 13H5L6 7Z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/>',
+  spark: '<path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6Z"/><path d="M19 15.5 19.7 17.5 21.5 18.2 19.7 19 19 21 18.3 19 16.5 18.2 18.3 17.5Z"/>',
+  heart: '<path d="M12 20.5s-7.5-4.6-9.5-9.2C1.2 8 3 5 6.3 5c1.9 0 3.4 1 5.7 3.3C14.3 6 15.8 5 17.7 5 21 5 22.8 8 21.5 11.3 19.5 15.9 12 20.5 12 20.5Z"/>',
+  truck: '<rect x="1.5" y="7" width="13" height="9" rx="1"/><path d="M14.5 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="1.7"/><circle cx="17.5" cy="18" r="1.7"/>',
+  leaf: '<path d="M20 4C10 4 4 10 4 18c8 0 14-6 14-14Z"/><path d="M4 18c3-3 6-6 12-12"/>',
+};
+
+export function iconFor(key) {
+  return CARD_ICONS[key] || CARD_ICONS.box;
+}
+
+export function pillClass(status) {
+  return { hired: 'hired', interview: 'interview', screening: 'screening', rejected: 'rejected', applied: 'applied' }[status] || 'applied';
+}
+
+export function pillLabel(status) {
+  return { hired: 'Hired', interview: 'Interview', screening: 'Screening', rejected: 'Rejected', applied: 'Applied' }[status] || 'Applied';
+}
+
+export function scoreClass(score) {
+  return score >= 80 ? 'high' : 'mid';
+}
+
+export const STATUS_LABEL_MAP = { active: 'Active Client', prospect: 'Prospect', inactive: 'Inactive' };
+
+export function refCode(clientName, jobIdx) {
+  return `JO-${String(jobIdx + 1).padStart(3, '0')}-${(clientName.replace(/[^A-Za-z]/g, '') || 'CLT').slice(0, 3).toUpperCase()}`;
+}
