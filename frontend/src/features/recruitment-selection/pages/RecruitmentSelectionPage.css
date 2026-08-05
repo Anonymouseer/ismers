@@ -40,13 +40,14 @@ h1.page-title { font-family: var(--font-display); font-size: 19px; font-weight: 
 .btn svg { width: 13px; height: 13px; }
 
 /* filter bar */
-.filter-bar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.filter-search { flex: 1; max-width: 340px; display: flex; align-items: center; gap: 7px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; color: var(--muted); font-size: 11.5px; transition: border-color .14s var(--ease); }
+.filter-bar { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+.filter-search { flex: 1; min-width: 200px; max-width: 300px; display: flex; align-items: center; gap: 7px; background: var(--panel); border: 1px solid var(--border); border-radius: 9px; padding: 8px 12px; color: var(--muted); font-size: 11.5px; transition: border-color .14s var(--ease); }
 .filter-search:focus-within { border-color: var(--green); }
 .filter-search svg { width: 14px; height: 14px; }
 .filter-search input { border: none; background: none; outline: none; font-size: 11.5px; color: var(--text); width: 100%; font-family: inherit; }
-select.chip { font-size: 11px; font-weight: 700; border: 1px solid var(--border); background: var(--panel); border-radius: 9px; padding: 8px 10px; color: #4B4A45; font-family: inherit; transition: border-color .14s var(--ease); }
-select.chip:hover { border-color: #D8D4C8; }
+select.chip { font-size: 11.5px; font-weight: 700; border: 1px solid var(--border); background: var(--panel); border-radius: 9px; padding: 8px 12px; color: var(--text); font-family: inherit; cursor: pointer; transition: border-color .14s var(--ease), box-shadow .14s var(--ease); outline: none; }
+select.chip:hover { border-color: var(--primary); box-shadow: var(--shadow-xs); }
+select.chip:focus { border-color: var(--primary); }
 
 /* ===== KANBAN BOARD ===== */
 .board-wrap { flex: 1; min-height: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }

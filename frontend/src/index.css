@@ -1,0 +1,254 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Light Mode Palette */
+  --background: #F2F7FC;
+  --bg: #F2F7FC;
+  --foreground: #0A1B2E;
+  --text: #0A1B2E;
+  --card: #EDF5FB;
+  --popover: #EDF5FB;
+  --panel: #EDF5FB;
+  --primary: #007DCC;
+  --primary-fg: #FAF9F6;
+  --secondary: #E4F0F8;
+  --muted: #E4F0F8;
+  --muted-fg: #486F91;
+  --accent: #007DCC;
+  --destructive: #d32f2f;
+  --border: rgba(0, 125, 204, 0.15);
+  --border-soft: rgba(0, 125, 204, 0.10);
+  --switch: #8FBDDC;
+  --ring: #007DCC;
+  --sidebar-bg: #EDF5FB;
+
+  /* Logo Text Colors */
+  --logo-primepower: #db3c3c;
+  --logo-department: #0c0a0a;
+
+  /* Functional Component Variables */
+  --green: #007DCC;
+  --green-soft: #E4F0F8;
+  --blue: #007DCC;
+  --blue-soft: #E4F0F8;
+  --amber: #D98A2B;
+  --amber-soft: #FBF0E1;
+  --purple: #8B6FD1;
+  --purple-soft: #F0EBFB;
+  --red: #d32f2f;
+  --red-soft: #FBEAEA;
+  --radius: 14px;
+  --radius-lg: 18px;
+  --sidebar-w: 236px;
+  --sidebar-w-collapsed: 72px;
+  --font-display: "Manrope", "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --shadow-xs: 0 1px 2px rgba(10, 27, 46, 0.05);
+  --shadow-sm: 0 2px 8px rgba(10, 27, 46, 0.06);
+  --shadow-md: 0 8px 24px rgba(10, 27, 46, 0.08);
+  --shadow-lg: 0 20px 48px rgba(10, 27, 46, 0.16);
+}
+
+/* Dark Mode Palette */
+[data-theme="dark"], .dark, body.dark-mode {
+  --background: #0F1B26;
+  --bg: #0F1B26;
+  --foreground: #E3EDF5;
+  --text: #E3EDF5;
+  --card: #16222E;
+  --popover: #16222E;
+  --panel: #16222E;
+  --primary: #33A1E6;
+  --primary-fg: #0F1B26;
+  --secondary: #1D2A37;
+  --muted: #1D2A37;
+  --muted-fg: #90A7B9;
+  --accent: #33A1E6;
+  --destructive: #ef4444;
+  --border: rgba(144, 167, 185, 0.12);
+  --border-soft: rgba(144, 167, 185, 0.08);
+  --switch: #33A1E6;
+  --ring: #33A1E6;
+  --sidebar-bg: #131E29;
+
+  /* Logo Text Colors */
+  --logo-primepower: #db3c3c;
+  --logo-department: #0c0a0a;
+
+  /* Functional Component Variables */
+  --green: #33A1E6;
+  --green-soft: #1D2A37;
+  --blue: #33A1E6;
+  --blue-soft: #1D2A37;
+  --red: #ef4444;
+  --red-soft: rgba(239, 68, 68, 0.15);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+svg.icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg);
+}
+
+::selection {
+  background: var(--secondary);
+  color: var(--primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* DENSITY SCALING RULES */
+[data-density="compact"] {
+  --sidebar-w: 210px;
+  font-size: 11.5px;
+}
+
+[data-density="compact"] .settings-page-body {
+  padding: 16px 24px;
+}
+
+[data-density="compact"] .settings-content-card {
+  padding: 18px 22px;
+}
+
+[data-density="compact"] .input-compact {
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+[data-density="compact"] .nav-item-btn {
+  padding: 6px 10px;
+  font-size: 11.5px;
+}
+
+[data-density="compact"] .nav-item {
+  padding: 6.5px 10px;
+  font-size: 11.5px;
+}
+
+[data-density="compact"] .top-bar {
+  height: 44px;
+}
+
+[data-density="compact"] .page-title {
+  font-size: 17px;
+}
+
+[data-density="spacious"] {
+  --sidebar-w: 250px;
+  font-size: 14.5px;
+}
+
+[data-density="spacious"] .settings-page-body {
+  padding: 32px 48px;
+}
+
+[data-density="spacious"] .settings-content-card {
+  padding: 36px 44px;
+}
+
+[data-density="spacious"] .input-compact {
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
+[data-density="spacious"] .nav-item-btn {
+  padding: 12px 18px;
+  font-size: 14px;
+}
+
+[data-density="spacious"] .nav-item {
+  padding: 12px 16px;
+  font-size: 14px;
+}
+
+[data-density="spacious"] .top-bar {
+  height: 60px;
+}
+
+[data-density="spacious"] .page-title {
+  font-size: 24px;
+}
+
+/* GLOBAL CUSTOM THEME-MATCHED SCROLLBARS */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+  transition: background 0.2s var(--ease);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar support mapped to system theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}

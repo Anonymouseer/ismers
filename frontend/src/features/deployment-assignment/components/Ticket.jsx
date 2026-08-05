@@ -7,27 +7,85 @@ export default function Ticket({ deployment, onOpen }) {
   const cd = countdownLabel(deployment.end);
 
   return (
-    <div className="ticket" onClick={() => onOpen(deployment.id)}>
-      <div className="ticket-stub" style={{ '--stub-soft': meta.soft, '--stub-color': meta.color }}>
-        <span className="ticket-dot"></span>
-        <span className="ticket-refcode">{deployment.id}</span>
+    <div
+      style={{
+        background: 'var(--panel)',
+        border: '1px solid var(--border)',
+        borderRadius: 14,
+        padding: 16,
+        boxShadow: 'var(--shadow-xs)',
+        cursor: 'pointer',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+        e.currentTarget.style.borderColor = 'var(--primary)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'none';
+        e.currentTarget.style.boxShadow = 'var(--shadow-xs)';
+        e.currentTarget.style.borderColor = 'var(--border)';
+      }}
+      onClick={() => onOpen(deployment.id)}
+    >
+      {/* CARD HEADER */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>
+            {initials(deployment.employee)}
+          </div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>{deployment.employee}</div>
+            <div style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{deployment.position}</div>
+          </div>
+        </div>
+        <span style={{ fontSize: 10, fontFamily: 'monospace', fontWeight: 700, color: 'var(--muted-fg)', background: 'var(--bg)', padding: '2px 7px', borderRadius: 4, border: '1px solid var(--border-soft)' }}>
+          {deployment.id}
+        </span>
       </div>
-      <div className="ticket-body">
-        <div className="ticket-title">{deployment.employee}</div>
-        <div className="ticket-client">{deployment.position} · {deployment.client}</div>
-        <div className="ticket-meta-row"><span>site</span><span>{deployment.site}</span></div>
-        <div className="ticket-progress-row">
-          <div className="ticket-progress-track">
-            <div className="ticket-progress-fill" style={{ width: `${rate}%`, background: meta.color }}></div>
-          </div>
-          <span className="ticket-progress-num">{rate}%</span>
+
+      {/* CLIENT & SITE BADGES */}
+      <div style={{ background: 'var(--bg)', border: '1px solid var(--border-soft)', borderRadius: 10, padding: '9px 11px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Client Account</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--primary)' }}>{deployment.client}</span>
         </div>
-        <div className="ticket-foot">
-          <span className="countdown-chip" style={{ background: cd.soft, color: cd.color }}>{cd.text}</span>
-          <div className="ticket-avatars">
-            <div className="ticket-avatar">{initials(deployment.employee)}</div>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Site Location</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{deployment.site}</span>
         </div>
+      </div>
+
+      {/* ATTENDANCE RATE PROGRESS */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10.5, fontWeight: 700 }}>
+          <span style={{ color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Attendance Rate</span>
+          <span style={{ color: 'var(--text)' }}>{rate}%</span>
+        </div>
+        <div style={{ height: 6, borderRadius: 4, background: 'var(--bg)', overflow: 'hidden' }}>
+          <div style={{ width: `${rate}%`, height: '100%', background: meta.color, borderRadius: 4 }}></div>
+        </div>
+      </div>
+
+      {/* CARD FOOTER */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border-soft)', marginTop: 2 }}>
+        <span style={{ padding: '3px 10px', borderRadius: 20, fontSize: 10.5, fontWeight: 700, background: cd.soft, color: cd.color }}>
+          {cd.text}
+        </span>
+        <button
+          className="btn"
+          style={{ padding: '4px 10px', fontSize: 10.5, fontWeight: 700 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(deployment.id);
+          }}
+        >
+          Manage Record
+        </button>
       </div>
     </div>
   );

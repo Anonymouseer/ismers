@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import Sidebar from '../../../components/layout/Sidebar';
+import { useOutletContext } from 'react-router-dom';
 import ClientCard from '../components/ClientCard';
 import ClientDetailPanel from '../components/ClientDetailPanel';
 import { CLIENTS } from '../data/mockClients';
 import './ClientManagementPage.css';
 
 export default function ClientManagementPage() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed } = useOutletContext() || { collapsed: false };
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -26,15 +26,9 @@ export default function ClientManagementPage() {
 
   return (
     <div className="app">
-      <Sidebar
-        activeItem="client-management"
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-      />
-
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="topbar">
-          <div className="crumb">COMPANY NAME &nbsp;›&nbsp; <b>Client Management</b></div>
+          <div className="crumb">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; <b>Client Management</b></div>
           <div className="search">
             <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             Search Anything...
@@ -77,6 +71,12 @@ export default function ClientManagementPage() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              <select className="chip">
+                <option value="all">Billing & Service Status</option>
+                <option value="good">Good Standing (Active)</option>
+                <option value="notice">Notice Sent (Overdue)</option>
+                <option value="hold">Service On-Hold (Non-Paying Client)</option>
+              </select>
               <select
                 className="chip"
                 value={statusFilter}

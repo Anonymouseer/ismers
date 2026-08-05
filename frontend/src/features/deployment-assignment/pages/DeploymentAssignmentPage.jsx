@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import Sidebar from '../../../components/layout/Sidebar';
+import { useState, useEffect } from 'react';
+import { useLocation, useOutletContext } from 'react-router-dom';
 import DispatchStrip from '../components/DispatchStrip';
 import ControlsBar from '../components/ControlsBar';
 import Board from '../components/Board';
+import StaffTableView from '../components/StaffTableView';
+import RenewalsAlertView from '../components/RenewalsAlertView';
 import DeploymentDrawer from '../components/DeploymentDrawer';
 import NewDeploymentModal from '../components/NewDeploymentModal';
 import { useDeploymentAssignmentStore } from '../store/DeploymentAssignmentStore';
@@ -16,7 +18,17 @@ const TODAY_LABEL = new Date(2026, 6, 24).toLocaleDateString('en-US', {
 });
 
 export default function DeploymentAssignmentPage() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed } = useOutletContext() || { collapsed: false };
+  const location = useLocation();
+  const [activeView, setActiveView] = useState('table'); // Default to 'table' for maximum performance with high-volume data!
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const viewParam = params.get('view');
+    if (viewParam && ['board', 'table', 'renewals'].includes(viewParam)) {
+      setActiveView(viewParam);
+    }
+  }, [location.search]);
 
   const {
     deployments,
@@ -42,15 +54,9 @@ export default function DeploymentAssignmentPage() {
 
   return (
     <div className="app">
-      <Sidebar
-        activeItem="deployment-assignment"
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((c) => !c)}
-      />
-
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="topbar">
-          <div className="crumb">COMPANY_NAME &nbsp;/&nbsp; recruitment &nbsp;/&nbsp; <b>deployments</b></div>
+          <div className="crumb">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Talent & Deployment &nbsp;›&nbsp; <b>Deployment & Assignment</b></div>
           <div className="search">
             <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}>
               <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
@@ -74,12 +80,14 @@ export default function DeploymentAssignmentPage() {
           </div>
         </div>
 
+        {/* TITLE ROW */}
         <div className="title-row">
           <div>
-            <div className="eyebrow">Core 1 · Deployment & Assignment</div>
-            <h1 className="page-title">Deployment Dispatch Board</h1>
-            <div className="page-sub">{stats.total} tracked deployments across {stats.clientCount} clients</div>
+            <div className="eyebrow">Core 1 · Deployment &amp; Assignment</div>
+            <h1 className="page-title">Deployed Staff Directory</h1>
+            <div className="page-sub">{stats.total} tracked staff assignments across {stats.clientCount} clients</div>
           </div>
+
           <button className="btn primary" onClick={() => setModalOpen(true)}>
             <svg className="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
             New Deployment
@@ -98,7 +106,16 @@ export default function DeploymentAssignmentPage() {
           onActiveStatusChange={setActiveStatus}
         />
 
-        <Board deployments={filtered} activeStatus={activeStatus} onOpen={openDetail} />
+        {/* HIGH-PERFORMANCE DYNAMIC VIEW ROUTING */}
+        {activeView === 'board' && (
+          <Board deployments={filtered} activeStatus={activeStatus} onOpen={openDetail} />
+        )}
+        {activeView === 'renewals' && (
+          <RenewalsAlertView deployments={filtered} onOpen={openDetail} />
+        )}
+        {activeView === 'table' && (
+          <StaffTableView deployments={filtered} onOpen={openDetail} />
+        )}
       </div>
 
       <DeploymentDrawer

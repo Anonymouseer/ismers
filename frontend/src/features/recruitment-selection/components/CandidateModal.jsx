@@ -18,6 +18,9 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   const [docViewerType, setDocViewerType] = useState(null);
   const [noteText, setNoteText] = useState('');
   const [warning, setWarning] = useState('');
+  const [assignedManager, setAssignedManager] = useState('Area Manager 1 (North NCR)');
+  const [endorsedClient, setEndorsedClient] = useState(job?.client || 'Seda Vertis North');
+  const [interviewPlatform, setInterviewPlatform] = useState('Zoom Meeting');
 
   if (!app) return null;
 
@@ -196,6 +199,53 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           )}
 
           <div className="modal-section">
+            <div className="modal-section-label">Endorsement & Interview Setup</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Assigned Area Manager</label>
+                <select
+                  style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11.5px', outline: 'none' }}
+                  value={assignedManager}
+                  onChange={(e) => setAssignedManager(e.target.value)}
+                >
+                  <option value="Area Manager 1 (North NCR)">Area Manager 1 (North NCR)</option>
+                  <option value="Area Manager 2 (South NCR)">Area Manager 2 (South NCR)</option>
+                  <option value="Area Supervisor - Hospitality">Area Supervisor - Hospitality</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Target Client Endorsement</label>
+                <select
+                  style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11.5px', outline: 'none' }}
+                  value={endorsedClient}
+                  onChange={(e) => setEndorsedClient(e.target.value)}
+                >
+                  <option value="Seda Vertis North">Seda Vertis North</option>
+                  <option value="Vikings Luxury Buffet">Vikings Luxury Buffet</option>
+                  <option value="Y2 Hotel Residence">Y2 Hotel Residence</option>
+                  <option value="City Garden Hotel">City Garden Hotel</option>
+                  <option value="ABC Logistics">ABC Logistics</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase' }}>Interview Channel / Venue</label>
+                <select
+                  style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11.5px', outline: 'none' }}
+                  value={interviewPlatform}
+                  onChange={(e) => setInterviewPlatform(e.target.value)}
+                >
+                  <option value="Zoom Meeting">Zoom Meeting</option>
+                  <option value="Microsoft Teams">Microsoft Teams</option>
+                  <option value="Google Meet">Google Meet</option>
+                  <option value="Face-to-Face (Isolated Room)">Face-to-Face (Isolated Room)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="modal-section">
             <div className="modal-section-label">Pipeline Stage</div>
             <div className="stage-track">
               {stageKeys.map((key, idx) => {
@@ -284,16 +334,22 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
 
         <div className="modal-actions">
           {warning && <div style={{ width: '100%', textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: 'var(--amber)', order: -1 }}>{warning}</div>}
-          {isHired ? (
-            <>
-              <a className="btn primary" href="/deployment-assignment" style={{ textDecoration: 'none', textAlign: 'center' }}>Open in Deployment &amp; Assignment</a>
-            </>
-          ) : isRejected ? (
-            <button className="btn" disabled style={{ opacity: 0.6 }}>Application Rejected</button>
+          {app.status === 'for_deployment' ? (
+            <a className="btn primary" href="/deployment-assignment" style={{ textDecoration: 'none', textAlign: 'center', width: '100%' }}>
+              🚀 Hand Over to Deployment &amp; Assignment Board
+            </a>
+          ) : app.status === 're_pooling' ? (
+            <button className="btn primary" style={{ width: '100%' }} onClick={() => update((a) => ({ ...a, status: 'pooling' }))}>
+              🔄 Re-Line Up Candidate to Another Client (Return to Pooling)
+            </button>
           ) : (
             <>
-              <button className="btn" style={{ color: 'var(--red)' }} onClick={handleReject}>Reject</button>
-              <button className="btn primary" onClick={handleAdvance}>Advance to {nextLabel}</button>
+              <button className="btn" style={{ color: 'var(--red)' }} onClick={handleReject}>
+                Failed (Re-Pool for Line Up)
+              </button>
+              <button className="btn primary" onClick={handleAdvance}>
+                Endorse / Advance to {nextLabel || 'Next Step'}
+              </button>
             </>
           )}
         </div>

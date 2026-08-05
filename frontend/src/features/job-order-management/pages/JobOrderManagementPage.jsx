@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Sidebar from '../../../components/layout/Sidebar'; // adjust path if your shared Sidebar lives elsewhere
+import { useOutletContext } from 'react-router-dom';
 import useJobOrderManagementStore from '../store/JobOrderManagementStore';
 import DispatchStrip from '../components/DispatchStrip';
 import ControlsBar from '../components/ControlsBar';
@@ -10,7 +10,7 @@ import JobOrderModal from '../components/JobOrderModal';
 import './JobOrderManagement.css';
 
 export default function JobOrderManagementPage() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed } = useOutletContext() || { collapsed: false };
   const store = useJobOrderManagementStore();
 
   const currentJob = store.getJob(store.currentRef);
@@ -33,7 +33,6 @@ export default function JobOrderManagementPage() {
   if (store.loading) {
     return (
       <div className="app">
-        <Sidebar activeItem="job-order-management" collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
         <div className={`main${collapsed ? ' collapsed' : ''}`}>
           <div className="page-sub">Loading job orders…</div>
         </div>
@@ -43,11 +42,9 @@ export default function JobOrderManagementPage() {
 
   return (
     <div className="app">
-      <Sidebar activeItem="job-order-management" collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
-
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="topbar">
-          <div className="crumb">COMPANY_NAME &nbsp;/&nbsp; recruitment &nbsp;/&nbsp; <b>job-orders</b></div>
+          <div className="crumb">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; <b>Job Order Management</b></div>
           <div className="search">
             <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             Search Anything...

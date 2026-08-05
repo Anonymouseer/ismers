@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import Sidebar from '../../../components/layout/Sidebar';
+import { useOutletContext } from 'react-router-dom';
 import DispatchStrip from '../components/DispatchStrip';
 import BoardColumn from '../components/BoardColumn';
 import ProfileDrawer from '../components/ProfileDrawer';
@@ -9,7 +9,7 @@ import './ApplicantRegistrationBoard.css';
 
 export default function ApplicantProfilingBoard() {
   const { candidates } = useApplicantRegistration();
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed } = useOutletContext() || { collapsed: false };
   const [search, setSearch] = useState('');
   const [jobFilter, setJobFilter] = useState('all');
   const [openRegId, setOpenRegId] = useState(null);
@@ -34,22 +34,17 @@ export default function ApplicantProfilingBoard() {
   const counts = useMemo(() => {
     const base = { registered: 0, profiling: 0, profiled: 0, sent: 0 };
     candidates.forEach((c) => {
-      base[boardColumn(c)] += 1;
+      const col = boardColumn(c.stage);
+      if (base[col] !== undefined) base[col] += 1;
     });
     return base;
   }, [candidates]);
 
   return (
     <div className="app">
-      <Sidebar
-        activeItem="applicant-registration"
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-      />
-
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="topbar">
-          <div className="crumb">COMPANY NAME &nbsp;›&nbsp; <b>Applicant Registration & Profiling</b></div>
+          <div className="crumb">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Talent & Deployment &nbsp;›&nbsp; <b>Applicant Registration & Profiling</b></div>
           <div className="search">
             <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}>
               <circle cx="11" cy="11" r="7" />

@@ -126,7 +126,7 @@ export function useDeploymentAssignmentStore() {
     (id, type) => {
       setDeployments((prev) =>
         prev.map((d) => {
-          if (d.id !== id || d.stage !== 'monitoring') return d; // only log while actively monitoring
+          if (d.id !== id) return d; // allow logging for any active deployment
           const noteMap = {
             present: 'Reported on time.',
             late: 'Arrived late.',

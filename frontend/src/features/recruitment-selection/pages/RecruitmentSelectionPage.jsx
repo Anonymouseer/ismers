@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import Sidebar from '../../../components/layout/Sidebar';
+import { useOutletContext } from 'react-router-dom';
 import CandidateCard from '../components/CandidateCard';
 import CandidateModal from '../components/CandidateModal';
 import { APPLICATIONS, JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
@@ -20,7 +20,7 @@ function buildInitialApplications() {
 }
 
 export default function RecruitmentSelectionPage() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed } = useOutletContext() || { collapsed: false };
   const [applications, setApplications] = useState(buildInitialApplications);
   const [search, setSearch] = useState('');
   const [jobFilter, setJobFilter] = useState('all');
@@ -28,13 +28,19 @@ export default function RecruitmentSelectionPage() {
   const [selectedId, setSelectedId] = useState(null);
 
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return applications.filter((a) => {
-      if (jobFilter !== 'all' && a.jobId !== jobFilter) return false;
-      if (scoreFilter === 'high' && a.score < 80) return false;
-      if (scoreFilter === 'mid' && (a.score < 60 || a.score >= 80)) return false;
-      if (scoreFilter === 'low' && a.score >= 60) return false;
-      if (q && !a.name.toLowerCase().includes(q)) return false;
+    return applications.filter((app) => {
+      if (jobFilter !== 'all' && app.jobId !== jobFilter) return false;
+      if (scoreFilter === 'high' && app.matchScore < 85) return false;
+      if (scoreFilter === 'mid' && (app.matchScore < 70 || app.matchScore >= 85)) return false;
+      if (scoreFilter === 'low' && app.matchScore >= 70) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const job = jobById(app.jobId);
+        const nameMatch = app.applicantName.toLowerCase().includes(q);
+        const jobMatch = job && job.title.toLowerCase().includes(q);
+        const skillsMatch = app.skills.some((s) => s.toLowerCase().includes(q));
+        if (!nameMatch && !jobMatch && !skillsMatch) return false;
+      }
       return true;
     });
   }, [applications, search, jobFilter, scoreFilter]);
@@ -48,15 +54,9 @@ export default function RecruitmentSelectionPage() {
 
   return (
     <div className="app">
-      <Sidebar
-        activeItem="recruitment-selection"
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-      />
-
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="topbar">
-          <div className="crumb">COMPANY NAME &nbsp;›&nbsp; <b>Recruitment &amp; Selection</b></div>
+          <div className="crumb">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Talent & Deployment &nbsp;›&nbsp; <b>Recruitment &amp; Selection</b></div>
           <div className="search">
             <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             Search Anything...

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" width="100%" height="100%">
+  <defs>
+    <radialGradient id="globeGrad" cx="38%" cy="32%" r="68%">
+      <stop offset="0%" stop-color="#60bdf1"/>
+      <stop offset="35%" stop-color="#0077c8"/>
+      <stop offset="75%" stop-color="#003e8a"/>
+      <stop offset="100%" stop-color="#001d4a"/>
+    </radialGradient>
+    
+    <radialGradient id="globeOverlay" cx="30%" cy="25%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <clipPath id="globeClip">
+      <circle cx="250" cy="190" r="142"/>
+    </clipPath>
+  </defs>
+
+  <!-- Base Globe Sphere -->
+  <circle cx="250" cy="190" r="142" fill="url(#globeGrad)" />
+
+  <!-- Continents & Grid inside Globe -->
+  <g clip-path="url(#globeClip)">
+    <!-- Longitude / Latitude Grid Lines -->
+    <ellipse cx="250" cy="190" rx="142" ry="46" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+    <ellipse cx="250" cy="190" rx="142" ry="92" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+    <ellipse cx="250" cy="190" rx="142" ry="128" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+    <ellipse cx="250" cy="190" rx="56" ry="142" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+    <ellipse cx="250" cy="190" rx="102" ry="142" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+    <line x1="250" y1="48" x2="250" y2="332" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+    <line x1="108" y1="190" x2="392" y2="190" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.4"/>
+
+    <!-- Continents in white/light blue -->
+    <!-- North America -->
+    <path d="M 205,90 Q 230,78 255,82 T 275,102 Q 265,122 242,132 T 212,118 Z" fill="#ffffff" opacity="0.9"/>
+    <path d="M 175,98 Q 198,102 208,128 T 192,152 Q 168,142 172,112 Z" fill="#ffffff" opacity="0.9"/>
+    <!-- South America -->
+    <path d="M 238,148 Q 275,158 282,188 T 262,240 Q 240,248 234,218 T 238,178 Z" fill="#ffffff" opacity="0.9"/>
+    <!-- Eurasia / Africa edge -->
+    <path d="M 288,78 Q 325,72 348,98 T 332,138 Q 302,128 292,102 Z" fill="#ffffff" opacity="0.9"/>
+    <path d="M 298,142 Q 332,148 338,182 T 312,218 Q 292,202 292,168 Z" fill="#ffffff" opacity="0.9"/>
+    
+    <!-- 3D Highlight Overlay -->
+    <circle cx="250" cy="190" r="142" fill="url(#globeOverlay)"/>
+  </g>
+
+  <!-- Globe Rim -->
+  <circle cx="250" cy="190" r="142" fill="none" stroke="#002b5b" stroke-width="2.5" opacity="0.6"/>
+
+  <!-- PRIMEPOWER Red Diagonal Text -->
+  <g transform="rotate(-30 250 190)">
+    <text x="250" y="198" font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="44" fill="#E51937" text-anchor="middle" letter-spacing="5">
+      PRIMEPOWER
+    </text>
+  </g>
+
+  <!-- PMS NETWORK INC Black Arc Text around bottom right -->
+  <path id="blackTextArc" d="M 120,270 A 155 155 0 0 0 405,210" fill="none"/>
+  <text font-family="'Arial', 'Helvetica', sans-serif" font-weight="800" font-size="22" fill="#111827" letter-spacing="3">
+    <textPath href="#blackTextArc" startOffset="50%" text-anchor="middle">
+      PMS NETWORK INC
+    </textPath>
+  </text>
+</svg>

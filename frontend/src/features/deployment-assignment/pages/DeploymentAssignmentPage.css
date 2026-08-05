@@ -9,7 +9,7 @@
 }
 
 /* MAIN */
-.main{flex:1;margin-left:var(--sidebar-w);height:100vh;overflow:hidden;padding:18px 26px;transition:margin-left .22s var(--ease);min-width:0;display:flex;flex-direction:column;gap:14px;}
+.main{flex:1;margin-left:var(--sidebar-w);height:100vh;overflow-y:auto;padding:18px 26px;transition:margin-left .22s var(--ease);min-width:0;display:flex;flex-direction:column;gap:14px;}
 .main.collapsed{margin-left:var(--sidebar-w-collapsed);}
 
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-shrink:0;}
