@@ -6,6 +6,7 @@ import { ApplicantRegistrationProvider } from '../features/applicant-registratio
 import RecruitmentSelectionPage from '../features/recruitment-selection/pages/RecruitmentSelectionPage';
 import JobOrderManagementPage from '../features/job-order-management/pages/JobOrderManagementPage';
 import DeploymentAssignmentPage from '../features/deployment-assignment/pages/DeploymentAssignmentPage';
+import AiAnalyticsPage from '../features/ai-analytics/pages/AiAnalyticsPage';
 import SettingsPage from '../features/settings/pages/SettingsPage';
 
 const router = createBrowserRouter([
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
       { path: 'recruitment-selection', element: <RecruitmentSelectionPage /> },
       { path: 'job-order-management', element: <JobOrderManagementPage /> },
       { path: 'deployment-assignment', element: <DeploymentAssignmentPage /> },
+      { path: 'ai-analytics', element: <AiAnalyticsPage /> },
       { path: 'settings', element: <SettingsPage /> },
     ],
   },

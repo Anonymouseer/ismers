@@ -1,0 +1,15 @@
+.ai-analytics-main {
+  flex: 1;
+  margin-left: var(--sidebar-w);
+  height: 100vh;
+  overflow-y: auto;
+  padding: 18px 26px;
+  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-analytics-main.collapsed {
+  margin-left: 72px;
+}
