@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import './Sidebar.css';
@@ -6,6 +6,29 @@ import './Sidebar.css';
 export default function RootLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+
+  // Global Theme & Density Sync across all pages and route refreshes
+  useEffect(() => {
+    const syncTheme = () => {
+      try {
+        const theme = localStorage.getItem('theme') || 'light';
+        const density = localStorage.getItem('density') || 'comfortable';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-density', density);
+        if (theme === 'dark') {
+          document.body.classList.add('dark');
+        } else {
+          document.body.classList.remove('dark');
+        }
+      } catch {
+        // ignore
+      }
+    };
+
+    syncTheme();
+    window.addEventListener('storage', syncTheme);
+    return () => window.removeEventListener('storage', syncTheme);
+  }, []);
 
   // Determine active item based on current pathname
   const path = location.pathname;
