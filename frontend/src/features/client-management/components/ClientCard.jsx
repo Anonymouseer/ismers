@@ -1,15 +1,26 @@
 import CardIcon from './CardIcon';
-import { colorFor, softFor } from '../utils/clientDisplay';
+import { colorFor, softFor, isExpiringSoon } from '../utils/clientDisplay';
 
 export default function ClientCard({ client, index, selected, onSelect }) {
   const c = client;
   const statusLabel = c.status.charAt(0).toUpperCase() + c.status.slice(1);
+  const expiringSoon = isExpiringSoon(c.renewal);
 
   return (
     <div
-      className={`client-card${selected ? ' selected' : ''}`}
+      className={`client-card${selected ? ' selected' : ''}${c.status === 'archived' ? ' is-archived' : ''}`}
+      style={{ position: 'relative' }}
       onClick={() => onSelect(index)}
     >
+      {expiringSoon && (
+        <div className="cc-expiry-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M12 9v4M12 17h.01" />
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+          </svg>
+          Expiring soon
+        </div>
+      )}
       <div className="cc-hover-actions">
         <div className="cc-hover-btn" title={`${c.cardTag} · ${c.cardBlurb}`}>
           <svg className="icon" viewBox="0 0 24 24"><path d="M4 4h16v16H4z" /><path d="m4 5 8 7 8-7" /></svg>

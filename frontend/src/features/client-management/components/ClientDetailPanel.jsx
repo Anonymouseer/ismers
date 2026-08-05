@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import JobOrderCard from './JobOrderCard';
 import JobDetailView from './JobDetailView';
+import ContractTab from './ContractTab';
+import NotesTab from './NotesTab';
+import ActivityTab from './ActivityTab';
 import { colorFor, softFor, initials, STATUS_LABEL_MAP } from '../utils/clientDisplay';
 
 const TABS = [
   { key: 'jobs', label: 'Job Orders' },
   { key: 'contacts', label: 'Contacts' },
+  { key: 'contract', label: 'Contract' },
+  { key: 'notes', label: 'Notes' },
   { key: 'activity', label: 'Activity' },
   { key: 'documents', label: 'Documents' },
 ];
@@ -14,11 +19,16 @@ export default function ClientDetailPanel({ client, clientIndex, onClose }) {
   const c = client;
   const [activeTab, setActiveTab] = useState('jobs');
   const [openJobIndex, setOpenJobIndex] = useState(null);
+  // NEW: Client Status Management — local override until wired to a real API.
+  const [status, setStatus] = useState(c.status);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
-  // Reset to the Jobs tab and close any open job whenever a different client is selected.
+  // Reset to the Jobs tab, close any open job, and reset status whenever a different client is selected.
   useEffect(() => {
     setActiveTab('jobs');
     setOpenJobIndex(null);
+    setStatus(c.status);
+    setStatusMenuOpen(false);
   }, [clientIndex]);
 
   // Close the inline job detail view on Escape, matching the original page behavior.
@@ -33,10 +43,14 @@ export default function ClientDetailPanel({ client, clientIndex, onClose }) {
 
   const openPositions = c.jobs.reduce((sum, j) => sum + Math.max(j.total - j.filled, 0), 0);
   const allTags = [...new Set(c.jobs.flatMap((j) => j.tags || []))];
-  const statusLabel = STATUS_LABEL_MAP[c.status] || 'Active Client';
+  const statusLabel = STATUS_LABEL_MAP[status] || 'Active Client';
 
   return (
-    <div id="detailContent" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+    <div
+      id="detailContent"
+      style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+      onClick={() => statusMenuOpen && setStatusMenuOpen(false)}
+    >
       <div className="d-head-flat">
         <div className="d-avatar-ring">
           <div className="d-logo" style={{ background: colorFor(clientIndex) }}>{initials(c.name)}</div>
@@ -44,13 +58,44 @@ export default function ClientDetailPanel({ client, clientIndex, onClose }) {
         <div className="d-title-wrap">
           <div className="d-name">{c.name}</div>
           <div className="d-badges">
-            <span className={`d-badge status-${c.status}`}><span className="dot"></span>{statusLabel}</span>
+            <span className={`d-badge status-${status}`}><span className="dot"></span>{statusLabel}</span>
             <span className="d-badge"><span className="dot"></span>Client for {c.tenure}</span>
           </div>
         </div>
         <div className="d-actions">
           <button className="btn"><svg className="icon" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>Edit</button>
           <button className="btn primary"><svg className="icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
+          {/* NEW: Client Status Management */}
+          <div className="status-menu-wrap">
+            <button className="btn" onClick={() => setStatusMenuOpen((v) => !v)}>
+              Status <svg className="icon" viewBox="0 0 24 24" style={{ width: 12, height: 12 }}><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+            {statusMenuOpen && (
+              <div className="status-menu open">
+                {status !== 'suspended' && (
+                  <div className="status-menu-item warn" onClick={() => { setStatus('suspended'); setStatusMenuOpen(false); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5v5M14.5 9.5v5" /></svg>
+                    Suspend Client
+                  </div>
+                )}
+                {status !== 'archived' && (
+                  <div className="status-menu-item danger" onClick={() => { setStatus('archived'); setStatusMenuOpen(false); }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" /></svg>
+                    Archive Client
+                  </div>
+                )}
+                {status !== 'active' && (
+                  <>
+                    <div className="status-menu-divider"></div>
+                    <div className="status-menu-item ok" onClick={() => { setStatus('active'); setStatusMenuOpen(false); }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9" /><path d="M3 4v5h5" /></svg>
+                      Reactivate
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           <button className="btn" title="Close" onClick={onClose}><svg className="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg></button>
         </div>
       </div>
@@ -167,15 +212,16 @@ export default function ClientDetailPanel({ client, clientIndex, onClose }) {
                   ))}
                 </div>
 
+                <div className={`tab-panel${activeTab === 'contract' ? ' active' : ''}`}>
+                  <ContractTab client={c} />
+                </div>
+
+                <div className={`tab-panel${activeTab === 'notes' ? ' active' : ''}`}>
+                  <NotesTab key={clientIndex} initialNotes={c.notes} />
+                </div>
+
                 <div className={`tab-panel${activeTab === 'activity' ? ' active' : ''}`}>
-                  <div className="timeline">
-                    {c.activity.map((a, idx) => (
-                      <div className="t-item" key={idx}>
-                        <div className="t-text">{a.text}</div>
-                        <div className="t-meta">{a.meta}</div>
-                      </div>
-                    ))}
-                  </div>
+                  <ActivityTab activity={c.activity} />
                 </div>
 
                 <div className={`tab-panel${activeTab === 'documents' ? ' active' : ''}`}>

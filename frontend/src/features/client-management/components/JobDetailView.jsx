@@ -1,4 +1,34 @@
-import { softForColor, initials, refCode, colorFor, softFor, pillClass, pillLabel, scoreClass } from '../utils/clientDisplay';
+import { initials, refCode, scoreClass, softForColor } from '../utils/clientDisplay';
+
+const RING_R = 27;
+const RING_CIRC = 2 * Math.PI * RING_R;
+const STAGES = ['applied', 'screening', 'interview', 'hired'];
+
+function StageTrack({ status }) {
+  if (status === 'rejected') {
+    return (
+      <div className="jdv2-stage-row">
+        <span className="jdv2-stage-rejected">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          Not selected
+        </span>
+      </div>
+    );
+  }
+  const idx = STAGES.indexOf(status);
+  const fillPct = idx >= 0 ? (idx / (STAGES.length - 1)) * 100 : 0;
+  const stageName = idx >= 0 ? STAGES[idx].charAt(0).toUpperCase() + STAGES[idx].slice(1) : '—';
+  return (
+    <div className="jdv2-stage-row">
+      <div className="jdv2-stage-track" style={{ '--fill-w': `${fillPct}%` }}>
+        {STAGES.map((s, i) => (
+          <span key={s} className={`jdv2-stage-dot${i <= idx ? ' filled' : ''}`} title={s} />
+        ))}
+      </div>
+      <span className="jdv2-stage-current">{stageName}</span>
+    </div>
+  );
+}
 
 export default function JobDetailView({ client, job, jobIndex, onBack }) {
   const j = job;
@@ -9,115 +39,156 @@ export default function JobDetailView({ client, job, jobIndex, onBack }) {
   const allApplicants = j.applicants || [];
   const hired = allApplicants.filter((a) => a.status === 'hired');
   const pipeline = allApplicants.filter((a) => a.status !== 'hired');
+  const dashOffset = RING_CIRC * (1 - pct / 100);
+
+  const jobStyle = {
+    '--job-accent': j.color,
+    '--job-tint-a': softForColor(j.color),
+    '--job-tint-b': '#F8F7F4',
+  };
 
   return (
-    <div className="job-detail-view open">
-      <button className="jd-back" onClick={onBack}>
-        <svg className="icon" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
-        Back to Job Orders
-      </button>
-      <div className="jd-head">
-        <div className="jd-icon" style={{ background: softForColor(j.color), color: j.color }}>
-          <svg className="icon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="1" /><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1" /></svg>
+    <div className="jdv2" style={jobStyle}>
+      <div className="jdv2-banner">
+        <div className="jdv2-back" onClick={onBack}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+          Back to Job Orders
         </div>
-        <div className="jd-title-wrap">
-          <div className="jd-title-row">
-            <div className="jd-title">{j.title}</div>
-            <span className="jd-badge" style={{ background: softForColor(j.color), color: j.color }}>• {badgeLabel}</span>
+        <div className="jdv2-top">
+          <div className="jdv2-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="4" y="3" width="16" height="18" rx="1" /><path d="M9 8h1M14 8h1M9 12h1M14 12h1M9 16h1M14 16h1" /></svg>
           </div>
-          <div className="jd-sub">{client.name} · {j.location || ''}</div>
-          <div className="jd-ref">{refCode(client.name, jobIndex)}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="jdv2-title">{j.title}</div>
+            <div className="jdv2-sub">{client.name}{j.location ? ` · ${j.location}` : ''}</div>
+            <div className="jdv2-ref">{refCode(client.name, jobIndex)}</div>
+          </div>
+          <span className="jdv2-badge">• {badgeLabel}</span>
+        </div>
+
+        <div className="jdv2-stat-strip">
+          <div className="jdv2-stat"><div className="jdv2-stat-label">Employment Type</div><div className="jdv2-stat-value">{j.type || '—'}</div></div>
+          <div className="jdv2-stat"><div className="jdv2-stat-label">Deadline</div><div className="jdv2-stat-value">{j.deadline || '—'}</div></div>
+          <div className="jdv2-stat"><div className="jdv2-stat-label">Rate</div><div className="jdv2-stat-value">{j.rate || '—'}</div></div>
+          <div className="jdv2-stat"><div className="jdv2-stat-label">Location</div><div className="jdv2-stat-value">{j.location || '—'}</div></div>
+        </div>
+
+        <div className="jdv2-fill-wrap">
+          <div className="jdv2-ring">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle className="jdv2-ring-track" cx="32" cy="32" r={RING_R}></circle>
+              <circle
+                className="jdv2-ring-fill"
+                cx="32" cy="32" r={RING_R}
+                strokeDasharray={RING_CIRC}
+                strokeDashoffset={dashOffset}
+              ></circle>
+            </svg>
+            <div className="jdv2-ring-pct">{pct}%</div>
+          </div>
+          <div className="jdv2-fill-text">
+            <div className="jdv2-fill-label">Positions Filled</div>
+            <div className="jdv2-fill-num">{j.filled}<span> / {j.total} positions</span></div>
+          </div>
         </div>
       </div>
-      <div className="modal-scroll">
-        <div className="jd-info-grid">
-          <div className="modal-info-item">
-            <div className="jd-info-icon c1"><svg className="icon" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg></div>
-            <div><div className="modal-info-label">Location</div><div className="modal-info-value">{j.location || '—'}</div></div>
-          </div>
-          <div className="modal-info-item">
-            <div className="jd-info-icon c2"><svg className="icon" viewBox="0 0 24 24"><path d="M6 7h12l1 13H5L6 7Z" /><path d="M9 7V5a3 3 0 0 1 6 0v2" /></svg></div>
-            <div><div className="modal-info-label">Employment Type</div><div className="modal-info-value">{j.type || '—'}</div></div>
-          </div>
-          <div className="modal-info-item">
-            <div className="jd-info-icon c3"><svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5h4" /></svg></div>
-            <div><div className="modal-info-label">Rate / Salary</div><div className="modal-info-value">{j.rate || '—'}</div></div>
-          </div>
-          <div className="modal-info-item">
-            <div className="jd-info-icon c4"><svg className="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 3v3M16 3v3" /></svg></div>
-            <div><div className="modal-info-label">Deadline</div><div className="modal-info-value">{j.deadline || '—'}</div></div>
-          </div>
-        </div>
 
-        <div className="jd-fill">
-          <div className="jd-fill-label">Positions filled</div>
-          <div className="jd-fill-track"><div className="jd-fill-fill" style={{ width: `${pct}%`, color: j.color }}></div></div>
-          <div className="num">{j.filled} / {j.total} ({pct}%)</div>
-        </div>
-
-        <div className="modal-section">
-          <div className="modal-section-label">Job Description</div>
-          <div className="modal-desc-text">{j.description || 'No description on file yet.'}</div>
-        </div>
-
-        <div className="modal-section">
-          <div className="modal-section-label">Requirements</div>
-          <ul className="modal-req-list">
-            {reqs.length ? reqs.map((r, i) => <li key={i}>{r}</li>) : <li>No requirements listed yet.</li>}
-          </ul>
-        </div>
-
-        <div className="modal-section">
-          <div className="modal-section-label">Tags</div>
-          <div className="modal-tag-row">
-            {tags.length
-              ? tags.map((t, i) => <span className="modal-tag" key={i}>{t}</span>)
-              : <span style={{ color: 'var(--muted)', fontSize: 11 }}>No tags</span>}
-          </div>
-        </div>
-
-        <div className="modal-section">
-          <div className="modal-section-label">
-            <span>Hired / Placed</span>
-            <span className="modal-section-count">{hired.length} / {j.total}</span>
-          </div>
+      <div className="jdv2-body">
+        <div className="jdv2-cols">
           <div>
-            {hired.length
-              ? hired.map((a, idx) => (
-                  <div className="hired-card" key={idx} style={{ borderColor: colorFor(idx), background: softFor(idx) }}>
-                    <div className="hired-avatar" style={{ background: colorFor(idx) }}>{initials(a.name)}</div>
-                    <div className="hired-info">
-                      <div className="hired-name">{a.name}</div>
-                      <div className="hired-meta">Applied {a.applied}</div>
-                    </div>
-                    <div className="hired-score" style={{ color: colorFor(idx) }}>{a.score}</div>
-                  </div>
-                ))
-              : <div className="empty-note">No one has been hired for this role yet.</div>}
-          </div>
-        </div>
+            <div className="jdv2-block-label">
+              <span className="jdv2-block-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5" /></svg>
+              </span>
+              Job Description
+            </div>
+            <div className="jdv2-desc-card">
+              <div className="jdv2-desc">{j.description || 'No description on file yet.'}</div>
+            </div>
 
-        <div className="modal-section">
-          <div className="modal-section-label">Applicant Pipeline</div>
-          <table className="modal-table">
-            <tbody>
-              {pipeline.length ? (
-                <>
-                  <tr><th>Applicant</th><th>AI Score</th><th>Status</th><th>Applied</th></tr>
-                  {pipeline.map((a, idx) => (
-                    <tr key={idx}>
-                      <td><div className="modal-name-cell"><span className="modal-app-avatar">{initials(a.name)}</span>{a.name}</div></td>
-                      <td><span className={`modal-score ${scoreClass(a.score)}`}>{a.score}</span></td>
-                      <td><span className={`modal-pill ${pillClass(a.status)}`}>{pillLabel(a.status)}</span></td>
-                      <td>{a.applied}</td>
-                    </tr>
-                  ))}
-                </>
-              ) : (
-                <tr><td className="empty-note">No one else currently in the pipeline.</td></tr>
+            <div className="jdv2-block-label">
+              <span className="jdv2-block-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+              </span>
+              Requirements
+            </div>
+            <ul className="jdv2-req-list">
+              {reqs.length ? reqs.map((r, i) => (
+                <li key={i}>
+                  <span className="jdv2-req-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6 9 17l-5-5" /></svg>
+                  </span>
+                  {r}
+                </li>
+              )) : <li style={{ color: 'var(--muted)' }}>No requirements listed yet.</li>}
+            </ul>
+
+            <div className="jdv2-block-label">
+              <span className="jdv2-block-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="m20.6 11.3-8.9-8.9a2 2 0 0 0-1.4-.6H4a2 2 0 0 0-2 2v6.3c0 .5.2 1 .6 1.4l8.9 8.9a2 2 0 0 0 2.8 0l6.3-6.3a2 2 0 0 0 0-2.8Z" /><circle cx="7" cy="7" r="1.3" /></svg>
+              </span>
+              Tags
+            </div>
+            <div className="jdv2-tag-row">
+              {tags.length
+                ? tags.map((t, i) => <span className="jdv2-tag" key={i}>{t}</span>)
+                : <span style={{ color: 'var(--muted)', fontSize: 11 }}>No tags</span>}
+            </div>
+
+            {/* Client Management surfaces pipeline data for visibility only — all applicant
+                actions (scoring, status changes, scheduling) live in Recruitment & Selection. */}
+            <div className="jdv2-cta">
+              <div className="jdv2-cta-text">
+                <b>Need to move an applicant forward?</b>
+                Screening, interviews, and status changes are handled in Recruitment & Selection.
+              </div>
+              <a className="jdv2-cta-btn" href={`/recruitment-selection?job=${encodeURIComponent(refCode(client.name, jobIndex))}`}>
+                Manage in Recruitment
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <div className="jdv2-side-card jdv2-side-card--hired">
+              <div className="jdv2-side-title">
+                <span>Hired / Placed</span>
+                <span className="jdv2-side-count">{hired.length} / {j.total}</span>
+              </div>
+              {hired.length ? hired.map((a, idx) => (
+                <div className="jdv2-hire-card" key={idx}>
+                  <div className="jdv2-hire-avatar">{initials(a.name)}</div>
+                  <div className="jdv2-hire-info">
+                    <div className="jdv2-hire-name">{a.name}</div>
+                    <div className="jdv2-hire-meta">Applied {a.applied}</div>
+                  </div>
+                  <span className={`jdv2-hire-score ${scoreClass(a.score)}`}>{a.score}</span>
+                </div>
+              )) : (
+                <div style={{ color: 'var(--muted)', fontSize: 11.5 }}>No one has been hired for this role yet.</div>
               )}
-            </tbody>
-          </table>
+            </div>
+
+            <div className="jdv2-side-card">
+              <div className="jdv2-side-title">
+                <span>Applicant Pipeline</span>
+                <span className="jdv2-readonly-tag">Read-only</span>
+              </div>
+              {pipeline.length ? pipeline.map((a, idx) => (
+                <div className="jdv2-pipe-card" key={idx}>
+                  <div className="jdv2-pipe-avatar">{initials(a.name)}</div>
+                  <div className="jdv2-pipe-info">
+                    <div className="jdv2-pipe-name">{a.name}</div>
+                    <div className="jdv2-pipe-meta">Applied {a.applied}</div>
+                    <StageTrack status={a.status} />
+                  </div>
+                  <span className={`jdv2-pipe-score ${scoreClass(a.score)}`}>{a.score}</span>
+                </div>
+              )) : (
+                <div style={{ color: 'var(--muted)', fontSize: 11.5 }}>No one else currently in the pipeline.</div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
