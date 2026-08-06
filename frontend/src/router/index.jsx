@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from '../components/layout/RootLayout';
 import ClientManagementPage from '../features/client-management/pages/ClientManagementPage';
 import ApplicantProfilingBoard from '../features/applicant-registration/pages/ApplicantProfilingBoard';
+import RegisterApplicantPage from '../features/applicant-registration/pages/RegisterApplicantPage';
 import { ApplicantRegistrationProvider } from '../features/applicant-registration/store/ApplicantRegistrationStore';
 import RecruitmentSelectionPage from '../features/recruitment-selection/pages/RecruitmentSelectionPage';
 import JobOrderManagementPage from '../features/job-order-management/pages/JobOrderManagementPage';
@@ -24,6 +25,14 @@ const router = createBrowserRouter([
           </ApplicantRegistrationProvider>
         ),
       },
+      {
+        path: 'applicant-registration/register',
+        element: (
+          <ApplicantRegistrationProvider>
+            <RegisterApplicantPage />
+          </ApplicantRegistrationProvider>
+        ),
+      },
       { path: 'recruitment-selection', element: <RecruitmentSelectionPage /> },
       { path: 'job-order-management', element: <JobOrderManagementPage /> },
       { path: 'deployment-assignment', element: <DeploymentAssignmentPage /> },
@@ -33,4 +42,4 @@ const router = createBrowserRouter([
   },
 ]);
 
-export default router;
+export default router;

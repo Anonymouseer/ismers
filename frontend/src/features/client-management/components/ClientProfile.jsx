@@ -23,103 +23,107 @@ export default function ClientProfile({ client, clientIndex, onBack }) {
   const renewalInfo = renewalStatus(c.renewal);
   const renewalWarn = renewalInfo.expired || (renewalInfo.days !== null && renewalInfo.days <= 30);
 
-  const accent = colorFor(clientIndex);
-  const tintA = softFor(clientIndex);
-  const heroStyle = { '--hero-accent': accent, '--hero-tint-a': tintA, '--hero-tint-b': '#F8F7F4' };
+  const accent = 'var(--primary)';
+  const tintA = 'var(--secondary)';
+  const heroStyle = { '--hero-accent': accent, '--hero-tint-a': tintA, '--hero-tint-b': 'var(--panel)' };
 
   const filledJobs = c.jobs.filter((j) => j.filled < j.total).length;
 
   return (
     <div className="profile-view" onClick={() => statusMenuOpen && setStatusMenuOpen(false)}>
-      <div className="back-btn" onClick={onBack}>
-        <svg className="icon" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
-        Back to Clients
-      </div>
-
-      <div className="hero-banner" style={heroStyle}>
-        <div className="hero-top">
-          <img className="hero-logo" src={logoUrl(c.name)} alt="" />
-          <div className="hero-title-wrap">
-            <div className="hero-name">{c.name}</div>
-            <div className="hero-badges">
-              <span className={`hero-pill status-${status}`}><span className="dot"></span>{statusLabel}</span>
-              <span className="hero-pill tenure">Client for {c.tenure}</span>
-            </div>
+      {openJobIndex === null && (
+        <>
+          <div className="back-btn" onClick={onBack}>
+            <svg className="icon" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /><path d="M19 12H5" /></svg>
+            Back to Clients
           </div>
-          <div className="hero-actions">
-            <button className="hero-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>Edit</button>
-            <button className="hero-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
-            <div className="status-menu-wrap">
-              <button className="hero-btn" onClick={() => setStatusMenuOpen((v) => !v)}>
-                Status <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 11, height: 11 }}><path d="m6 9 6 6 6-6" /></svg>
-              </button>
-              {statusMenuOpen && (
-                <div className="status-menu open">
-                  {status !== 'suspended' && (
-                    <div className="status-menu-item warn" onClick={() => { setStatus('suspended'); setStatusMenuOpen(false); }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5v5M14.5 9.5v5" /></svg>
-                      Suspend Client
+
+          <div className="hero-banner" style={heroStyle}>
+            <div className="hero-top">
+              <img className="hero-logo" src={logoUrl(c.name)} alt="" />
+              <div className="hero-title-wrap">
+                <div className="hero-name">{c.name}</div>
+                <div className="hero-badges">
+                  <span className={`hero-pill status-${status}`}><span className="dot"></span>{statusLabel}</span>
+                  <span className="hero-pill tenure">Client for {c.tenure}</span>
+                </div>
+              </div>
+              <div className="hero-actions">
+                <button className="hero-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>Edit</button>
+                <button className="hero-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
+                <div className="status-menu-wrap">
+                  <button className="hero-btn" onClick={() => setStatusMenuOpen((v) => !v)}>
+                    Status <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 11, height: 11 }}><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+                  {statusMenuOpen && (
+                    <div className="status-menu open">
+                      {status !== 'suspended' && (
+                        <div className="status-menu-item warn" onClick={() => { setStatus('suspended'); setStatusMenuOpen(false); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5v5M14.5 9.5v5" /></svg>
+                          Suspend Client
+                        </div>
+                      )}
+                      {status !== 'archived' && (
+                        <div className="status-menu-item danger" onClick={() => { setStatus('archived'); setStatusMenuOpen(false); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" /></svg>
+                          Archive Client
+                        </div>
+                      )}
+                      {status !== 'active' && (
+                        <>
+                          <div className="status-menu-divider"></div>
+                          <div className="status-menu-item ok" onClick={() => { setStatus('active'); setStatusMenuOpen(false); }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9" /><path d="M3 4v5h5" /></svg>
+                            Reactivate
+                          </div>
+                        </>
+                      )}
                     </div>
-                  )}
-                  {status !== 'archived' && (
-                    <div className="status-menu-item danger" onClick={() => { setStatus('archived'); setStatusMenuOpen(false); }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" /></svg>
-                      Archive Client
-                    </div>
-                  )}
-                  {status !== 'active' && (
-                    <>
-                      <div className="status-menu-divider"></div>
-                      <div className="status-menu-item ok" onClick={() => { setStatus('active'); setStatusMenuOpen(false); }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9" /><path d="M3 4v5h5" /></svg>
-                        Reactivate
-                      </div>
-                    </>
                   )}
                 </div>
-              )}
+              </div>
+            </div>
+
+            <div className="hero-meta-row">
+              <div className="hero-meta-item">
+                <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-6h6v6" /></svg></div>
+                <div><div className="hero-meta-label">Industry</div><div className="hero-meta-value">{c.industry}</div></div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg></div>
+                <div><div className="hero-meta-label">Address</div><div className="hero-meta-value">{c.address || '—'}</div></div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 20h6M12 3a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Z" /></svg></div>
+                <div><div className="hero-meta-label">Account Manager</div><div className="hero-meta-value">{c.am}</div></div>
+              </div>
+              <div className="hero-meta-item">
+                <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 3v3M16 3v3" /></svg></div>
+                <div><div className="hero-meta-label">Contract Renewal</div><div className={`hero-meta-value${renewalWarn ? ' warn' : ''}`}>{c.renewal}</div></div>
+              </div>
+            </div>
+
+            <div className="stat-strip">
+              <div className="stat-strip-item">
+                <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>Job Orders</div>
+                <div className="stat-strip-value">{c.jobs.length}</div>
+              </div>
+              <div className="stat-strip-item">
+                <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5" /></svg>Open Positions</div>
+                <div className="stat-strip-value accent">{openPositions}</div>
+              </div>
+              <div className="stat-strip-item">
+                <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20" /><path d="M17 5.5c0-1.7-2.2-3-5-3s-5 1.3-5 3 2.2 3 5 3 5 1.3 5 3-2.2 3-5 3-5-1.3-5-3" /></svg>Revenue this Q</div>
+                <div className="stat-strip-value">{c.revenueQ}</div>
+              </div>
+              <div className="stat-strip-item">
+                <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>Billing Rate</div>
+                <div className="stat-strip-value">{c.rate}</div>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="hero-meta-row">
-          <div className="hero-meta-item">
-            <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21V7l9-4 9 4v14" /><path d="M9 21v-6h6v6" /></svg></div>
-            <div><div className="hero-meta-label">Industry</div><div className="hero-meta-value">{c.industry}</div></div>
-          </div>
-          <div className="hero-meta-item">
-            <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11Z" /><circle cx="12" cy="10" r="2.5" /></svg></div>
-            <div><div className="hero-meta-label">Address</div><div className="hero-meta-value">{c.address || '—'}</div></div>
-          </div>
-          <div className="hero-meta-item">
-            <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 20h6M12 3a7 7 0 0 0-7 7c0 5 7 11 7 11s7-6 7-11a7 7 0 0 0-7-7Z" /></svg></div>
-            <div><div className="hero-meta-label">Account Manager</div><div className="hero-meta-value">{c.am}</div></div>
-          </div>
-          <div className="hero-meta-item">
-            <div className="hero-meta-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 3v3M16 3v3" /></svg></div>
-            <div><div className="hero-meta-label">Contract Renewal</div><div className={`hero-meta-value${renewalWarn ? ' warn' : ''}`}>{c.renewal}</div></div>
-          </div>
-        </div>
-
-        <div className="stat-strip">
-          <div className="stat-strip-item">
-            <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>Job Orders</div>
-            <div className="stat-strip-value">{c.jobs.length}</div>
-          </div>
-          <div className="stat-strip-item">
-            <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c0-3.3 2.5-5.5 5.5-5.5s5.5 2.2 5.5 5.5" /></svg>Open Positions</div>
-            <div className="stat-strip-value accent">{openPositions}</div>
-          </div>
-          <div className="stat-strip-item">
-            <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20" /><path d="M17 5.5c0-1.7-2.2-3-5-3s-5 1.3-5 3 2.2 3 5 3 5 1.3 5 3-2.2 3-5 3-5-1.3-5-3" /></svg>Revenue this Q</div>
-            <div className="stat-strip-value">{c.revenueQ}</div>
-          </div>
-          <div className="stat-strip-item">
-            <div className="stat-strip-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>Billing Rate</div>
-            <div className="stat-strip-value">{c.rate}</div>
-          </div>
-        </div>
-      </div>
+        </>
+      )}
 
       <div className="d-main-panel">
         {openJobIndex === null ? (

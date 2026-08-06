@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../../../components/layout/Sidebar';
 import { EDUCATION_LEVELS } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
@@ -19,7 +19,7 @@ const emptyEducationRows = () =>
     return acc;
   }, {});
 
-export default function RegisterApplicantPage() {
+export default function RegisterApplicantPage({ embedded = false, onDone }) {
   const { addApplicant } = useApplicantRegistration();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
@@ -93,36 +93,19 @@ export default function RegisterApplicantPage() {
       return;
     }
 
-    navigate('/applicant-registration');
+    addApplicant(newApplicant);
+    if (onDone) {
+      onDone();
+    } else {
+      navigate('/applicant-registration');
+    }
   };
 
-  return (
-    <div className="app">
-      <Sidebar
-        activeItem="applicant-registration"
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((v) => !v)}
-      />
-
-      <div className={`main${collapsed ? ' collapsed' : ''}`}>
-        <div className="topbar">
-          <div className="crumb">
-            COMPANY NAME &nbsp;›&nbsp; <b>Applicant Registration & Profiling</b> &nbsp;›&nbsp; Register Applicant
-          </div>
-        </div>
-
-        <div className="title-row">
-          <div>
-            <div className="eyebrow">Core 1 · Applicant Registration & Profiling</div>
-            <h1 className="page-title">Register New Applicant</h1>
-            <div className="page-sub">Staff-assisted intake — transcribe from the applicant's paper form / resume</div>
-          </div>
-        </div>
-
-        <div className="intake-scroll">
-          <div className="intake-section">
-            <div className="intake-section-title">Applicant Information</div>
-            <div className="edit-form-grid intake-grid">
+  const formContent = (
+    <div className="intake-scroll">
+      <div className="intake-section">
+        <div className="intake-section-title">Applicant Information</div>
+        <div className="edit-form-grid intake-grid">
               <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} /></label>
               <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} /></label>
               <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} /></label>
@@ -242,14 +225,49 @@ export default function RegisterApplicantPage() {
           {error && <div className="actions-warning" style={{ textAlign: 'left', marginBottom: 12 }}>{error}</div>}
 
           <div className="intake-submit-row">
-            <button type="button" className="stage-btn" onClick={() => navigate('/applicant-registration')}>
+            <button type="button" className="stage-btn" onClick={() => (onDone ? onDone() : navigate('/applicant-registration'))}>
               Cancel
             </button>
             <button type="button" className="stage-btn go" onClick={handleSubmit}>
               Register Applicant
             </button>
           </div>
+    </div>
+  );
+
+  if (embedded) {
+    return formContent;
+  }
+
+  return (
+    <div className="app">
+      <Sidebar
+        activeItem="applicant-registration"
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((v) => !v)}
+      />
+
+      <div className={`main${collapsed ? ' collapsed' : ''}`}>
+        <div className="topbar">
+          <div className="crumb">
+            PRIMEPOWER MANPOWER &nbsp;›&nbsp; <Link to="/applicant-registration" style={{ color: 'inherit', textDecoration: 'none' }}>Applicant Registration & Profiling</Link> &nbsp;›&nbsp; <b>Register Applicant</b>
+          </div>
         </div>
+
+        <div className="title-row">
+          <div>
+            <div className="eyebrow">Core 1 · Applicant Registration &amp; Profiling</div>
+            <h1 className="page-title">Register New Applicant</h1>
+            <div className="page-sub">Staff-assisted intake — transcribe from the applicant's paper form / resume</div>
+          </div>
+          <div className="title-row-actions">
+            <Link to="/applicant-registration" className="stage-btn" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              ← Back to Applicants
+            </Link>
+          </div>
+        </div>
+
+        {formContent}
       </div>
     </div>
   );

@@ -198,6 +198,7 @@ export default function Sidebar({
               <Link
                 to="/applicant-registration"
                 className={`nav-item${activeItem === 'applicant-registration' ? ' active' : ''}`}
+                onClick={() => handleParentClick('applicant-registration')}
               >
                 <span className="icon-slot">
                   <svg className="icon" viewBox="0 0 24 24">
@@ -208,7 +209,58 @@ export default function Sidebar({
                   </svg>
                 </span>
                 <span className="label">Applicant Registration</span>
+                <button
+                  type="button"
+                  className="chevron-slot"
+                  onClick={(e) => toggleSubmenu('applicant-registration', e)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  <svg className={`chevron ${openMenus['applicant-registration'] ? 'open' : ''}`} viewBox="0 0 24 24">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
               </Link>
+
+              <div className={`submenu-wrapper ${openMenus['applicant-registration'] && !collapsed ? 'open' : ''}`}>
+                <div className="submenu-inner">
+                  <Link
+                    to="/applicant-registration?view=register"
+                    className={`submenu-item${location.search.includes('view=register') ? ' active' : ''}`}
+                  >
+                    Register New Applicant
+                  </Link>
+                  <Link
+                    to="/applicant-registration"
+                    className={`submenu-item${(!location.search || location.search.includes('view=all')) ? ' active' : ''}`}
+                  >
+                    Intake &amp; Profiling Board
+                  </Link>
+                  <Link
+                    to="/applicant-registration?view=registered"
+                    className={`submenu-item${location.search.includes('view=registered') ? ' active' : ''}`}
+                  >
+                    Registered
+                  </Link>
+                  <Link
+                    to="/applicant-registration?view=profiling"
+                    className={`submenu-item${location.search.includes('view=profiling') ? ' active' : ''}`}
+                  >
+                    Profiling
+                  </Link>
+                  <Link
+                    to="/applicant-registration?view=profiled"
+                    className={`submenu-item${location.search.includes('view=profiled') ? ' active' : ''}`}
+                  >
+                    Profiled — Ready
+                  </Link>
+                  <Link
+                    to="/applicant-registration?view=sent"
+                    className={`submenu-item${location.search.includes('view=sent') ? ' active' : ''}`}
+                  >
+                    Sent to Recruitment
+                  </Link>
+                </div>
+              </div>
             </div>
 
             {/* Recruitment & Selection */}

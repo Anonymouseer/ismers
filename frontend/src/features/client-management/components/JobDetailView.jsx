@@ -44,7 +44,7 @@ export default function JobDetailView({ client, job, jobIndex, onBack }) {
   const jobStyle = {
     '--job-accent': j.color,
     '--job-tint-a': softForColor(j.color),
-    '--job-tint-b': '#F8F7F4',
+    '--job-tint-b': 'var(--panel)',
   };
 
   return (
@@ -137,7 +137,7 @@ export default function JobDetailView({ client, job, jobIndex, onBack }) {
 
             {/* Client Management surfaces pipeline data for visibility only — all applicant
                 actions (scoring, status changes, scheduling) live in Recruitment & Selection. */}
-            <div className="jdv2-cta">
+            <div className="jdv2-cta" style={{ marginBottom: 16 }}>
               <div className="jdv2-cta-text">
                 <b>Need to move an applicant forward?</b>
                 Screening, interviews, and status changes are handled in Recruitment & Selection.
@@ -146,6 +146,26 @@ export default function JobDetailView({ client, job, jobIndex, onBack }) {
                 Manage in Recruitment
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
               </a>
+            </div>
+
+            <div className="jdv2-side-card">
+              <div className="jdv2-side-title">
+                <span>Applicant Pipeline</span>
+                <span className="jdv2-readonly-tag">Read-only</span>
+              </div>
+              {pipeline.length ? pipeline.map((a, idx) => (
+                <div className="jdv2-pipe-card" key={idx}>
+                  <div className="jdv2-pipe-avatar">{initials(a.name)}</div>
+                  <div className="jdv2-pipe-info">
+                    <div className="jdv2-pipe-name">{a.name}</div>
+                    <div className="jdv2-pipe-meta">Applied {a.applied}</div>
+                    <StageTrack status={a.status} />
+                  </div>
+                  <span className={`jdv2-pipe-score ${scoreClass(a.score)}`}>{a.score}</span>
+                </div>
+              )) : (
+                <div style={{ color: 'var(--muted)', fontSize: 11.5 }}>No one else currently in the pipeline.</div>
+              )}
             </div>
           </div>
 
@@ -166,26 +186,6 @@ export default function JobDetailView({ client, job, jobIndex, onBack }) {
                 </div>
               )) : (
                 <div style={{ color: 'var(--muted)', fontSize: 11.5 }}>No one has been hired for this role yet.</div>
-              )}
-            </div>
-
-            <div className="jdv2-side-card">
-              <div className="jdv2-side-title">
-                <span>Applicant Pipeline</span>
-                <span className="jdv2-readonly-tag">Read-only</span>
-              </div>
-              {pipeline.length ? pipeline.map((a, idx) => (
-                <div className="jdv2-pipe-card" key={idx}>
-                  <div className="jdv2-pipe-avatar">{initials(a.name)}</div>
-                  <div className="jdv2-pipe-info">
-                    <div className="jdv2-pipe-name">{a.name}</div>
-                    <div className="jdv2-pipe-meta">Applied {a.applied}</div>
-                    <StageTrack status={a.status} />
-                  </div>
-                  <span className={`jdv2-pipe-score ${scoreClass(a.score)}`}>{a.score}</span>
-                </div>
-              )) : (
-                <div style={{ color: 'var(--muted)', fontSize: 11.5 }}>No one else currently in the pipeline.</div>
               )}
             </div>
           </div>
