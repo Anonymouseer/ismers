@@ -1,0 +1,656 @@
+/* ============================================================
+   ClientPortalRegisterPage.css
+   Scoped to .cp-reg-* namespace only.
+   Consumes design system tokens from var(--*). No globals.
+   ============================================================ */
+
+/* ── VIEWPORT SHELL ── */
+.cp-reg-shell {
+  width: 100vw;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+}
+
+/* ── BRAND PANEL ── */
+.cp-reg-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #041320 0%, #072b4a 50%, #093d6b 100%);
+  overflow: hidden;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.cp-reg-brand-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cp-reg-deco-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(51, 161, 230, 0.10);
+}
+
+.cp-reg-deco-ring--a {
+  width: 440px;
+  height: 440px;
+  top: -80px;
+  right: -180px;
+}
+
+.cp-reg-deco-ring--b {
+  width: 280px;
+  height: 280px;
+  top: -20px;
+  right: -100px;
+  border-color: rgba(51, 161, 230, 0.15);
+}
+
+.cp-reg-deco-ring--c {
+  width: 520px;
+  height: 520px;
+  bottom: -160px;
+  left: -180px;
+  border-color: rgba(51, 161, 230, 0.07);
+}
+
+.cp-reg-deco-blob {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 125, 204, 0.16) 0%, transparent 70%);
+  bottom: 80px;
+  right: -50px;
+}
+
+.cp-reg-brand-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 40px;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+}
+
+.cp-reg-logo-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.cp-reg-logo-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #007DCC, #33A1E6);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: "Manrope", "Inter", sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0, 125, 204, 0.40);
+}
+
+.cp-reg-logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cp-reg-logo-name {
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.5px;
+}
+
+.cp-reg-logo-prime { color: #e05252; }
+.cp-reg-logo-power { color: #f0f6fc; }
+
+.cp-reg-logo-dept {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: rgba(200, 220, 235, 0.50);
+  margin-top: 3px;
+}
+
+.cp-reg-brand-headline {
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.3px;
+  color: #f0f6fc;
+  margin-bottom: 12px;
+}
+
+.cp-reg-brand-desc {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: rgba(180, 205, 225, 0.70);
+  margin-bottom: 32px;
+  max-width: 320px;
+}
+
+/* Steps */
+.cp-reg-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cp-reg-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cp-reg-step-connector {
+  width: 1px;
+  height: 20px;
+  background: rgba(51, 161, 230, 0.25);
+  margin-left: 15px;
+}
+
+.cp-reg-step-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(51, 161, 230, 0.15);
+  border: 1.5px solid rgba(51, 161, 230, 0.30);
+  color: #33A1E6;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cp-reg-step-info {
+  padding-top: 4px;
+}
+
+.cp-reg-step-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(220, 235, 245, 0.90);
+  margin-bottom: 2px;
+}
+
+.cp-reg-step-desc {
+  font-size: 11px;
+  color: rgba(170, 200, 220, 0.60);
+}
+
+/* Brand footer */
+.cp-reg-brand-foot {
+  padding: 20px 40px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: rgba(150, 185, 210, 0.40);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── FORM PANEL ── */
+.cp-reg-form-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.cp-reg-form-inner {
+  flex: 1;
+  padding: 48px 56px;
+  max-width: 740px;
+  width: 100%;
+}
+
+.cp-reg-form-eyebrow {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 8px;
+  font-family: "Manrope", "Inter", sans-serif;
+}
+
+.cp-reg-form-heading {
+  font-family: "Manrope", "Inter", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.cp-reg-form-desc {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+/* Error banner */
+.cp-reg-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--red-soft);
+  border: 1px solid rgba(211, 47, 47, 0.25);
+  border-radius: 10px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  margin-bottom: 20px;
+}
+
+.cp-reg-error-banner svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Form */
+.cp-reg-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Section labels */
+.cp-reg-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--primary);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-top: 6px;
+}
+
+/* Two-column row */
+.cp-reg-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* Field */
+.cp-reg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cp-reg-field--error .cp-reg-input,
+.cp-reg-field--error .cp-reg-select {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.10);
+}
+
+.cp-reg-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cp-reg-required {
+  color: var(--red);
+}
+
+.cp-reg-field-error {
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* Input wrap */
+.cp-reg-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cp-reg-input-icon {
+  position: absolute;
+  left: 12px;
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.cp-reg-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+
+.cp-reg-input--has-icon {
+  padding-left: 36px;
+}
+
+.cp-reg-input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.cp-reg-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 125, 204, 0.10);
+}
+
+/* Password toggle */
+.cp-reg-pw-toggle {
+  position: absolute;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.14s;
+}
+
+.cp-reg-pw-toggle:hover { color: var(--primary); }
+
+.cp-reg-pw-toggle svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* Select */
+.cp-reg-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cp-reg-select-icon {
+  position: absolute;
+  left: 12px;
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.cp-reg-select {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--text);
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.16s, box-shadow 0.16s;
+}
+
+.cp-reg-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 125, 204, 0.10);
+}
+
+/* Terms */
+.cp-reg-terms {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.cp-reg-terms--error .cp-reg-checkbox-custom {
+  border-color: var(--red);
+}
+
+.cp-reg-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.cp-reg-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.cp-reg-checkbox-custom {
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border);
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: background 0.14s, border-color 0.14s;
+}
+
+.cp-reg-checkbox:checked + .cp-reg-checkbox-custom {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.cp-reg-checkbox-custom svg {
+  width: 10px;
+  height: 10px;
+  stroke: #fff;
+}
+
+.cp-reg-terms-text {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cp-reg-terms-link {
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Submit */
+.cp-reg-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  color: var(--primary-fg);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: box-shadow 0.16s, transform 0.12s;
+  box-shadow: 0 4px 14px rgba(0, 125, 204, 0.30);
+  margin-top: 8px;
+}
+
+.cp-reg-submit:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(0, 125, 204, 0.42);
+  transform: translateY(-1px);
+}
+
+.cp-reg-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cp-reg-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.cp-reg-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: cp-reg-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cp-reg-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Divider */
+.cp-reg-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.cp-reg-divider::before,
+.cp-reg-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Login link */
+.cp-reg-login-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 0.16s, background 0.16s, color 0.16s;
+}
+
+.cp-reg-login-link:hover {
+  border-color: var(--primary);
+  background: var(--secondary);
+  color: var(--primary);
+}
+
+/* Footer */
+.cp-reg-panel-footer {
+  padding: 20px 56px;
+  font-size: 10.5px;
+  color: var(--muted);
+  opacity: 0.6;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  margin-top: auto;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+  .cp-reg-shell {
+    grid-template-columns: 340px 1fr;
+  }
+
+  .cp-reg-form-inner {
+    padding: 36px 40px;
+  }
+}
+
+@media (max-width: 767px) {
+  .cp-reg-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-reg-brand {
+    position: static;
+    height: auto;
+    min-height: unset;
+  }
+
+  .cp-reg-brand-body {
+    padding: 28px 24px 20px;
+  }
+
+  .cp-reg-brand-desc,
+  .cp-reg-steps {
+    display: none;
+  }
+
+  .cp-reg-brand-headline {
+    font-size: 18px;
+    margin-bottom: 0;
+  }
+
+  .cp-reg-form-inner {
+    padding: 28px 20px;
+  }
+
+  .cp-reg-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-reg-panel-footer {
+    padding: 16px 20px;
+  }
+}
