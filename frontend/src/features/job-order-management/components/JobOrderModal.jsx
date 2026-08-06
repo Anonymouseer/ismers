@@ -1,17 +1,43 @@
 import { useEffect, useState } from 'react';
 import { RECRUITERS } from '../services/JobOrderManagementService';
 
+const TYPE_OPTIONS = ['Full-time', 'Part-time', 'Contractual', 'Others'];
 const BLANK = {
-  client: '', title: '', filled: 0, total: 1, type: '', rate: '',
+  client: '', title: '', filled: 0, total: 1, type: TYPE_OPTIONS[0], typeOther: '', rate: '',
   location: '', deadline: '', recruiter: RECRUITERS[0], priority: 'normal',
   description: '', requirements: [], tags: [],
 };
 
+function parseDisplayDate(value) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatDisplayDate(value) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
 function jobToForm(job) {
+  const typeIsKnown = TYPE_OPTIONS.includes(job.type);
   return {
-    client: job.client, title: job.title, filled: job.filled, total: job.total,
-    type: job.type, rate: job.rate, location: job.location, deadline: job.deadline,
-    recruiter: job.recruiter, priority: job.priority, description: job.description,
+    client: job.client,
+    title: job.title,
+    filled: job.filled,
+    total: job.total,
+    type: typeIsKnown ? job.type : 'Others',
+    typeOther: typeIsKnown ? '' : job.type,
+    rate: job.rate ? String(job.rate).replace(/[^0-9.]/g, '') : '',
+    location: job.location,
+    deadline: parseDisplayDate(job.deadline),
+    recruiter: job.recruiter,
+    priority: job.priority,
+    description: job.description,
     reqsText: (job.requirements || []).join('\n'),
     tagsText: (job.tags || []).join(', '),
   };
@@ -43,6 +69,19 @@ export default function JobOrderModal({ open, mode, job, clients, onSubmit, onCl
     setNewClientName('');
   };
 
+  const handleTypeChange = (e) => {
+    setForm((f) => ({ ...f, type: e.target.value, typeOther: e.target.value === 'Others' ? f.typeOther : '' }));
+  };
+
+  const handleRateChange = (e) => {
+    const value = e.target.value.replace(/[^0-9.]/g, '');
+    setForm((f) => ({ ...f, rate: value }));
+  };
+
+  const handleDeadlineChange = (e) => {
+    setForm((f) => ({ ...f, deadline: e.target.value }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
@@ -50,10 +89,10 @@ export default function JobOrderModal({ open, mode, job, clients, onSubmit, onCl
       title: form.title.trim(),
       filled: parseInt(form.filled, 10) || 0,
       total: parseInt(form.total, 10) || 1,
-      type: form.type.trim(),
-      rate: form.rate.trim(),
+      type: form.type === 'Others' ? form.typeOther.trim() || 'Others' : form.type,
+      rate: form.rate.trim() ? `${form.rate.trim()}` : '',
       location: form.location.trim(),
-      deadline: form.deadline.trim(),
+      deadline: form.deadline.trim() ? formatDisplayDate(form.deadline.trim()) : '',
       recruiter: form.recruiter,
       priority: form.priority,
       description: form.description.trim(),
@@ -112,11 +151,31 @@ export default function JobOrderModal({ open, mode, job, clients, onSubmit, onCl
           <div className="field-row">
             <div className="field">
               <label>Employment Type</label>
-              <input type="text" required placeholder="e.g. Full-time · Contractual" value={form.type} onChange={set('type')} />
+              <select value={form.type} onChange={handleTypeChange}>
+                {TYPE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+              {form.type === 'Others' && (
+                <input
+                  type="text"
+                  placeholder="Enter other employment type"
+                  value={form.typeOther}
+                  onChange={set('typeOther')}
+                />
+              )}
             </div>
             <div className="field">
               <label>Rate / Salary</label>
-              <input type="text" required placeholder="e.g. ₱610/day" value={form.rate} onChange={set('rate')} />
+              <div className="input-with-prefix">
+                <span className="input-prefix">₱</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="e.g. 610"
+                  required
+                  value={form.rate}
+                  onChange={handleRateChange}
+                />
+              </div>
             </div>
           </div>
 
@@ -127,7 +186,7 @@ export default function JobOrderModal({ open, mode, job, clients, onSubmit, onCl
             </div>
             <div className="field">
               <label>Deadline</label>
-              <input type="text" required placeholder="e.g. Aug 15, 2026" value={form.deadline} onChange={set('deadline')} />
+              <input type="date" required value={form.deadline} onChange={handleDeadlineChange} />
             </div>
           </div>
 
@@ -150,13 +209,13 @@ export default function JobOrderModal({ open, mode, job, clients, onSubmit, onCl
 
           <div className="field">
             <label>Job Description</label>
-            <textarea rows={3} placeholder="Brief description of the role and context..." value={form.description} onChange={set('description')} />
+            <textarea rows={4} placeholder="Brief description of the role and context..." value={form.description} onChange={set('description')} />
           </div>
 
           <div className="field">
             <label>Requirements (one per line)</label>
             <textarea
-              rows={3}
+              rows={4}
               placeholder={'At least high school graduate\n6 months warehouse experience'}
               value={form.reqsText} onChange={set('reqsText')}
             />

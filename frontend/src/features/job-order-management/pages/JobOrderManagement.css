@@ -240,9 +240,12 @@ select.chip{font-size:11px;font-weight:700;border:1px solid var(--border);backgr
 .modal-title{font-family:var(--font-display);font-weight:700;font-size:15px;}
 .modal-body{padding:18px 22px 22px 22px;display:flex;flex-direction:column;gap:14px;}
 .field{display:flex;flex-direction:column;gap:6px;}
-.field label{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.field label{display:block;font-family:var(--font-mono);font-size:11px;font-weight:800;color:#007DCC !important;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;opacity:1 !important;}
 .field input,.field select,.field textarea{border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:12.5px;font-family:inherit;color:var(--text);background:var(--panel);transition:border-color .14s var(--ease);width:100%;resize:vertical;}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green);}
+.input-with-prefix{position:relative;width:100%;}
+.input-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#007DCC;font-size:13px;font-family:inherit;line-height:1;}
+.input-with-prefix input{width:100%;padding-left:34px;box-sizing:border-box;}
 .field-row{display:flex;gap:12px;}
 .field-row .field{flex:1;}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:2px;}
