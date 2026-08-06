@@ -50,6 +50,16 @@ export default function NewDeploymentModal({ open, onClose, onSubmit }) {
     }));
   }
 
+  function formatDateDisplay(dStr) {
+    if (!dStr) return '';
+    if (!dStr.includes('-')) return dStr;
+    const [y, m, d] = dStr.split('-');
+    if (!y || !m || !d) return dStr;
+    const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+    if (Number.isNaN(dateObj.getTime())) return dStr;
+    return dateObj.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
     const jobOrder = JOB_ORDER_OPTIONS.find((j) => j.ref === form.jobOrderRef);
@@ -59,8 +69,8 @@ export default function NewDeploymentModal({ open, onClose, onSubmit }) {
       jobOrderRef: form.jobOrderRef,
       position: jobOrder ? jobOrder.title : '—',
       site: form.site.trim(),
-      start: form.start.trim(),
-      end: form.end.trim(),
+      start: formatDateDisplay(form.start.trim()),
+      end: formatDateDisplay(form.end.trim()),
       applicantKey: form.hireKey || null,
     });
   }
@@ -122,9 +132,8 @@ export default function NewDeploymentModal({ open, onClose, onSubmit }) {
             <div className="field">
               <label>Start Date</label>
               <input
-                type="text"
+                type="date"
                 required
-                placeholder="e.g. Aug 01, 2026"
                 value={form.start}
                 onChange={(e) => update('start', e.target.value)}
               />
@@ -132,9 +141,8 @@ export default function NewDeploymentModal({ open, onClose, onSubmit }) {
             <div className="field">
               <label>End Date</label>
               <input
-                type="text"
+                type="date"
                 required
-                placeholder="e.g. Feb 01, 2027"
                 value={form.end}
                 onChange={(e) => update('end', e.target.value)}
               />

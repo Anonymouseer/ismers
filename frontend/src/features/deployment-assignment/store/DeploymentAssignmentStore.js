@@ -13,15 +13,23 @@ import { ISMERSBridge } from '../services/ismersBridge';
  * DeploymentAssignmentStore.js
  *
  * A lightweight, dependency-free "store" for this feature — a custom hook
- * that owns the deployment list plus filter/UI state, mirroring what the
- * original inline <script> did with module-level variables and DOM writes.
- *
- * No Redux/Zustand in the project yet, so this pattern (hook-per-feature,
- * called once from the page component and passed down via props) is the
- * default until the team standardizes on a global store.
+ * that owns the deployment list plus filter/UI state.
  */
+
+const STORAGE_KEY = 'ismers.deployments';
+
+function loadInitialDeployments() {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {
+    // ignore
+  }
+  return getDeployments();
+}
+
 export function useDeploymentAssignmentStore() {
-  const [deployments, setDeployments] = useState(getDeployments);
+  const [deployments, setDeployments] = useState(loadInitialDeployments);
   const [activeStatus, setActiveStatus] = useState('all');
   const [search, setSearch] = useState('');
   const [clientFilter, setClientFilter] = useState('all');
@@ -29,8 +37,15 @@ export function useDeploymentAssignmentStore() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Register bridge-linked deployments once on mount (same effect as the
-  // bottom-of-script `DEPLOYMENTS.filter(...).forEach(...)` in the original file).
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(deployments));
+    } catch {
+      // ignore
+    }
+  }, [deployments]);
+
+  // Register bridge-linked deployments once on mount
   useEffect(() => {
     deployments
       .filter((d) => d.applicantKey)

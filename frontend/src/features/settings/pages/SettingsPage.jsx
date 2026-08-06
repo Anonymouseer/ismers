@@ -89,23 +89,49 @@ export default function SettingsPage() {
   const [syncWithSystem, setSyncWithSystem] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Form State
-  const [companyName, setCompanyName] = useState('PRIMEPOWER MANPOWER');
-  const [departmentName, setDepartmentName] = useState('HR Smart Recruitment System');
-  const [supportEmail, setSupportEmail] = useState('support@primepower.ph');
-  const [contactPhone, setContactPhone] = useState('+63 (02) 8812-3456');
-  const [address, setAddress] = useState('Ayala Avenue, Makati City, Metro Manila, Philippines');
-  const [timezone, setTimezone] = useState('Asia/Manila (GMT+8)');
+  const SETTINGS_STORAGE_KEY = 'ismers.settings';
+  const LOGS_STORAGE_KEY = 'ismers.audit_logs';
+
+  const loadSavedSettings = () => {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return {};
+  };
+
+  const savedSettings = useMemo(loadSavedSettings, []);
+
+  // Form State initialized with localStorage fallback
+  const [companyName, setCompanyName] = useState(savedSettings.companyName || 'PRIMEPOWER MANPOWER');
+  const [departmentName, setDepartmentName] = useState(savedSettings.departmentName || 'HR Smart Recruitment System');
+  const [supportEmail, setSupportEmail] = useState(savedSettings.supportEmail || 'support@primepower.ph');
+  const [contactPhone, setContactPhone] = useState(savedSettings.contactPhone || '+63 (02) 8812-3456');
+  const [address, setAddress] = useState(savedSettings.address || 'Ayala Avenue, Makati City, Metro Manila, Philippines');
+  const [timezone, setTimezone] = useState(savedSettings.timezone || 'Asia/Manila (GMT+8)');
 
   // Notification Switches
-  const [emailApplicant, setEmailApplicant] = useState(true);
-  const [emailJobOrder, setEmailJobOrder] = useState(true);
-  const [smsDeploy, setSmsDeploy] = useState(true);
+  const [emailApplicant, setEmailApplicant] = useState(savedSettings.emailApplicant ?? true);
+  const [emailJobOrder, setEmailJobOrder] = useState(savedSettings.emailJobOrder ?? true);
+  const [smsDeploy, setSmsDeploy] = useState(savedSettings.smsDeploy ?? true);
 
   // Security Switches
-  const [twoFa, setTwoFa] = useState(true);
-  const [sessionTimeout, setSessionTimeout] = useState('30');
-  const [autoBackup, setAutoBackup] = useState(true);
+  const [twoFa, setTwoFa] = useState(savedSettings.twoFa ?? true);
+  const [sessionTimeout, setSessionTimeout] = useState(savedSettings.sessionTimeout || '30');
+  const [autoBackup, setAutoBackup] = useState(savedSettings.autoBackup ?? true);
+
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem(LOGS_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return MOCK_AUDIT_LOGS;
+  });
 
   // Audit Log Filters
   const [logFilterModule, setLogFilterModule] = useState('all');
@@ -140,12 +166,54 @@ export default function SettingsPage() {
 
   const handleSave = (e) => {
     if (e) e.preventDefault();
+    const settingsPayload = {
+      companyName,
+      departmentName,
+      supportEmail,
+      contactPhone,
+      address,
+      timezone,
+      emailApplicant,
+      emailJobOrder,
+      smsDeploy,
+      twoFa,
+      sessionTimeout,
+      autoBackup,
+    };
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settingsPayload));
+    } catch {
+      // ignore
+    }
+
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const newLog = {
+      id: `LOG-${Math.floor(100 + Math.random() * 900)}`,
+      timestamp: nowStr,
+      user: 'ADMIN USER',
+      email: supportEmail,
+      action: 'Updated system configuration parameters and security settings',
+      module: 'Settings',
+      ip: '192.168.1.104',
+      status: 'Success',
+    };
+
+    setAuditLogs((prev) => {
+      const next = [newLog, ...prev];
+      try {
+        localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 3000);
   };
 
   const filteredLogs = useMemo(() => {
-    return MOCK_AUDIT_LOGS.filter((log) => {
+    return auditLogs.filter((log) => {
       if (logFilterModule !== 'all' && log.module !== logFilterModule) return false;
       if (logSearch) {
         const q = logSearch.toLowerCase();
@@ -157,45 +225,11 @@ export default function SettingsPage() {
       }
       return true;
     });
-  }, [logFilterModule, logSearch]);
+  }, [auditLogs, logFilterModule, logSearch]);
 
   return (
     <div className="app">
       <main className={`settings-main-wrapper ${collapsed ? 'collapsed' : ''}`}>
-        {/* Top Header Bar */}
-        <div className="top-bar">
-          <div className="top-bar-left">
-            <button className="top-toggle-btn" onClick={() => setCollapsed(!collapsed)} title="Toggle Sidebar">
-              <svg className="icon" viewBox="0 0 24 24">
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-            <span className="top-page-name">Settings</span>
-          </div>
-
-          <div className="top-bar-right">
-            <div className="top-search">
-              <svg className="icon search-icon" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input type="text" placeholder="Quick search..." />
-            </div>
-
-            <div className="top-notify">
-              <svg className="icon" viewBox="0 0 24 24">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              <span className="notify-badge">5</span>
-            </div>
-
-            <div className="top-user-avatar">N</div>
-          </div>
-        </div>
-
         {/* Page Content Body */}
         <div className="settings-page-body">
           {/* Header Title Section */}

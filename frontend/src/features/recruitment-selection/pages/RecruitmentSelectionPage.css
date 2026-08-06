@@ -8,12 +8,11 @@
   prototype into a shared stylesheet (e.g. src/styles/tokens.css).
 */
 
-.app { display: flex; height: 100vh; overflow: hidden; }
+.app { display: flex; flex-direction: column; width: 100%; }
 svg.icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-/* MAIN */
-.main { flex: 1; margin-left: var(--sidebar-w); height: 100vh; overflow: hidden; padding: 18px 26px; transition: margin-left .22s var(--ease); min-width: 0; display: flex; flex-direction: column; gap: 11px; }
-.main.collapsed { margin-left: var(--sidebar-w-collapsed); }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 11px; }
+.main.collapsed { margin-left: 0; }
 
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-shrink: 0; }
 .crumb { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
@@ -25,7 +24,7 @@ svg.icon { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-w
 .icon-btn:hover { color: var(--green); box-shadow: var(--shadow-md); }
 .who { display: flex; align-items: center; gap: 9px; }
 .who-name { font-size: 12px; font-weight: 700; }
-.who-date { font-size: 10.5px; color: var(--muted); }
+.who-date { font-size: 10.5px; color: var(--muted-fg); }
 .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 12.5px; flex-shrink: 0; box-shadow: 0 3px 8px rgba(20,158,110,0.28); }
 
 .title-row { display: flex; align-items: baseline; justify-content: space-between; flex-shrink: 0; }

@@ -10,7 +10,7 @@ export default function RenewalsAlertView({ deployments, onOpen }) {
   if (!expiringStaff.length) {
     return (
       <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted-fg)', background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 16, marginTop: 16 }}>
-        ✅ All deployed staff currently have active long-term contracts. No 3-month renewal actions needed at this time.
+        All deployed staff currently have active long-term contracts. No 3-month renewal actions needed at this time.
       </div>
     );
   }

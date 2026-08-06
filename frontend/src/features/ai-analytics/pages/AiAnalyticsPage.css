@@ -1,15 +1,248 @@
 .ai-analytics-main {
   flex: 1;
-  margin-left: var(--sidebar-w);
-  height: 100vh;
-  overflow-y: auto;
-  padding: 18px 26px;
-  transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
 
 .ai-analytics-main.collapsed {
-  margin-left: 72px;
+  margin-left: 0;
+}
+
+.ai-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.retention-card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (max-width: 1023px) {
+  .ai-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .ai-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ai-scoring-split {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .ai-scoring-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== WORKFORCE RETENTION ANALYSIS SCALED STYLES ==================== */
+
+/* INTERACTIVE SUMMARY RISK BADGES */
+.risk-summary-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.risk-summary-badge.high {
+  background: var(--red-soft);
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.risk-summary-badge.high.active {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
+.risk-summary-badge.med {
+  background: var(--amber-soft);
+  color: var(--amber);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.risk-summary-badge.med.active {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+}
+
+.risk-summary-badge.low {
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.risk-summary-badge.low.active {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+}
+
+.risk-summary-badge:hover {
+  transform: translateY(-1px);
+}
+
+/* COMPACT TABLE VIEW */
+.retention-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-xs);
+  -webkit-overflow-scrolling: touch;
+}
+
+.retention-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+  font-size: 12px;
+}
+
+.retention-table th {
+  background: var(--bg);
+  color: var(--muted-fg);
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 11px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.retention-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.retention-table tr.table-row-main {
+  transition: background 0.12s ease;
+  cursor: pointer;
+}
+
+.retention-table tr.table-row-main:hover {
+  background: var(--secondary);
+}
+
+.retention-table tr.table-row-main.is-selected {
+  background: rgba(0, 125, 204, 0.08);
+}
+
+.retention-table tr.table-row-expanded-content td {
+  background: var(--bg);
+  padding: 14px 18px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+/* GROUP BY CLIENT SECTION HEADERS */
+.retention-group-header {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.14s ease;
+  margin-top: 4px;
+}
+
+.retention-group-header:hover {
+  background: var(--panel);
+}
+
+/* FLOATING BULK ACTION BAR */
+.retention-bulk-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1.5px solid var(--primary);
+  box-shadow: var(--shadow-lg);
+  border-radius: 14px;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 100;
+  animation: slideUp 0.22s var(--ease);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* URGENCY BADGE */
+.urgency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* ACTIVE FILTER CHIPS */
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.filter-chip-remove {
+  cursor: pointer;
+  color: var(--muted-fg);
+  font-size: 13px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.filter-chip-remove:hover {
+  color: var(--red);
 }

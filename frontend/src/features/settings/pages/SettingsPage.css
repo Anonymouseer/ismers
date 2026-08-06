@@ -1,17 +1,14 @@
 .settings-main-wrapper {
-  margin-left: var(--sidebar-w);
   flex: 1;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: var(--bg);
   color: var(--text);
-  transition: margin-left 0.22s var(--ease), background-color 0.22s var(--ease);
-  overflow: hidden;
+  transition: background-color 0.22s var(--ease);
 }
 
 .settings-main-wrapper.collapsed {
-  margin-left: var(--sidebar-w-collapsed);
+  margin-left: 0;
 }
 
 /* TOP HEADER BAR */
@@ -859,4 +856,38 @@
   padding: 24px;
   color: var(--muted-fg);
   font-style: italic;
+}
+
+/* RESPONSIVE BREAKPOINTS FOR SETTINGS */
+@media (max-width: 900px) {
+  .settings-layout {
+    flex-direction: column;
+  }
+
+  .settings-sidebar-nav {
+    width: 100%;
+  }
+
+  .settings-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .form-row.two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-page-body {
+    padding: 14px;
+  }
+
+  .logs-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
 }

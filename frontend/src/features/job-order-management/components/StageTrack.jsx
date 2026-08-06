@@ -74,14 +74,14 @@ function StageActions({ job, actions }) {
     case 'deploying':
       return (
         <>
-          <div className="stage-note">✅ Enough available employees found on the bench — deploying directly, no recruitment needed.</div>
+          <div className="stage-note">Enough available employees found on the bench — deploying directly, no recruitment needed.</div>
           <div className="stage-btn-row"><button className="stage-btn go" onClick={() => actions.stageAssign(ref)}>Continue → Assign Staff</button></div>
         </>
       );
     case 'recruiting':
       return (
         <>
-          <div className="stage-note">⚠️ Not enough available employees. A staffing request was sent to Recruitment &amp; Selection.</div>
+          <div className="stage-note">Not enough available employees. A staffing request was sent to Recruitment &amp; Selection.</div>
           <div className="stage-btn-row"><button className="stage-btn go" onClick={() => actions.stageAssign(ref)}>Recruitment Complete → Assign Staff</button></div>
         </>
       );

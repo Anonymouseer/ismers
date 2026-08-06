@@ -336,11 +336,11 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           {warning && <div style={{ width: '100%', textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: 'var(--amber)', order: -1 }}>{warning}</div>}
           {app.status === 'for_deployment' ? (
             <a className="btn primary" href="/deployment-assignment" style={{ textDecoration: 'none', textAlign: 'center', width: '100%' }}>
-              🚀 Hand Over to Deployment &amp; Assignment Board
+              Hand Over to Deployment &amp; Assignment Board
             </a>
           ) : app.status === 're_pooling' ? (
             <button className="btn primary" style={{ width: '100%' }} onClick={() => update((a) => ({ ...a, status: 'pooling' }))}>
-              🔄 Re-Line Up Candidate to Another Client (Return to Pooling)
+              Re-Line Up Candidate to Another Client (Return to Pooling)
             </button>
           ) : (
             <>

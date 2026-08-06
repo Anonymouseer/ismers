@@ -1,11 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Header from './Header';
 import './Sidebar.css';
 
 export default function RootLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+
+  // Auto-close mobile drawer on route navigation
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname, location.search]);
 
   // Global Theme & Density Sync across all pages and route refreshes
   useEffect(() => {
@@ -38,17 +45,34 @@ export default function RootLayout() {
   else if (path.includes('applicant-registration')) activeItem = 'applicant-registration';
   else if (path.includes('recruitment-selection')) activeItem = 'recruitment-selection';
   else if (path.includes('deployment-assignment')) activeItem = 'deployment-assignment';
+  else if (path.includes('ai-analytics')) activeItem = 'ai-analytics';
   else if (path.includes('settings')) activeItem = 'settings';
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', width: '100vw', background: 'var(--bg)', overflow: 'hidden' }}>
+    <div className="root-layout-shell" style={{ height: '100vh', width: '100vw', background: 'var(--bg)', overflow: 'hidden' }}>
       <Sidebar
         activeItem={activeItem}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
       />
-      <div style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto' }}>
-        <Outlet context={{ collapsed, setCollapsed }} />
+      <div
+        className="main-viewport-pane"
+        style={{
+          marginLeft: window.innerWidth < 1024 ? 0 : collapsed ? 'var(--sidebar-w-collapsed)' : 'var(--sidebar-w)',
+          height: '100vh',
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+          background: 'var(--bg)',
+        }}
+      >
+        <Header onToggleMobileMenu={() => setMobileOpen((m) => !m)} />
+        <div className="main-content-slot" style={{ flex: '1 0 auto', minWidth: 0, padding: '18px 26px 26px 26px' }}>
+          <Outlet context={{ collapsed, setCollapsed }} />
+        </div>
       </div>
     </div>
   );

@@ -24,11 +24,9 @@ export default function AiAnalyticsPage() {
     <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       <main className={`ai-analytics-main ${collapsed ? 'collapsed' : ''}`}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* HEADER BAR */}
+
+          {/* PAGE TITLE HEADER */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-              Core Engine › AI & Predictive Analytics
-            </div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '4px 0 2px' }}>
               Smart Recruitment & Workforce Intelligence
             </h1>
@@ -38,7 +36,7 @@ export default function AiAnalyticsPage() {
           </div>
 
           {/* KPI STATS STRIP */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div className="ai-kpi-grid">
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: 'var(--shadow-xs)' }}>
               <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Total Scored Candidates</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', marginTop: 2 }}>10 Applicants</div>
@@ -62,43 +60,6 @@ export default function AiAnalyticsPage() {
               <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--purple)', marginTop: 2 }}>68.5%</div>
               <div style={{ fontSize: 10.5, color: 'var(--green)', fontWeight: 700, marginTop: 2 }}>+4.2% MoM growth</div>
             </div>
-          </div>
-
-          {/* SUB-TAB FILTER BAR */}
-          <div style={{ display: 'flex', gap: 8, background: 'var(--panel)', border: '1px solid var(--border)', padding: 6, borderRadius: 12 }}>
-            <button
-              onClick={() => handleTabSwitch('scoring')}
-              style={{
-                flex: 1, padding: '8px 14px', borderRadius: 8, border: 'none',
-                background: activeTab === 'scoring' ? 'var(--primary)' : 'transparent',
-                color: activeTab === 'scoring' ? '#fff' : 'var(--muted-fg)',
-                fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s ease',
-              }}
-            >
-              AI Candidate Scoring
-            </button>
-            <button
-              onClick={() => handleTabSwitch('pipeline')}
-              style={{
-                flex: 1, padding: '8px 14px', borderRadius: 8, border: 'none',
-                background: activeTab === 'pipeline' ? 'var(--primary)' : 'transparent',
-                color: activeTab === 'pipeline' ? '#fff' : 'var(--muted-fg)',
-                fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s ease',
-              }}
-            >
-              Recruitment Intelligence
-            </button>
-            <button
-              onClick={() => handleTabSwitch('retention')}
-              style={{
-                flex: 1, padding: '8px 14px', borderRadius: 8, border: 'none',
-                background: activeTab === 'retention' ? 'var(--primary)' : 'transparent',
-                color: activeTab === 'retention' ? '#fff' : 'var(--muted-fg)',
-                fontWeight: 700, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s ease',
-              }}
-            >
-              Workforce Retention Analysis
-            </button>
           </div>
 
           {/* ACTIVE TAB CONTENT */}

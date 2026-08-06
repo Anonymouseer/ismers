@@ -19,18 +19,13 @@
 /* MAIN (page shell — same pattern as ClientManagementPage.css) */
 .main {
   flex: 1;
-  margin-left: var(--sidebar-w);
-  height: 100vh;
-  overflow: hidden;
-  padding: 18px 26px;
-  transition: margin-left 0.22s var(--ease);
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 .main.collapsed {
-  margin-left: var(--sidebar-w-collapsed);
+  margin-left: 0;
 }
 
 .topbar {
@@ -99,7 +94,7 @@
 }
 .who-date {
   font-size: 10.5px;
-  color: var(--muted);
+  color: var(--muted-fg);
 }
 
 .title-row {

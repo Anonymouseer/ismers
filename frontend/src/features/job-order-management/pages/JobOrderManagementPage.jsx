@@ -43,25 +43,6 @@ export default function JobOrderManagementPage() {
   return (
     <div className="app">
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
-        <div className="topbar">
-          <div className="crumb">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; <b>Job Order Management</b></div>
-          <div className="search">
-            <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-            Search Anything...
-          </div>
-          <div className="top-right">
-            <div className="icon-btn">
-              <svg className="icon" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 0 1-3.4 0" /></svg>
-            </div>
-            <div className="who">
-              <div className="avatar" style={{ background: 'var(--ink)' }}>N</div>
-              <div>
-                <div className="who-name">Name of Administrator</div>
-                <div className="who-date">Jul 24, 2026</div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div className="title-row">
           <div>

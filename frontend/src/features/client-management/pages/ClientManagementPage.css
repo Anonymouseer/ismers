@@ -1,6 +1,5 @@
-/* MAIN */
-  .main{flex:1;margin-left:var(--sidebar-w);height:100vh;overflow:hidden;padding:18px 26px;transition:margin-left .22s var(--ease);min-width:0;display:flex;flex-direction:column;gap:11px;}
-  .main.collapsed{margin-left:var(--sidebar-w-collapsed);}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:11px;}
+  .main.collapsed{margin-left:0;}
 
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-shrink:0;}
   .crumb{font-size:11.5px;color:var(--muted);white-space:nowrap;}
@@ -12,7 +11,7 @@
   .icon-btn:hover{color:var(--green);box-shadow:var(--shadow-md);}
   .who{display:flex;align-items:center;gap:9px;}
   .who-name{font-size:12px;font-weight:700;}
-  .who-date{font-size:10.5px;color:var(--muted);}
+  .who-date{font-size:10.5px;color:var(--muted-fg);}
 
   .title-row{display:flex;align-items:baseline;justify-content:space-between;flex-shrink:0;}
   h1.page-title{font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.2px;}

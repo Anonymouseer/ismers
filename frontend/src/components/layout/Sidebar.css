@@ -118,10 +118,10 @@
     gap: 8px;
     padding: 6.5px 10px;
     border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0.2px;
     color: var(--muted-fg);
     text-decoration: none;
     transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1), color 0.18s cubic-bezier(0.4, 0, 0.2, 1), padding-left 0.18s cubic-bezier(0.4, 0, 0.2, 1);
@@ -140,8 +140,59 @@
 
   .sidebar-foot{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:14px 10px 0 10px;border-top:1px solid var(--border);margin-top:auto;transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);}
   .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:var(--primary-fg);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:12.5px;flex-shrink:0;box-shadow:0 3px 8px rgba(0,125,204,0.28);}
-  .foot-name{font-size:12px;font-weight:700;color:var(--text);}
-  .foot-role{font-size:10.5px;color:var(--muted-fg);}
+  /* MOBILE SIDEBAR DRAWER OVERLAY */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 27, 46, 0.45);
+    backdrop-filter: blur(2px);
+    z-index: 45;
+  }
+
+  @media (max-width: 1023px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 50;
+      width: 250px !important;
+      padding: 20px 14px;
+    }
+
+    .sidebar.mobile-open {
+      transform: translateX(0);
+    }
+
+    .sidebar-backdrop.mobile-open {
+      display: block;
+    }
+
+    .collapse-btn {
+      display: none !important;
+    }
+
+    .sidebar.mobile-open .brand-text,
+    .sidebar.mobile-open .nav-label,
+    .sidebar.mobile-open .nav-item span.label,
+    .sidebar.mobile-open .foot-text,
+    .sidebar.mobile-open .chevron-slot,
+    .sidebar.mobile-open .submenu-wrapper {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+
+    .main-viewport-pane {
+      margin-left: 0 !important;
+    }
+
+    .main-content-slot {
+      padding: 12px 14px 20px 14px !important;
+    }
+  }
   .signout{flex-shrink:0;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted-fg);margin-top:12px;padding:8px 10px;border-radius:9px;transition:background .14s var(--ease),color .14s var(--ease);}
   .signout:hover{background:var(--red-soft);color:var(--destructive);}
 

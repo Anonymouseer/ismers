@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { AI_CANDIDATE_MATCHES } from '../data/mockAiAnalyticsData';
 import Pagination from '../../../components/common/Pagination';
 import SidebarContextMenu from '../../../components/layout/SidebarContextMenu';
@@ -11,7 +11,13 @@ export default function SmartScoringTab() {
   const [clientFilter, setClientFilter] = useState('all');
   const [sortBy, setSortBy] = useState('score-desc');
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 5;
+  const [toastMessage, setToastMessage] = useState('');
+  const PAGE_SIZE = 10;
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const [ctxMenu, setCtxMenu] = useState({ visible: false, x: 0, y: 0, items: [] });
   const closeCtx = useCallback(() => setCtxMenu((prev) => ({ ...prev, visible: false })), []);
@@ -28,7 +34,7 @@ export default function SmartScoringTab() {
         {
           label: `Shortlist Candidate (${item.applicantName})`,
           icon: '<polyline points="20 6 9 17 4 12"/>',
-          action: () => alert(`Candidate ${item.applicantName} shortlisted!`),
+          action: () => showToast(`Candidate ${item.applicantName} shortlisted!`),
         },
         {
           label: 'View Full AI Scorecard',
@@ -39,7 +45,7 @@ export default function SmartScoringTab() {
         {
           label: `Export Match Analysis`,
           icon: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-          action: () => alert(`Exporting AI analysis for ${item.applicantName}...`),
+          action: () => showToast(`Exporting AI analysis for ${item.applicantName}...`),
         },
       ],
     });
@@ -71,7 +77,7 @@ export default function SmartScoringTab() {
     return list;
   }, [search, clientFilter, sortBy]);
 
-  useMemo(() => { setPage(1); }, [search, clientFilter, sortBy]);
+  useEffect(() => { setPage(1); }, [search, clientFilter, sortBy]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginatedRoster = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -79,6 +85,11 @@ export default function SmartScoringTab() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14, height: 'calc(100vh - 230px)' }}>
+      {toastMessage && (
+        <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--primary)', color: 'var(--primary-fg)', fontSize: 12, fontWeight: 700 }}>
+          {toastMessage}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
           <svg viewBox="0 0 24 24" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, stroke: 'var(--muted-fg)', fill: 'none', strokeWidth: 2 }}>
@@ -133,7 +144,7 @@ export default function SmartScoringTab() {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, flex: 1, minHeight: 0 }}>
+      <div className="ai-scoring-split">
         <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-xs)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ padding: '12px 16px', background: 'var(--bg)', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 800, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
             AI Match Ranking Roster

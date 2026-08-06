@@ -10,7 +10,9 @@ import primepowerLogo from '../../assets/primepower-logo.svg';
 export default function Sidebar({
   activeItem,
   collapsed = false,
-  onToggleCollapse = () => {},
+  onToggleCollapse = () => { },
+  mobileOpen = false,
+  onCloseMobile = () => { },
   adminName = 'Name of Administrator',
   adminEmail = 'admin@example.com',
 }) {
@@ -23,6 +25,8 @@ export default function Sidebar({
       'job-order-management': true,
       'applicant-registration': true,
       'recruitment-selection': true,
+      'deployment-assignment': true,
+      'ai-analytics': true,
     };
     try {
       const saved = localStorage.getItem('primepower_open_menus');
@@ -46,21 +50,32 @@ export default function Sidebar({
     }
   }, [openMenus]);
 
-  const toggleSubmenu = (key, e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setOpenMenus((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleSubmenu = (menuKey, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpenMenus((prev) => ({
+      ...prev,
+      [menuKey]: !prev[menuKey],
+    }));
   };
 
-  const handleParentClick = (key) => {
-    setOpenMenus((prev) => ({ ...prev, [key]: true }));
+  const handleParentClick = (menuKey) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [menuKey]: true,
+    }));
+    if (mobileOpen) {
+      onCloseMobile();
+    }
   };
 
   return (
     <>
-      <div className={`sidebar${collapsed ? ' collapsed' : ''}`} id="sidebar">
+      <div
+        className={`sidebar-backdrop ${mobileOpen ? 'mobile-open' : ''}`}
+        onClick={onCloseMobile}
+      />
+      <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`} id="sidebar">
         {/* BRAND LOGO HEADER */}
         <div className="brand">
           <img src={primepowerLogo} alt="Prime Power Logo" className="brand-logo-img" />
@@ -314,20 +329,48 @@ export default function Sidebar({
           {/* AI & ANALYTICS */}
           <div className="nav-group">
             <div className="nav-label">AI &amp; Analytics</div>
+
+            {/* AI Candidate Scoring */}
             <Link
-              to="/recruitment-selection"
-              className={`nav-item${activeItem === 'smart-recruitment' ? ' active' : ''}`}
+              to="/ai-analytics?tab=scoring"
+              className={`nav-item${activeItem === 'ai-analytics' && (!location.search || location.search.includes('tab=scoring')) ? ' active' : ''}`}
             >
               <span className="icon-slot">
                 <svg className="icon" viewBox="0 0 24 24">
-                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 0 .962L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z" />
+                  <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z" />
                   <path d="M20 3v4" />
                   <path d="M22 5h-4" />
-                  <path d="M4 17v2" />
-                  <path d="M5 18H3" />
                 </svg>
               </span>
-              <span className="label">Smart Recruitment Scoring</span>
+              <span className="label">AI Candidate Scoring</span>
+            </Link>
+
+            {/* Recruitment Intelligence */}
+            <Link
+              to="/ai-analytics?tab=pipeline"
+              className={`nav-item${activeItem === 'ai-analytics' && location.search.includes('tab=pipeline') ? ' active' : ''}`}
+            >
+              <span className="icon-slot">
+                <svg className="icon" viewBox="0 0 24 24">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+              </span>
+              <span className="label">Recruitment Intelligence</span>
+            </Link>
+
+            {/* Workforce Retention Analysis */}
+            <Link
+              to="/ai-analytics?tab=retention"
+              className={`nav-item${activeItem === 'ai-analytics' && location.search.includes('tab=retention') ? ' active' : ''}`}
+            >
+              <span className="icon-slot">
+                <svg className="icon" viewBox="0 0 24 24">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </span>
+              <span className="label">Workforce Retention Analysis</span>
             </Link>
           </div>
 
@@ -366,7 +409,7 @@ export default function Sidebar({
           </svg>
           <span className="label">Sign Out</span>
         </Link>
-      </div>
+      </aside>
 
       {/* COLLAPSE TOGGLE BUTTON WITH SMOOTH SLIDE */}
       <div
