@@ -7,8 +7,8 @@ import ProfileDrawer from '../components/ProfileDrawer';
 import RoleSwitcher from '../components/RoleSwitcher';
 import RegisterApplicantPage from './RegisterApplicantPage';
 import {
-  COLUMN_ORDER, STAGE_META, JOB_TARGETS, CATEGORIES, boardColumn,
-  hasPermission,
+  COLUMN_ORDER, STAGE_META, STATUS_META, JOB_TARGETS, CATEGORIES, boardColumn,
+  hasPermission, targetById, initials,
 } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
 import './ApplicantRegistrationBoard.css';
@@ -212,41 +212,91 @@ export default function ApplicantProfilingBoard() {
             </select>
           </div>
 
-          <div className="single-stage-grid">
-            {filtered.filter((c) => boardColumn(c) === viewMode).map((cand) => (
-              <div className="single-stage-card-wrap" key={cand.regId}>
-                <CandidateCard candidate={cand} onOpen={setOpenRegId} />
-                <div className="stage-card-actions">
-                  <button
-                    className="stage-btn"
-                    onClick={() => setOpenRegId(cand.regId)}
-                  >
-                    View &amp; Profile
-                  </button>
+          <div className="stage-table-container">
+            {filtered.filter((c) => boardColumn(c) === viewMode).length > 0 ? (
+              <table className="stage-table">
+                <thead>
+                  <tr>
+                    <th>Reg ID</th>
+                    <th>Applicant Name</th>
+                    <th>Target Category</th>
+                    <th>Assigned Job Order</th>
+                    <th>Status</th>
+                    <th>Registered Date</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.filter((c) => boardColumn(c) === viewMode).map((cand) => {
+                    const job = targetById(cand.targetJobId);
+                    const statusMeta = STATUS_META[cand.status] || STATUS_META.active;
+                    return (
+                      <tr key={cand.regId} onClick={() => setOpenRegId(cand.regId)} className="stage-table-row">
+                        <td className="cell-regid">{cand.regId}</td>
+                        <td className="cell-name">
+                          <div className="table-user-wrap">
+                            <div className="table-user-avatar">{initials(cand.name)}</div>
+                            <div>
+                              <div className="table-user-name">{cand.name}</div>
+                              <div className="table-user-sub">{cand.email || cand.phone}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="table-cat-badge">{cand.category || 'Unassigned'}</span>
+                        </td>
+                        <td>
+                          {job ? (
+                            <div className="table-job-info">
+                              <span className="table-job-title">{job.title}</span>
+                              <span className="table-job-client">{job.client}</span>
+                            </div>
+                          ) : (
+                            <span className="table-unassigned">No target assigned</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="cand-status-flag" style={{ color: statusMeta.color }}>
+                            <span className="dot" style={{ background: statusMeta.color }} />
+                            {statusMeta.label}
+                          </span>
+                        </td>
+                        <td className="cell-date">{cand.registeredDate}</td>
+                        <td className="cell-actions" onClick={(e) => e.stopPropagation()}>
+                          <div className="table-actions-flex">
+                            <button
+                              className="stage-btn"
+                              onClick={() => setOpenRegId(cand.regId)}
+                            >
+                              View &amp; Profile
+                            </button>
 
-                  {viewMode === 'sent' ? (
-                    <Link
-                      to="/recruitment-selection"
-                      className="stage-btn go"
-                      style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      Recruitment &amp; Selection →
-                    </Link>
-                  ) : (
-                    hasPermission(role, 'changeStage') && (
-                      <button
-                        className="stage-btn go"
-                        onClick={() => handleAdvanceStage(cand.regId, viewMode)}
-                      >
-                        {STAGE_PAGE_META[viewMode]?.btnLabel} →
-                      </button>
-                    )
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {filtered.filter((c) => boardColumn(c) === viewMode).length === 0 && (
+                            {viewMode === 'sent' ? (
+                              <Link
+                                to="/recruitment-selection"
+                                className="stage-btn go"
+                                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                              >
+                                Recruitment &amp; Selection →
+                              </Link>
+                            ) : (
+                              hasPermission(role, 'changeStage') && (
+                                <button
+                                  className="stage-btn go"
+                                  onClick={() => handleAdvanceStage(cand.regId, viewMode)}
+                                >
+                                  {STAGE_PAGE_META[viewMode]?.btnLabel} →
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
               <div className="empty-stage-box">
                 No applicants currently in this stage matching your filter criteria.
               </div>

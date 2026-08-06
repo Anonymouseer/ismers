@@ -1295,3 +1295,112 @@ select.chip:hover {
   border: 1px dashed var(--border);
   border-radius: 14px;
 }
+
+/* ===== SINGLE STAGE TABLE VIEW ===== */
+.stage-table-container {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+.stage-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.stage-table th {
+  background: var(--secondary);
+  color: var(--muted-fg);
+  font-family: var(--font-display);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.stage-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+.stage-table-row {
+  cursor: pointer;
+  transition: background 0.12s var(--ease);
+}
+.stage-table-row:hover {
+  background: var(--secondary);
+}
+.cell-regid {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 11.5px;
+}
+.table-user-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.table-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.table-user-name {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 12.5px;
+}
+.table-user-sub {
+  font-size: 10.5px;
+  color: var(--muted-fg);
+}
+.table-cat-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  background: var(--secondary);
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  white-space: nowrap;
+}
+.table-job-info {
+  display: flex;
+  flex-direction: column;
+}
+.table-job-title {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 11.5px;
+}
+.table-job-client {
+  font-size: 10.5px;
+  color: var(--muted-fg);
+}
+.table-unassigned {
+  color: var(--muted-fg);
+  font-size: 11px;
+  font-style: italic;
+}
+.table-actions-flex {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.table-actions-flex .stage-btn {
+  font-size: 10.5px;
+  padding: 5px 12px;
+}

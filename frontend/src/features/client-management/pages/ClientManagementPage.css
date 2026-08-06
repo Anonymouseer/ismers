@@ -1123,61 +1123,62 @@
 
   /* ===== BOLD REDESIGN: Hero + Stats + Job Order Detail ===== */
 
-  /* ---- HERO BANNER ---- */
+  /* ===== REVAMPED EXECUTIVE HERO BANNER ===== */
   .hero-banner {
     position: relative;
-    border-radius: 26px;
-    padding: 30px 32px 0 32px;
-    margin-bottom: 18px;
+    border-radius: 20px;
+    padding: 24px 28px 24px 28px;
+    margin-bottom: 20px;
     overflow: hidden;
-    background: linear-gradient(120deg, var(--secondary) 0%, var(--panel) 100%);
-    border: 1px solid var(--border-soft);
+    background: linear-gradient(135deg, #FFFFFF 0%, #F4F7FB 100%);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(0, 125, 204, 0.06);
   }
 
   .hero-banner::after {
     content: "";
     position: absolute;
-    top: -60px;
-    right: -60px;
-    width: 260px;
-    height: 260px;
+    top: -80px;
+    right: -80px;
+    width: 280px;
+    height: 280px;
     border-radius: 50%;
-    background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
-    opacity: .12;
+    background: radial-gradient(circle, rgba(0, 125, 204, 0.12) 0%, transparent 70%);
     pointer-events: none;
   }
 
   .hero-top {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 20px;
     position: relative;
     z-index: 1;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-soft);
   }
 
   .hero-logo {
-    width: 76px;
-    height: 76px;
-    border-radius: 20px;
+    width: 68px;
+    height: 68px;
+    border-radius: 16px;
     flex-shrink: 0;
-    box-shadow: 0 10px 26px rgba(20, 40, 30, .16);
-    border: 3px solid var(--panel);
+    box-shadow: 0 4px 14px rgba(10, 27, 46, 0.08);
+    border: 2px solid #FFFFFF;
     object-fit: cover;
-    background: var(--panel);
+    background: #FFFFFF;
   }
 
   .hero-title-wrap {
     flex: 1;
     min-width: 0;
-    padding-top: 2px;
   }
 
   .hero-name {
     font-family: var(--font-display);
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 800;
-    letter-spacing: -.6px;
-    line-height: 1.1;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
     color: var(--text);
   }
 
@@ -1185,7 +1186,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 9px;
+    margin-top: 6px;
     flex-wrap: wrap;
   }
 
@@ -1193,11 +1194,10 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11.5px;
-    font-weight: 800;
-    padding: 5px 13px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
     border-radius: 20px;
-    letter-spacing: .1px;
   }
 
   .hero-pill .dot {
@@ -1208,8 +1208,9 @@
   }
 
   .hero-pill.status-active {
-    background: var(--secondary);
+    background: #EAF5FF;
     color: var(--primary);
+    border: 1px solid rgba(0, 125, 204, 0.2);
   }
 
   .hero-pill.status-prospect {
@@ -1233,49 +1234,52 @@
   }
 
   .hero-pill.tenure {
-    background: var(--secondary);
-    color: var(--text);
+    background: var(--bg);
+    color: var(--muted-fg);
+    border: 1px solid var(--border);
   }
 
   .hero-actions {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 10px;
     flex-shrink: 0;
-    padding-top: 2px;
   }
 
   .hero-btn {
     font-size: 12px;
-    font-weight: 800;
-    padding: 10px 16px;
-    border-radius: 11px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 10px;
     border: 1px solid var(--border);
-    background: var(--panel);
+    background: #FFFFFF;
     color: var(--text);
     display: flex;
     align-items: center;
-    gap: 7px;
-    box-shadow: var(--shadow-xs);
+    gap: 6px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
     cursor: pointer;
-    transition: transform .14s var(--ease), box-shadow .14s var(--ease);
+    transition: all 0.15s ease;
   }
 
   .hero-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
     border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 125, 204, 0.1);
   }
 
   .hero-btn.primary {
     background: var(--primary);
     border-color: var(--primary);
-    color: #fff;
+    color: #FFFFFF;
     box-shadow: 0 4px 14px rgba(0, 125, 204, 0.25);
   }
 
   .hero-btn.primary:hover {
     background: #006BB3;
     border-color: #006BB3;
+    color: #FFFFFF;
   }
 
   .hero-btn svg {
@@ -1285,9 +1289,10 @@
 
   .hero-meta-row {
     display: flex;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 0;
-    margin: 22px 0 0 0;
+    gap: 24px;
+    margin: 16px 0 16px 0;
     position: relative;
     z-index: 1;
   }
@@ -1296,20 +1301,11 @@
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 0 22px 0 0;
-    margin-right: 22px;
-    border-right: 1px solid var(--border-soft);
-  }
-
-  .hero-meta-item:last-child {
-    border-right: none;
-    margin-right: 0;
-    padding-right: 0;
   }
 
   .hero-meta-icon {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 9px;
     background: var(--secondary);
     color: var(--primary);
@@ -1322,6 +1318,7 @@
   .hero-meta-icon svg {
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
   }
 
   .hero-meta-label {
@@ -1333,7 +1330,7 @@
   }
 
   .hero-meta-value {
-    font-size: 13.5px;
+    font-size: 12.5px;
     font-weight: 800;
     color: var(--text);
     margin-top: 1px;
@@ -1343,48 +1340,56 @@
     color: var(--amber);
   }
 
-  /* ---- BIG NUMBER STAT STRIP ---- */
   .stat-strip {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: 24px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 14px;
     position: relative;
     z-index: 1;
   }
 
   .stat-strip-item {
-    padding: 18px 22px 22px 0;
-    border-right: 1px solid var(--border-soft);
+    background: #FFFFFF;
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
 
-  .stat-strip-item:last-child {
-    border-right: none;
+  .stat-strip-item:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 4px 14px rgba(0, 125, 204, 0.08);
   }
 
   .stat-strip-label {
     font-size: 10px;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: .5px;
+    letter-spacing: 0.5px;
     color: var(--muted-fg);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     gap: 6px;
   }
 
   .stat-strip-label svg {
-    width: 12px;
-    height: 12px;
-    opacity: .7;
+    width: 13px;
+    height: 13px;
+    opacity: 0.8;
   }
 
   .stat-strip-value {
     font-family: var(--font-display);
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 800;
-    letter-spacing: -.6px;
-    line-height: 1;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
     color: var(--text);
   }
 
@@ -1405,19 +1410,16 @@
     }
 
     .stat-strip-item {
-      border-right: none;
-      border-bottom: 1px solid var(--border-soft);
-      padding-bottom: 16px;
-      margin-bottom: 16px;
+      padding-bottom: 14px;
     }
   }
 
-  /* ---- JOB ORDERS SECTION HEADER ---- */
+  /* ---- JOB ORDERS SECTION HEADER (Pulled up closer to top header) ---- */
   .section-head2 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 26px 0 14px 0;
+    margin: 12px 0 10px 0;
   }
 
   .section-title2 {
