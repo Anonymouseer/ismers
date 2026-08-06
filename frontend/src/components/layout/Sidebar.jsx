@@ -198,7 +198,6 @@ export default function Sidebar({
               <Link
                 to="/applicant-registration"
                 className={`nav-item${activeItem === 'applicant-registration' ? ' active' : ''}`}
-                onClick={() => handleParentClick('applicant-registration')}
               >
                 <span className="icon-slot">
                   <svg className="icon" viewBox="0 0 24 24">
@@ -209,28 +208,7 @@ export default function Sidebar({
                   </svg>
                 </span>
                 <span className="label">Applicant Registration</span>
-                <button
-                  type="button"
-                  className="chevron-slot"
-                  onClick={(e) => toggleSubmenu('applicant-registration', e)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <svg className={`chevron ${openMenus['applicant-registration'] ? 'open' : ''}`} viewBox="0 0 24 24">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
               </Link>
-
-              <div className={`submenu-wrapper ${openMenus['applicant-registration'] && !collapsed ? 'open' : ''}`}>
-                <div className="submenu-inner">
-                  <Link to="/applicant-registration" className="submenu-item active">
-                    Applicant Roster
-                  </Link>
-                  <Link to="/applicant-registration" className="submenu-item">
-                    Talent Pool Database
-                  </Link>
-                </div>
-              </div>
             </div>
 
             {/* Recruitment & Selection */}

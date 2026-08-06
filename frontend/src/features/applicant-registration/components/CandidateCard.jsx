@@ -1,7 +1,9 @@
-import { initials, targetById } from '../services/ApplicantRegistrationService';
+import { initials, targetById, STATUS_META } from '../services/ApplicantRegistrationService';
 
 export default function CandidateCard({ candidate, onOpen }) {
   const job = targetById(candidate.targetJobId);
+  const statusMeta = STATUS_META[candidate.status] || STATUS_META.active;
+  const showStatusFlag = candidate.status !== 'active';
 
   return (
     <div className="cand-card" onClick={() => onOpen(candidate.regId)}>
@@ -23,6 +25,15 @@ export default function CandidateCard({ candidate, onOpen }) {
           <span className="no-target">No target job order yet</span>
         )}
       </div>
+      {candidate.category && (
+        <div className="cand-category-chip">{candidate.category}</div>
+      )}
+      {showStatusFlag && (
+        <div className="cand-status-flag" style={{ color: statusMeta.color }}>
+          <span className="dot" style={{ background: statusMeta.color }} />
+          {statusMeta.label}
+        </div>
+      )}
       <div className="cand-foot">
         <span className="cand-loc">{candidate.location}</span>
         <span className="cand-days">Registered {candidate.registeredDate}</span>

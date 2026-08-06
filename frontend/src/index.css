@@ -12,7 +12,8 @@
   --primary: #007DCC;
   --primary-fg: #FAF9F6;
   --secondary: #E4F0F8;
-  --muted: #E4F0F8;
+  --muted: #486F91;
+  --muted-bg: #E4F0F8;
   --muted-fg: #486F91;
   --accent: #007DCC;
   --destructive: #d32f2f;
@@ -61,7 +62,8 @@
   --primary: #33A1E6;
   --primary-fg: #0F1B26;
   --secondary: #1D2A37;
-  --muted: #1D2A37;
+  --muted: #90A7B9;
+  --muted-bg: #1D2A37;
   --muted-fg: #90A7B9;
   --accent: #33A1E6;
   --destructive: #ef4444;
