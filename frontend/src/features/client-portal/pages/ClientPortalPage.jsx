@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ClientPortalSidebar from '../components/ClientPortalSidebar';
+import ClientPortalTopbar from '../components/ClientPortalTopbar';
+import ClientPortalSuccessToast from '../components/ClientPortalSuccessToast';
+import ClientPortalSummaryCards from '../components/ClientPortalSummaryCards';
+import ClientPortalDashboardSidebar from '../components/ClientPortalDashboardSidebar';
 import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import './ClientPortalPage.css';
 
@@ -633,206 +638,26 @@ export default function ClientPortalPage() {
 
   return (
     <div className="client-portal-shell">
-      {/* STICKY TOP NAV BAR */}
-      <nav className="client-portal-topbar">
-        <div className="client-portal-topbar-brand">
-          <div className="client-portal-topbar-mark">PM</div>
-          <div className="client-portal-topbar-name">
-            <span>PRIME</span>
-            <span>POWER</span>
-          </div>
-          <div className="client-portal-topbar-sep" aria-hidden="true" />
-          <div className="client-portal-topbar-module">Client Portal</div>
-        </div>
-        <div className="client-portal-topbar-actions">
-          <button
-            id="client-portal-notification-btn"
-            className="client-portal-notif-btn"
-            type="button"
-            title="View Notifications"
-            aria-label="Notifications"
-          >
-            <svg className="icon" viewBox="0 0 24 24">
-              <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-            </svg>
-            <span className="client-portal-notif-dot" aria-hidden="true" />
-          </button>
-          <button
-            id="client-portal-logout-btn"
-            className="client-portal-logout-btn"
-            type="button"
-            onClick={handleLogout}
-            title="Sign Out"
-            aria-label="Sign Out"
-          >
-            <svg className="icon" viewBox="0 0 24 24">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </nav>
+      <ClientPortalTopbar />
 
-      {/* MAIN CONTAINER: SIDEBAR + CONTENT */}
       <div className="client-portal-main-container">
-        {/* LEFT SIDEBAR NAVIGATION */}
-        <aside className={`client-portal-sidebar-nav ${sidebarCollapsed ? 'collapsed' : ''}`}>
-          {/* SIDEBAR COLLAPSE TOGGLE BUTTON ON BORDER LINE */}
-          <button
-            type="button"
-            id="cp-sidebar-collapse-btn"
-            className={`cp-sidebar-collapse-btn ${sidebarCollapsed ? 'collapsed' : ''}`}
-            onClick={() => setSidebarCollapsed((c) => !c)}
-            title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-            aria-label={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            <svg className="icon" viewBox="0 0 24 24">
-              <path d="m15 6-6 6 6 6" />
-            </svg>
-          </button>
-
-          {/* CLIENT BRAND / PROFILE HEADER (AT VERY TOP - NO BORDER) */}
-          <div className="client-portal-sidebar-top-profile" title={sidebarCollapsed ? (session?.company || 'Sunshine Mfg. Corp.') : undefined}>
-            <div className="client-portal-sidebar-user-avatar">
-              {session?.logo ? (
-                <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-sidebar-logo-img" />
-              ) : (
-                (session?.company || 'S')[0]
-              )}
-            </div>
-            {!sidebarCollapsed && (
-              <div className="client-portal-sidebar-user-info">
-                <div className="client-portal-sidebar-user-company">
-                  {session?.company || 'Sunshine Mfg. Corp.'}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="client-portal-sidebar-section">
-            <div className="client-portal-sidebar-label">Navigation</div>
-            <nav className="client-portal-nav-list">
-              <button
-                type="button"
-                id="nav-dashboard"
-                className={`client-portal-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={() => setActiveTab('dashboard')}
-                title={sidebarCollapsed ? 'Dashboard' : undefined}
-              >
-                <svg className="icon" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="3" width="7" height="7" rx="1" />
-                  <rect x="14" y="14" width="7" height="7" rx="1" />
-                  <rect x="3" y="14" width="7" height="7" rx="1" />
-                </svg>
-                <span>Dashboard</span>
-              </button>
-
-              <button
-                type="button"
-                id="nav-job-orders"
-                className={`client-portal-nav-item ${activeTab === 'job-orders' ? 'active' : ''}`}
-                onClick={() => setActiveTab('job-orders')}
-                title={sidebarCollapsed ? `Job Orders (${jobRequests.length})` : undefined}
-              >
-                <svg className="icon" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                <span>Job orders</span>
-                <span className="client-portal-nav-count">{jobRequests.length}</span>
-              </button>
-
-              <button
-                type="button"
-                id="nav-endorsements"
-                className={`client-portal-nav-item ${activeTab === 'endorsements' ? 'active' : ''}`}
-                onClick={() => setActiveTab('endorsements')}
-                title={sidebarCollapsed ? `Endorsements (${endorsedCandidates.filter((c) => c.status === 'Pending Review').length})` : undefined}
-              >
-                <svg className="icon" viewBox="0 0 24 24">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="8.5" cy="7" r="4" />
-                  <polyline points="17 11 19 13 23 9" />
-                </svg>
-                <span>Endorsements</span>
-                <span className="client-portal-nav-count client-portal-nav-count--amber">
-                  {endorsedCandidates.filter((c) => c.status === 'Pending Review').length}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                id="nav-deployed-roster"
-                className={`client-portal-nav-item ${activeTab === 'deployed-roster' ? 'active' : ''}`}
-                onClick={() => setActiveTab('deployed-roster')}
-                title={sidebarCollapsed ? `Deployed Roster (${deployedRoster.length})` : undefined}
-              >
-                <svg className="icon" viewBox="0 0 24 24">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                <span>Deployed Roster</span>
-                <span className="client-portal-nav-count">{deployedRoster.length}</span>
-              </button>
-
-              <button
-                type="button"
-                id="nav-settings"
-                className={`client-portal-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-                onClick={() => setActiveTab('settings')}
-                title={sidebarCollapsed ? 'Settings' : undefined}
-              >
-                <svg className="icon" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                <span>Settings</span>
-              </button>
-            </nav>
-          </div>
-
-          {/* SIDEBAR ACCOUNT MANAGER WIDGET */}
-          <div className="client-portal-sidebar-section client-portal-sidebar-section--am" title={sidebarCollapsed ? `Account Manager: ${MOCK_ACCOUNT_MANAGER.name}` : undefined}>
-            <div className="client-portal-sidebar-label">Assigned Account Manager</div>
-            <div className="client-portal-am-card">
-              <div className="client-portal-am-avatar">
-                {MOCK_ACCOUNT_MANAGER.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
-              </div>
-              <div className="client-portal-am-info">
-                <div className="client-portal-am-name">{MOCK_ACCOUNT_MANAGER.name}</div>
-                <div className="client-portal-am-title">{MOCK_ACCOUNT_MANAGER.title}</div>
-                <a href={`mailto:${MOCK_ACCOUNT_MANAGER.email}`} className="client-portal-am-email">
-                  {MOCK_ACCOUNT_MANAGER.email}
-                </a>
-                <div className="client-portal-am-phone">{MOCK_ACCOUNT_MANAGER.phone}</div>
-              </div>
-            </div>
-          </div>
-        </aside>
+        <ClientPortalSidebar
+          session={session}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          jobRequests={jobRequests}
+          endorsedCandidates={endorsedCandidates}
+          deployedRoster={deployedRoster}
+          accountManager={MOCK_ACCOUNT_MANAGER}
+          onLogout={handleLogout}
+        />
 
         {/* MAIN CONTENT AREA */}
         <main className="client-portal-content-area">
           {/* SUCCESS TOAST */}
-          {successBanner && (
-            <div className="client-portal-success-toast" role="status">
-              <svg className="icon" viewBox="0 0 24 24">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              <span>{successBanner}</span>
-              <button type="button" className="client-portal-toast-close" onClick={() => setSuccessBanner('')}>
-                ✕
-              </button>
-            </div>
-          )}
+          <ClientPortalSuccessToast message={successBanner} onClose={() => setSuccessBanner('')} />
 
           {/* ── VIEW: DASHBOARD ── */}
           {activeTab === 'dashboard' && (
@@ -849,23 +674,7 @@ export default function ClientPortalPage() {
               </div>
 
               {/* SUMMARY STAT CARDS */}
-              <div className="client-portal-summary-grid">
-                {summaryCards.map((card) => (
-                  <div key={card.id} id={card.id} className="client-portal-card client-portal-summary-card">
-                    <div className={`client-portal-summary-accent ${card.accentClass}`} aria-hidden="true" />
-                    <div className="client-portal-summary-body">
-                      <div className="client-portal-summary-card-top">
-                        <div className={`client-portal-card-icon ${card.colorClass}`}>{card.icon}</div>
-                        <span className={`client-portal-trend ${card.trendUp ? 'client-portal-trend--up' : 'client-portal-trend--warn'}`}>
-                          {card.trend}
-                        </span>
-                      </div>
-                      <div className="client-portal-summary-value">{card.value}</div>
-                      <div className="client-portal-summary-label">{card.label}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ClientPortalSummaryCards cards={summaryCards} />
 
               {/* TWO-COLUMN GRID: TABLE + SIDEBAR */}
               <div className="client-portal-content-grid">
@@ -919,95 +728,12 @@ export default function ClientPortalPage() {
                   </div>
                 </div>
 
-                {/* RIGHT SIDEBAR: ANNOUNCEMENTS + UPCOMING INTERVIEWS */}
-                <aside className="client-portal-sidebar">
-                  <div className="client-portal-card client-portal-sidebar-card">
-                    <div className="client-portal-card-head">
-                      <div className="client-portal-card-title">
-                        <svg className="icon" viewBox="0 0 24 24">
-                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                        </svg>
-                        Announcements
-                      </div>
-                    </div>
-                    <div className="client-portal-announce-list">
-                      {ANNOUNCEMENTS.map((item) => (
-                        <div key={item.id} className="client-portal-announce-item">
-                          <div className="client-portal-announce-date">{item.date}</div>
-                          <div className="client-portal-announce-title">{item.title}</div>
-                          <div className="client-portal-announce-body">{item.body}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="client-portal-card client-portal-sidebar-card">
-                    <div className="client-portal-card-head">
-                      <div className="client-portal-card-title">
-                        <svg className="icon" viewBox="0 0 24 24">
-                          <rect x="3" y="4" width="18" height="18" rx="2" />
-                          <line x1="16" y1="2" x2="16" y2="6" />
-                          <line x1="8" y1="2" x2="8" y2="6" />
-                          <line x1="3" y1="10" x2="21" y2="10" />
-                        </svg>
-                        Upcoming Interviews
-                      </div>
-                    </div>
-                    <div className="client-portal-interview-list">
-                      {UPCOMING_INTERVIEWS.map((iv) => (
-                        <div key={iv.id} className="client-portal-interview-item">
-                          <div className="client-portal-interview-avatar">{iv.candidate[0]}</div>
-                          <div className="client-portal-interview-info">
-                            <div className="client-portal-interview-candidate">{iv.candidate}</div>
-                            <div className="client-portal-interview-position">{iv.position}</div>
-                            <div className="client-portal-interview-meta">
-                              <span>{iv.date} &middot; {iv.time}</span>
-                              <span className="client-portal-interview-type">{iv.type}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* EXPIRING DEPLOYMENTS ALERT WIDGET */}
-                  <div className="client-portal-card client-portal-sidebar-card">
-                    <div className="client-portal-card-head">
-                      <div className="client-portal-card-title client-portal-card-title--amber">
-                        <svg className="icon" viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        Expiring Deployment Alerts
-                      </div>
-                    </div>
-                    <div className="client-portal-expiry-list">
-                      {deployedRoster
-                        .filter((r) => r.status === 'Expiring Soon' || r.status === 'Renewal Requested')
-                        .map((item) => (
-                          <div key={item.id} className="client-portal-expiry-item">
-                            <div className="client-portal-expiry-header">
-                              <span className="client-portal-expiry-name">{item.employeeName}</span>
-                              <span className={`client-portal-badge ${item.status === 'Renewal Requested' ? 'client-portal-badge--active' : 'client-portal-badge--pending'}`}>
-                                {item.status === 'Renewal Requested' ? 'Renewal Requested' : `Expires ${item.expiryDate}`}
-                              </span>
-                            </div>
-                            <div className="client-portal-expiry-sub">{item.position} &middot; {item.site}</div>
-                            {item.status !== 'Renewal Requested' && (
-                              <button
-                                type="button"
-                                className="client-portal-expiry-renew-btn"
-                                onClick={() => handleRenewRosterContract(item.id)}
-                              >
-                                Request Contract Renewal
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </aside>
+                <ClientPortalDashboardSidebar
+                  announcements={ANNOUNCEMENTS}
+                  interviews={UPCOMING_INTERVIEWS}
+                  deployedRoster={deployedRoster}
+                  onRenewRosterContract={handleRenewRosterContract}
+                />
               </div>
             </div>
           )}
