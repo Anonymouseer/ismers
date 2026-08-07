@@ -44,6 +44,27 @@ const MOCK_CLIENT_AUDIT_LOGS = [
   },
 ];
 
+const formatAuditTimestamp = (value) => {
+  if (!value) return '—';
+
+  const normalizedValue = typeof value === 'string' && value.includes(' ') && !value.includes('T')
+    ? value.replace(' ', 'T')
+    : value;
+
+  const parsedDate = new Date(normalizedValue);
+  if (Number.isNaN(parsedDate.getTime())) return value;
+
+  return parsedDate.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  });
+};
+
 const INDUSTRIES = [
   'Manufacturing',
   'Electronics & Precision Assembly',
@@ -145,10 +166,9 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
       onUpdateSession(updatedProfile);
     }
 
-    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
     const newLog = {
       id: `LOG-${Math.floor(100 + Math.random() * 900)}`,
-      timestamp: nowStr,
+      timestamp: new Date().toISOString(),
       user: contactPerson || 'Engr. Ferdinand Ramos',
       email: email || 'f.ramos@sunshinemfg.ph',
       action: 'Updated company profile, notification settings, and portal preferences',
@@ -623,7 +643,7 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                     {filteredLogs.map((log) => (
                       <tr key={log.id}>
                         <td className="log-id">{log.id}</td>
-                        <td className="log-time">{log.timestamp}</td>
+                        <td className="log-time">{formatAuditTimestamp(log.timestamp)}</td>
                         <td>
                           <div className="user-cell">
                             <span className="user-name">{log.user}</span>
