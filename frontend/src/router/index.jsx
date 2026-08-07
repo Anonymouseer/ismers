@@ -12,6 +12,7 @@ import SettingsPage from '../features/settings/pages/SettingsPage';
 import ClientPortalPage from '../features/client-portal/pages/ClientPortalPage';
 import ClientPortalLoginPage from '../features/client-portal/pages/ClientPortalLoginPage';
 import ClientPortalRegisterPage from '../features/client-portal/pages/ClientPortalRegisterPage';
+import PublicApplyPage from '../features/applicant-registration/pages/PublicApplyPage';
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,14 @@ const router = createBrowserRouter([
   {
     path: '/client-portal/register',
     element: <ClientPortalRegisterPage />,
+  },
+  {
+    path: '/apply',
+    element: (
+      <ApplicantRegistrationProvider>
+        <PublicApplyPage />
+      </ApplicantRegistrationProvider>
+    ),
   },
 ]);
 
