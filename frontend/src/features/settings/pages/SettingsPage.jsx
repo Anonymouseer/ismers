@@ -568,41 +568,75 @@ export default function SettingsPage() {
 
                   <div className="card-divider"></div>
 
-                  {/* OPENROUTER CREDENTIALS & MODEL */}
-                  <div className="form-grid-2col">
-                    <div className="form-group-compact">
-                      <label>OpenRouter API Key</label>
-                      <div style={{ display: 'flex', gap: 6, position: 'relative' }}>
-                        <input
-                          type={showApiKey ? 'text' : 'password'}
-                          className="input-compact"
-                          value={openRouterApiKey}
-                          onChange={(e) => setOpenRouterApiKey(e.target.value)}
-                          placeholder="sk-or-v1-..."
-                        />
-                        <button
-                          type="button"
-                          className="btn-secondary-action"
-                          style={{ padding: '6px 12px', fontSize: 11 }}
-                          onClick={() => setShowApiKey(!showApiKey)}
-                        >
-                          {showApiKey ? 'Hide' : 'Show'}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="form-group-compact">
-                      <label>Target LLM Scoring Model</label>
-                      <select
-                        className="input-compact"
-                        value={aiModel}
-                        onChange={(e) => setAiModel(e.target.value)}
-                      >
-                        <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (Recommended)</option>
-                        <option value="openai/gpt-4o">OpenAI GPT-4o</option>
-                        <option value="deepseek/deepseek-r1">DeepSeek R1 Reasoning</option>
-                        <option value="google/gemini-1.5-pro">Google Gemini 1.5 Pro</option>
-                      </select>
+                  {/* LLM MODEL SELECTION CARDS */}
+                  <div className="form-group-compact">
+                    <label>Active AI Model Selection</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginTop: 4 }}>
+                      {[
+                        {
+                          id: 'anthropic/claude-3.5-sonnet',
+                          name: 'Claude 3.5 Sonnet',
+                          badge: 'Recommended',
+                          desc: 'Optimal precision for HR resume analysis, skill matrix matching, and candidate summary synthesis.',
+                          provider: 'Anthropic'
+                        },
+                        {
+                          id: 'openai/gpt-4o',
+                          name: 'GPT-4o Omnimodal',
+                          badge: 'High Speed',
+                          desc: 'Fast multilingual parsing suited for high-volume applicant registration screening.',
+                          provider: 'OpenAI'
+                        },
+                        {
+                          id: 'deepseek/deepseek-r1',
+                          name: 'DeepSeek R1',
+                          badge: 'Reasoning Engine',
+                          desc: 'Deep analytical evaluation for complex technical trade tests and engineering roles.',
+                          provider: 'DeepSeek'
+                        },
+                        {
+                          id: 'google/gemini-1.5-pro',
+                          name: 'Gemini 1.5 Pro',
+                          badge: 'Long Context',
+                          desc: 'High context window capability for processing lengthy multi-page CVs and portfolios.',
+                          provider: 'Google AI'
+                        }
+                      ].map((model) => {
+                        const isSelected = aiModel === model.id;
+                        return (
+                          <div
+                            key={model.id}
+                            onClick={() => setAiModel(model.id)}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: 10,
+                              border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
+                              background: isSelected ? 'var(--secondary)' : 'var(--bg)',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              boxShadow: isSelected ? 'var(--shadow-xs)' : 'none'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>
+                                {model.name}
+                              </div>
+                              <span style={{ fontSize: 9.5, fontWeight: 800, padding: '2px 8px', borderRadius: 6, background: isSelected ? 'var(--primary)' : 'var(--panel)', color: isSelected ? '#fff' : 'var(--muted-fg)', border: '1px solid var(--border-soft)' }}>
+                                {model.badge}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--muted-fg)', lineHeight: 1.4, margin: '4px 0 8px' }}>
+                              {model.desc}
+                            </div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                              Provider: {model.provider}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 

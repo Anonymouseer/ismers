@@ -2,10 +2,14 @@
 node_modules/
 frontend/dist/
 frontend/.env
+frontend/.env.*
+frontend/.env.local
 
 # Laravel / Backend
 backend/vendor/
 backend/.env
+backend/.env.*
+backend/.env.local
 backend/storage/*.key
 backend/bootstrap/cache/*
 backend/storage/logs/*
