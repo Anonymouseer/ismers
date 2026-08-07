@@ -1,5 +1,48 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import '../../settings/pages/SettingsPage.css';
+
+const MOCK_CLIENT_AUDIT_LOGS = [
+  {
+    id: 'LOG-821',
+    timestamp: '2026-08-07 09:22:10',
+    user: 'Engr. Ferdinand Ramos',
+    email: 'f.ramos@sunshinemfg.ph',
+    action: 'Logged in to Client Portal dashboard',
+    module: 'Access',
+    ip: '203.0.113.18',
+    status: 'Success',
+  },
+  {
+    id: 'LOG-820',
+    timestamp: '2026-08-06 18:03:42',
+    user: 'Engr. Ferdinand Ramos',
+    email: 'f.ramos@sunshinemfg.ph',
+    action: 'Updated company profile and corporate branding details',
+    module: 'Settings',
+    ip: '203.0.113.18',
+    status: 'Success',
+  },
+  {
+    id: 'LOG-819',
+    timestamp: '2026-08-06 15:14:29',
+    user: 'Engr. Ferdinand Ramos',
+    email: 'f.ramos@sunshinemfg.ph',
+    action: 'Enabled new interview confirmation alerts for recruitment updates',
+    module: 'Notifications',
+    ip: '203.0.113.18',
+    status: 'Success',
+  },
+  {
+    id: 'LOG-818',
+    timestamp: '2026-08-05 11:48:07',
+    user: 'Engr. Ferdinand Ramos',
+    email: 'f.ramos@sunshinemfg.ph',
+    action: 'Reviewed endorsed candidate shortlist for Job Order #PRJ-2048',
+    module: 'Client Portal',
+    ip: '203.0.113.18',
+    status: 'Info',
+  },
+];
 
 const INDUSTRIES = [
   'Manufacturing',
@@ -19,8 +62,19 @@ const INDUSTRIES = [
 ];
 
 export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
-  const [activeTab, setActiveTab] = useState('general'); // 'general' | 'notifications' | 'appearance'
+  const [activeTab, setActiveTab] = useState('general'); // 'general' | 'notifications' | 'appearance' | 'audit'
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [auditLogs, setAuditLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ismers.client_portal.audit_logs');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return MOCK_CLIENT_AUDIT_LOGS;
+  });
+  const [logFilterModule, setLogFilterModule] = useState('all');
+  const [logSearch, setLogSearch] = useState('');
 
   // Client Company Account Profile State
   const [company, setCompany] = useState(session?.company || 'Sunshine Manufacturing Corp.');
@@ -90,8 +144,46 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
     if (onUpdateSession) {
       onUpdateSession(updatedProfile);
     }
+
+    const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    const newLog = {
+      id: `LOG-${Math.floor(100 + Math.random() * 900)}`,
+      timestamp: nowStr,
+      user: contactPerson || 'Engr. Ferdinand Ramos',
+      email: email || 'f.ramos@sunshinemfg.ph',
+      action: 'Updated company profile, notification settings, and portal preferences',
+      module: 'Settings',
+      ip: '203.0.113.18',
+      status: 'Success',
+    };
+
+    setAuditLogs((prev) => {
+      const next = [newLog, ...prev];
+      try {
+        localStorage.setItem('ismers.client_portal.audit_logs', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+
     setSavedSuccess(true);
   };
+
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      if (logFilterModule !== 'all' && log.module !== logFilterModule) return false;
+      if (logSearch) {
+        const q = logSearch.toLowerCase();
+        return (
+          log.action.toLowerCase().includes(q) ||
+          log.user.toLowerCase().includes(q) ||
+          log.id.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
+  }, [auditLogs, logFilterModule, logSearch]);
 
   return (
     <div className="client-portal-view-container">
@@ -174,6 +266,17 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                 <circle cx="12" cy="12" r="4" />
               </svg>
               Appearance
+            </button>
+            <button
+              type="button"
+              className={`nav-item-btn ${activeTab === 'audit' ? 'active' : ''}`}
+              onClick={() => setActiveTab('audit')}
+            >
+              <svg className="icon" viewBox="0 0 24 24">
+                <path d="M12 8v4l3 3" />
+                <circle cx="12" cy="12" r="9" />
+              </svg>
+              Audit Logs
             </button>
           </div>
         </div>
@@ -461,6 +564,92 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                     Spacious
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: AUDIT LOGS */}
+          {activeTab === 'audit' && (
+            <div className="section-block">
+              <div className="audit-header-row">
+                <div>
+                  <h2 className="section-title">Audit Logs &amp; Activity History</h2>
+                  <p className="section-desc">Track portal access, profile updates, and action history for your company account.</p>
+                </div>
+                <button type="button" className="btn-secondary-action">Export Audit Log (CSV)</button>
+              </div>
+
+              <div className="audit-toolbar">
+                <div className="audit-search-box">
+                  <svg className="icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search action or user..."
+                    value={logSearch}
+                    onChange={(e) => setLogSearch(e.target.value)}
+                  />
+                </div>
+
+                <select
+                  className="audit-select-filter"
+                  value={logFilterModule}
+                  onChange={(e) => setLogFilterModule(e.target.value)}
+                >
+                  <option value="all">All Modules</option>
+                  <option value="Settings">Settings</option>
+                  <option value="Access">Access</option>
+                  <option value="Notifications">Notifications</option>
+                  <option value="Client Portal">Client Portal</option>
+                </select>
+              </div>
+
+              <div className="table-responsive">
+                <table className="audit-table">
+                  <thead>
+                    <tr>
+                      <th>LOG ID</th>
+                      <th>TIMESTAMP</th>
+                      <th>USER</th>
+                      <th>ACTION / EVENT</th>
+                      <th>MODULE</th>
+                      <th>IP ADDRESS</th>
+                      <th>STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredLogs.map((log) => (
+                      <tr key={log.id}>
+                        <td className="log-id">{log.id}</td>
+                        <td className="log-time">{log.timestamp}</td>
+                        <td>
+                          <div className="user-cell">
+                            <span className="user-name">{log.user}</span>
+                          </div>
+                        </td>
+                        <td className="log-action">{log.action}</td>
+                        <td>
+                          <span className="module-badge">{log.module}</span>
+                        </td>
+                        <td className="log-ip">{log.ip}</td>
+                        <td>
+                          <span className={`status-pill ${log.status.toLowerCase()}`}>
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredLogs.length === 0 && (
+                      <tr>
+                        <td colSpan="7" className="empty-table-note">
+                          No matching audit logs found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
