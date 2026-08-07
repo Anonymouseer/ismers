@@ -1,45 +1,30 @@
-// ApplicantRegistrationStore.jsx
-//
-// Feature-scoped state for the Applicant Registration & Profiling board.
-// Replaces the original static prototype's `ISMERSBridge` (a localStorage
-// hack used to fake shared state between separate .html pages). Inside the
-// real React app, other subsystems should read this feature's data through
-// ApplicantRegistrationService (once it calls the real API) rather than
-// reaching into this store directly — see "Frontend cross-feature calls" in
-// the project conventions.
-//
-// NOTE: this file needs a .jsx extension (not .js) because it renders a
-// Provider component with JSX. If your Vite config already parses JSX in
-// .js files project-wide, feel free to rename it back to .js to match the
-// naming convention used elsewhere.
-//
-// NOTE on roles: there is no auth/backend yet, so `role` here is just local
-// state defaulting to 'admin', switchable via RoleSwitcher.jsx in the
-// topbar for demoing permission gating. Replace with real session data once
-// auth exists.
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  SEED_CANDIDATES,
-  STATUS_META,
-  generateId,
+  addDocumentApi,
+  addEducationApi,
+  addReferenceApi,
+  addSkillApi,
+  addWorkHistoryApi,
+  createApplicantApi,
+  deleteApplicantApi,
+  fetchApplicantsApi,
   nextRegId,
+  removeDocumentApi,
+  removeEducationApi,
+  removeReferenceApi,
+  removeSkillApi,
+  removeWorkHistoryApi,
+  sendToRecruitmentApi,
+  updateBasicInfoApi,
+  updateCategoryApi,
+  updateStageApi,
+  updateStatusApi,
+  updateTargetJobApi,
 } from '../services/ApplicantRegistrationService';
 
-const STORAGE_KEY = 'ismers.applicantRegistration.candidates';
 const ROLE_STORAGE_KEY = 'ismers.applicantRegistration.role';
 
 const ApplicantRegistrationContext = createContext(null);
-
-function loadInitialCandidates() {
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch (err) {
-    console.warn('Could not read persisted applicant data, falling back to seed data.', err);
-  }
-  return SEED_CANDIDATES;
-}
 
 function loadInitialRole() {
   try {
@@ -56,16 +41,27 @@ function today() {
 }
 
 export function ApplicantRegistrationProvider({ children }) {
-  const [candidates, setCandidates] = useState(loadInitialCandidates);
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [role, setRole] = useState(loadInitialRole);
 
-  useEffect(() => {
+  const loadCandidates = async () => {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(candidates));
+      const data = await fetchApplicantsApi();
+      setCandidates(data);
+      setError(null);
     } catch (err) {
-      console.warn('Could not persist applicant data.', err);
+      console.error('Failed to load applicants from backend:', err);
+      setError('Could not connect to the recruitment backend server.');
+    } finally {
+      setLoading(false);
     }
-  }, [candidates]);
+  };
+
+  useEffect(() => {
+    loadCandidates();
+  }, []);
 
   useEffect(() => {
     try {
@@ -77,213 +73,19 @@ export function ApplicantRegistrationProvider({ children }) {
 
   const getCandidate = (regId) => candidates.find((c) => c.regId === regId);
 
-  const upsertCandidate = (regId, patch) => {
-    setCandidates((prev) => prev.map((c) => (c.regId === regId ? { ...c, ...patch } : c)));
-  };
-
-  // Appends a line to the applicant's activity history. Internal helper —
-  // every mutating action below calls this so the timeline stays accurate
-  // without every component having to remember to log it themselves.
-  const logHistory = (regId, text) => {
+  // Helper for instant local state update (0ms optimistic UI)
+  const patchCandidateLocal = (regId, patchFn) => {
     setCandidates((prev) =>
-      prev.map((c) =>
-        c.regId === regId
-          ? { ...c, history: [...(c.history || []), { id: generateId('h'), date: today(), text }] }
-          : c
-      )
+      prev.map((c) => (c.regId === regId ? patchFn(c) : c))
     );
   };
 
-  const addSkill = (regId, skill) => {
-    const trimmed = skill.trim();
-    if (!trimmed) return;
-    const c = getCandidate(regId);
-    if (!c) return;
-    upsertCandidate(regId, { skills: [...c.skills, trimmed] });
-    logHistory(regId, `Skill added: ${trimmed}`);
-  };
-
-  const removeSkill = (regId, index) => {
-    const c = getCandidate(regId);
-    if (!c) return;
-    const removed = c.skills[index];
-    const skills = c.skills.slice();
-    skills.splice(index, 1);
-    upsertCandidate(regId, { skills });
-    if (removed) logHistory(regId, `Skill removed: ${removed}`);
-  };
-
-  const addWorkHistory = (regId, entry) => {
-    if (!entry.role.trim() || !entry.company.trim()) return;
-    const c = getCandidate(regId);
-    if (!c) return;
-    const workHistory = [
-      ...c.workHistory,
-      {
-        role: entry.role.trim(),
-        company: entry.company.trim(),
-        duration: entry.duration.trim() || '—',
-      },
-    ];
-    upsertCandidate(regId, { workHistory });
-    logHistory(regId, `Work history added: ${entry.role.trim()} at ${entry.company.trim()}`);
-  };
-
-  const removeWorkHistory = (regId, index) => {
-    const c = getCandidate(regId);
-    if (!c) return;
-    const workHistory = c.workHistory.slice();
-    workHistory.splice(index, 1);
-    upsertCandidate(regId, { workHistory });
-    logHistory(regId, 'Work history entry removed');
-  };
-
-  // ---- Education ----
-  const addEducation = (regId, entry) => {
-    if (!entry.school.trim() || !entry.degree.trim()) return;
-    const c = getCandidate(regId);
-    if (!c) return;
-    const education = [
-      ...(c.education || []),
-      {
-        id: generateId('e'),
-        school: entry.school.trim(),
-        degree: entry.degree.trim(),
-        level: entry.level.trim() || '—',
-        startYear: entry.startYear.trim(),
-        endYear: entry.endYear.trim() || 'Present',
-      },
-    ];
-    upsertCandidate(regId, { education });
-    logHistory(regId, `Education added: ${entry.degree.trim()} at ${entry.school.trim()}`);
-  };
-
-  const removeEducation = (regId, entryId) => {
-    const c = getCandidate(regId);
-    if (!c) return;
-    const education = (c.education || []).filter((e) => e.id !== entryId);
-    upsertCandidate(regId, { education });
-    logHistory(regId, 'Education entry removed');
-  };
-
-  // ---- Documents ----
-  // NOTE: no backend yet, so this only stores file metadata (name, type,
-  // upload date) — not the actual file bytes. View/download won't work
-  // for real until a backend + file storage exists; this just gets the
-  // UI and data shape ready for that.
-  const addDocument = (regId, doc) => {
-    if (!doc.name.trim()) return;
-    const c = getCandidate(regId);
-    if (!c) return;
-    const documents = [
-      ...(c.documents || []),
-      {
-        id: generateId('d'),
-        name: doc.name.trim(),
-        type: doc.type || 'Other Documents',
-        uploadedDate: today(),
-      },
-    ];
-    upsertCandidate(regId, { documents });
-    logHistory(regId, `Document uploaded: ${doc.name.trim()}`);
-  };
-
-  const removeDocument = (regId, docId) => {
-    const c = getCandidate(regId);
-    if (!c) return;
-    const removed = (c.documents || []).find((d) => d.id === docId);
-    const documents = (c.documents || []).filter((d) => d.id !== docId);
-    upsertCandidate(regId, { documents });
-    if (removed) logHistory(regId, `Document removed: ${removed.name}`);
-  };
-
-  // ---- Basic info edit + duplicate detection ----
-  // Checks email/mobile against every OTHER candidate before saving.
-  // Returns { ok, message, duplicate } instead of throwing so the caller
-  // (component) decides how to surface the warning.
-  const updateBasicInfo = (regId, patch) => {
-    const email = (patch.email || '').trim().toLowerCase();
-    const phone = (patch.phone || '').trim();
-
-    const duplicate = candidates.find(
-      (c) =>
-        c.regId !== regId &&
-        ((email && c.email.trim().toLowerCase() === email) ||
-          (phone && c.phone.trim() === phone))
-    );
-
-    if (duplicate) {
-      return {
-        ok: false,
-        duplicate: true,
-        message: `Possible existing applicant found: ${duplicate.name} (${duplicate.regId}) already uses this email or mobile number.`,
-      };
-    }
-
-    upsertCandidate(regId, patch);
-    logHistory(regId, 'Basic information updated');
-    return { ok: true };
-  };
-
-  // ---- Stage / status ----
-  const startProfiling = (regId) => {
-    upsertCandidate(regId, { stage: 'profiling' });
-    logHistory(regId, 'Started profiling');
-  };
-
-  // Returns { ok: true } or { ok: false, message } instead of showing a DOM
-  // warning directly, so the component decides how to display it.
-  const completeProfile = (regId) => {
-    const c = getCandidate(regId);
-    if (!c) return { ok: false, message: 'Applicant not found.' };
-    if (!c.category) {
-      return { ok: false, message: 'Assign a category before marking the profile complete.' };
-    }
-    if (!c.targetJobId) {
-      return { ok: false, message: 'Assign a target job order before marking the profile complete.' };
-    }
-    if (!c.skills.length) {
-      return { ok: false, message: 'Add at least one skill before marking the profile complete.' };
-    }
-    if (!c.workHistory.length) {
-      return { ok: false, message: 'Add at least one work history entry before marking the profile complete.' };
-    }
-    upsertCandidate(regId, { stage: 'profiled' });
-    logHistory(regId, 'Profile marked complete');
-    return { ok: true };
-  };
-
-  const sendToRecruitment = (regId) => {
-    upsertCandidate(regId, { sentToRecruitment: true });
-    logHistory(regId, 'Sent to Recruitment & Selection');
-  };
-
-  const updateStatus = (regId, status) => {
-    upsertCandidate(regId, { status });
-    logHistory(regId, `Status changed to ${STATUS_META[status]?.label || status}`);
-  };
-
-  const updateCategory = (regId, category) => {
-    upsertCandidate(regId, { category });
-    logHistory(regId, category ? `Category assigned: ${category}` : 'Category unassigned');
-  };
-
-  const updateTargetJob = (regId, targetJobId, jobLabel) => {
-    upsertCandidate(regId, { targetJobId });
-    logHistory(regId, targetJobId ? `Target job assigned: ${jobLabel}` : 'Target job unassigned');
-  };
-
-  const deleteCandidate = (regId) => {
-    setCandidates((prev) => prev.filter((c) => c.regId !== regId));
-  };
-
-  // ---- New applicant intake (staff-assisted registration form) ----
-  // Same duplicate check as updateBasicInfo — checked against email/phone
-  // before the record is created. Returns { ok, regId } or { ok, duplicate, message }.
-  const addApplicant = (formData) => {
+  // ── 1. ADD APPLICANT (0ms Instant Response) ──
+  const addApplicant = async (formData) => {
     const email = (formData.email || '').trim().toLowerCase();
     const phone = (formData.phone || '').trim();
 
+    // Fast local duplicate check first
     const duplicate = candidates.find(
       (c) =>
         (email && c.email.trim().toLowerCase() === email) ||
@@ -298,14 +100,19 @@ export function ApplicantRegistrationProvider({ children }) {
     }
 
     const regId = nextRegId(candidates);
-    const registeredDate = today();
+    const fullName = [formData.firstName, formData.lastName].filter(Boolean).join(' ');
 
     const newCandidate = {
+      id: Date.now(),
       regId,
-      name: formData.name || '',
-      lastName: formData.lastName || '',
+      name: fullName || 'New Applicant',
+      firstName: formData.firstName || '',
       middleName: formData.middleName || '',
+      lastName: formData.lastName || '',
       suffix: formData.suffix || '',
+      email: formData.email || '',
+      phone: formData.phone || '',
+      alternateContact: formData.alternateContact || '',
       dateOfBirth: formData.dateOfBirth || '',
       gender: formData.gender || '',
       civilStatus: formData.civilStatus || '',
@@ -314,11 +121,8 @@ export function ApplicantRegistrationProvider({ children }) {
       height: formData.height || '',
       weight: formData.weight || '',
       religion: formData.religion || '',
-      email: formData.email || '',
-      phone: formData.phone || '',
-      alternateContact: formData.alternateContact || '',
-      address: formData.address || '',
       location: formData.location || '',
+      address: formData.address || '',
       spouseName: formData.spouseName || '',
       spouseOccupation: formData.spouseOccupation || '',
       fatherName: formData.fatherName || '',
@@ -328,57 +132,354 @@ export function ApplicantRegistrationProvider({ children }) {
       familyAddress: formData.familyAddress || '',
       emergencyContactName: formData.emergencyContactName || '',
       emergencyContactAddress: formData.emergencyContactAddress || '',
+      category: formData.category || null,
       experienceSummary: formData.experienceSummary || '',
       targetJobId: null,
-      category: null,
-      skills: [],
-      workHistory: formData.workHistory || [],
-      education: (formData.education || []).map((e) => ({ id: generateId('e'), ...e })),
-      documents: [],
-      references: (formData.references || []).map((r) => ({ id: generateId('r'), ...r })),
       stage: 'registered',
       status: 'active',
       sentToRecruitment: false,
-      registeredDate,
-      history: [{ id: generateId('h'), date: registeredDate, text: 'Applicant registered' }],
+      submissionSource: formData.submissionSource || 'staff',
+      registeredDate: today(),
+      skills: [],
+      workHistory: formData.workHistory || [],
+      education: formData.education || [],
+      documents: [],
+      references: formData.references || [],
+      history: [{ id: `h-${Date.now()}`, date: today(), text: 'Applicant registered' }],
     };
 
-    setCandidates((prev) => [...prev, newCandidate]);
-    return { ok: true, regId };
+    // 0ms Instant UI update
+    setCandidates((prev) => [newCandidate, ...prev]);
+
+    // Async backend sync
+    try {
+      const res = await createApplicantApi(formData);
+      if (!res.ok) {
+        await loadCandidates();
+        return { ok: false, duplicate: res.duplicate, message: res.message };
+      }
+      return { ok: true, regId: res.regId };
+    } catch (err) {
+      await loadCandidates();
+      return { ok: false, message: 'Server error creating applicant.' };
+    }
   };
 
-  // ---- References ----
-  const addReference = (regId, entry) => {
+  // ── 2. UPDATE BASIC INFO (0ms Instant Response) ──
+  const updateBasicInfo = async (regId, patch) => {
+    patchCandidateLocal(regId, (c) => ({ ...c, ...patch }));
+    try {
+      const res = await updateBasicInfoApi(regId, patch);
+      if (!res.ok) {
+        await loadCandidates();
+        return { ok: false, duplicate: res.duplicate, message: res.message };
+      }
+      return { ok: true };
+    } catch (err) {
+      await loadCandidates();
+      return { ok: false, message: 'Server error updating information.' };
+    }
+  };
+
+  // ── 3. DELETE APPLICANT (0ms Instant Response) ──
+  const deleteCandidate = async (regId) => {
+    setCandidates((prev) => prev.filter((c) => c.regId !== regId));
+    try {
+      await deleteApplicantApi(regId);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  // ── 4. SKILLS (0ms Instant Response) ──
+  const addSkill = async (regId, skill) => {
+    const trimmed = skill.trim();
+    if (!trimmed) return;
+
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      skills: [...c.skills, trimmed],
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: `Skill added: ${trimmed}` }],
+    }));
+
+    try {
+      await addSkillApi(regId, trimmed);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const removeSkill = async (regId, index) => {
+    const c = getCandidate(regId);
+    if (!c || !c.skills[index]) return;
+
+    const skillName = c.skills[index];
+
+    patchCandidateLocal(regId, (cand) => ({
+      ...cand,
+      skills: cand.skills.filter((_, i) => i !== index),
+      history: [...cand.history, { id: `h-${Date.now()}`, date: today(), text: `Skill removed: ${skillName}` }],
+    }));
+
+    try {
+      await removeSkillApi(regId, encodeURIComponent(skillName));
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  // ── 5. WORK HISTORY (0ms Instant Response) ──
+  const addWorkHistory = async (regId, entry) => {
+    if (!entry.role.trim() || !entry.company.trim()) return;
+
+    const newWork = {
+      id: `temp-${Date.now()}`,
+      role: entry.role.trim(),
+      company: entry.company.trim(),
+      duration: entry.duration.trim() || '—',
+    };
+
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      workHistory: [...c.workHistory, newWork],
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: `Work history added: ${newWork.role} at ${newWork.company}` }],
+    }));
+
+    try {
+      await addWorkHistoryApi(regId, entry);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const removeWorkHistory = async (regId, index) => {
+    const c = getCandidate(regId);
+    if (!c || !c.workHistory[index]) return;
+    const workId = c.workHistory[index].id;
+
+    patchCandidateLocal(regId, (cand) => ({
+      ...cand,
+      workHistory: cand.workHistory.filter((_, i) => i !== index),
+      history: [...cand.history, { id: `h-${Date.now()}`, date: today(), text: 'Work history entry removed' }],
+    }));
+
+    try {
+      await removeWorkHistoryApi(regId, workId);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  // ── 6. EDUCATION (0ms Instant Response) ──
+  const addEducation = async (regId, entry) => {
+    if (!entry.school.trim()) return;
+
+    const newEdu = {
+      id: `temp-${Date.now()}`,
+      school: entry.school.trim(),
+      degree: entry.degree?.trim() || '',
+      level: entry.level?.trim() || '—',
+      startYear: entry.startYear?.trim() || '',
+      endYear: entry.endYear?.trim() || 'Present',
+    };
+
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      education: [...(c.education || []), newEdu],
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: `Education added: ${newEdu.degree} at ${newEdu.school}` }],
+    }));
+
+    try {
+      await addEducationApi(regId, entry);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const removeEducation = async (regId, entryId) => {
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      education: (c.education || []).filter((e) => e.id !== entryId),
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: 'Education entry removed' }],
+    }));
+
+    try {
+      await removeEducationApi(regId, entryId);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  // ── 7. DOCUMENTS (0ms Instant Response) ──
+  const addDocument = async (regId, doc) => {
+    const docName = doc instanceof FormData ? (doc.get('name') || 'Document') : doc.name;
+    const docType = doc instanceof FormData ? (doc.get('type') || 'Other Documents') : (doc.type || 'Other Documents');
+
+    const tempDoc = {
+      id: `temp-${Date.now()}`,
+      name: docName,
+      type: docType,
+      uploadedDate: today(),
+    };
+
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      documents: [...(c.documents || []), tempDoc],
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: `Document uploaded: ${docName}` }],
+    }));
+
+    try {
+      await addDocumentApi(regId, doc);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const removeDocument = async (regId, docId) => {
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      documents: (c.documents || []).filter((d) => d.id !== docId),
+    }));
+
+    try {
+      await removeDocumentApi(regId, docId);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  // ── 8. REFERENCES (0ms Instant Response) ──
+  const addReference = async (regId, entry) => {
     if (!entry.name.trim()) return;
-    const c = getCandidate(regId);
-    if (!c) return;
-    const references = [
-      ...(c.references || []),
-      {
-        id: generateId('r'),
-        name: entry.name.trim(),
-        occupation: entry.occupation.trim() || '—',
-        contact: entry.contact.trim() || '—',
-      },
-    ];
-    upsertCandidate(regId, { references });
-    logHistory(regId, `Reference added: ${entry.name.trim()}`);
+
+    const tempRef = {
+      id: `temp-${Date.now()}`,
+      name: entry.name.trim(),
+      occupation: entry.occupation?.trim() || '—',
+      contact: entry.contact?.trim() || '—',
+    };
+
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      references: [...(c.references || []), tempRef],
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: `Reference added: ${tempRef.name}` }],
+    }));
+
+    try {
+      await addReferenceApi(regId, entry);
+    } catch (err) {
+      await loadCandidates();
+    }
   };
 
-  const removeReference = (regId, refId) => {
+  const removeReference = async (regId, refId) => {
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      references: (c.references || []).filter((r) => r.id !== refId),
+    }));
+    try {
+      await removeReferenceApi(regId, refId);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  // ── 9. STAGE & STATUS ACTIONS (0ms Instant Response) ──
+  const startProfiling = async (regId) => {
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      stage: 'profiling',
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: 'Started profiling' }],
+    }));
+    try {
+      await updateStageApi(regId, 'profiling');
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const completeProfile = async (regId) => {
     const c = getCandidate(regId);
-    if (!c) return;
-    const references = (c.references || []).filter((r) => r.id !== refId);
-    upsertCandidate(regId, { references });
-    logHistory(regId, 'Reference removed');
+    if (!c) return { ok: false, message: 'Applicant not found.' };
+    if (!c.category) {
+      return { ok: false, message: 'Assign a category before marking the profile complete.' };
+    }
+    if (!c.targetJobId) {
+      return { ok: false, message: 'Assign a target job order before marking the profile complete.' };
+    }
+    if (!c.skills.length) {
+      return { ok: false, message: 'Add at least one skill before marking the profile complete.' };
+    }
+    if (!c.workHistory.length) {
+      return { ok: false, message: 'Add at least one work history entry before marking the profile complete.' };
+    }
+
+    patchCandidateLocal(regId, (cand) => ({
+      ...cand,
+      stage: 'profiled',
+      history: [...cand.history, { id: `h-${Date.now()}`, date: today(), text: 'Profile marked complete' }],
+    }));
+
+    try {
+      const res = await updateStageApi(regId, 'profiled');
+      if (res.ok === false) {
+        await loadCandidates();
+        return { ok: false, message: res.message };
+      }
+      return { ok: true };
+    } catch (err) {
+      await loadCandidates();
+      return { ok: false, message: 'Failed to update stage on server.' };
+    }
+  };
+
+  const sendToRecruitment = async (regId) => {
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      sentToRecruitment: true,
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: 'Sent to Recruitment & Selection' }],
+    }));
+    try {
+      await sendToRecruitmentApi(regId);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const updateStatus = async (regId, status) => {
+    patchCandidateLocal(regId, (c) => ({ ...c, status }));
+    try {
+      await updateStatusApi(regId, status);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const updateCategory = async (regId, category) => {
+    patchCandidateLocal(regId, (c) => ({ ...c, category }));
+    try {
+      await updateCategoryApi(regId, category);
+    } catch (err) {
+      await loadCandidates();
+    }
+  };
+
+  const updateTargetJob = async (regId, targetJobId, jobLabel) => {
+    patchCandidateLocal(regId, (c) => ({ ...c, targetJobId }));
+    try {
+      await updateTargetJobApi(regId, targetJobId, jobLabel);
+    } catch (err) {
+      await loadCandidates();
+    }
   };
 
   const value = {
     candidates,
+    loading,
+    error,
     role,
     setRole,
     getCandidate,
-    upsertCandidate,
     addApplicant,
     addSkill,
     removeSkill,
@@ -398,6 +499,7 @@ export function ApplicantRegistrationProvider({ children }) {
     updateCategory,
     updateTargetJob,
     deleteCandidate,
+    refreshCandidates: loadCandidates,
   };
 
   return (
