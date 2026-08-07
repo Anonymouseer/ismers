@@ -54,6 +54,7 @@ export default function PublicApplyPage() {
   const [resumeFile, setResumeFile] = useState(null);
   const [error, setError] = useState('');
   const [submittedRegId, setSubmittedRegId] = useState(null);
+  const [stepKey, setStepKey] = useState(0);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -90,20 +91,22 @@ export default function PublicApplyPage() {
   const goNext = () => {
     if (!validateStep()) return;
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStepKey((k) => k + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const goBack = () => {
     setError('');
     setStep((s) => Math.max(s - 1, 0));
+    setStepKey((k) => k + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const goToStep = (target) => {
-    // Only allow going back freely; going forward requires validation
     if (target < step) {
       setError('');
       setStep(target);
+      setStepKey((k) => k + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -164,6 +167,27 @@ export default function PublicApplyPage() {
   if (submittedRegId) {
     return (
       <div className="public-apply-page">
+        <div className="public-apply-brand-strip">
+          <div className="public-apply-deco">
+            <div className="public-apply-deco-ring public-apply-deco-ring--a" />
+            <div className="public-apply-deco-ring public-apply-deco-ring--b" />
+            <div className="public-apply-deco-ring public-apply-deco-ring--c" />
+            <div className="public-apply-deco-blob" />
+          </div>
+          <div className="public-apply-header">
+            <img src={primepowerLogo} alt="PRIMEPOWER Logo" className="public-apply-logo" />
+            <div>
+              <div className="public-apply-brand-name">PRIMEPOWER MANPOWER</div>
+              <div className="public-apply-brand-sub">HR Smart Recruitment System</div>
+            </div>
+          </div>
+          <div className="public-apply-intro">
+            <div className="public-apply-title">Application Submitted</div>
+            <div className="public-apply-sub">
+              Your application has been received and is now under review.
+            </div>
+          </div>
+        </div>
         <div className="public-apply-success">
           <div className="public-apply-success-icon">
             <svg className="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
@@ -187,23 +211,23 @@ export default function PublicApplyPage() {
         Applicant Information
       </div>
       <div className="edit-form-grid intake-grid">
-        <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} /></label>
-        <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} /></label>
-        <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} /></label>
+        <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} placeholder="Enter first name" /></label>
+        <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} placeholder="Enter middle name" /></label>
+        <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} placeholder="Enter last name" /></label>
         <label>Suffix<input type="text" placeholder="Jr., Sr., III..." value={form.suffix} onChange={set('suffix')} /></label>
-        <label>City Address<input type="text" value={form.location} onChange={set('location')} /></label>
-        <label>Provincial Address<input type="text" value={form.address} onChange={set('address')} /></label>
-        <label>Cel #<input type="text" value={form.phone} onChange={set('phone')} /></label>
-        <label>Alternate Contact<input type="text" value={form.alternateContact} onChange={set('alternateContact')} /></label>
-        <label>Email<input type="email" value={form.email} onChange={set('email')} /></label>
-        <label>Age<input type="text" value={form.age} onChange={set('age')} /></label>
-        <label>Sex<input type="text" value={form.gender} onChange={set('gender')} /></label>
+        <label>City Address<input type="text" value={form.location} onChange={set('location')} placeholder="Current city address" /></label>
+        <label>Provincial Address<input type="text" value={form.address} onChange={set('address')} placeholder="Provincial address" /></label>
+        <label>Cel #<input type="text" value={form.phone} onChange={set('phone')} placeholder="09XX XXX XXXX" /></label>
+        <label>Alternate Contact<input type="text" value={form.alternateContact} onChange={set('alternateContact')} placeholder="Alternative number" /></label>
+        <label>Email<input type="email" value={form.email} onChange={set('email')} placeholder="email@example.com" /></label>
+        <label>Age<input type="text" value={form.age} onChange={set('age')} placeholder="e.g. 25" /></label>
+        <label>Sex<input type="text" value={form.gender} onChange={set('gender')} placeholder="Male / Female" /></label>
         <label>Date of Birth<input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} /></label>
-        <label>Place of Birth<input type="text" value={form.placeOfBirth} onChange={set('placeOfBirth')} /></label>
+        <label>Place of Birth<input type="text" value={form.placeOfBirth} onChange={set('placeOfBirth')} placeholder="City, Province" /></label>
         <label>Height<input type="text" placeholder={'e.g. 5\'6"'} value={form.height} onChange={set('height')} /></label>
         <label>Weight<input type="text" placeholder="e.g. 60kg" value={form.weight} onChange={set('weight')} /></label>
-        <label>Religion<input type="text" value={form.religion} onChange={set('religion')} /></label>
-        <label>Nationality<input type="text" value={form.nationality} onChange={set('nationality')} /></label>
+        <label>Religion<input type="text" value={form.religion} onChange={set('religion')} placeholder="Enter religion" /></label>
+        <label>Nationality<input type="text" value={form.nationality} onChange={set('nationality')} placeholder="e.g. Filipino" /></label>
         <label>
           Position Interest
           <select value={form.category} onChange={set('category')}>
@@ -224,15 +248,15 @@ export default function PublicApplyPage() {
         Family / Emergency Information
       </div>
       <div className="edit-form-grid intake-grid">
-        <label>Name of Spouse<input type="text" value={form.spouseName} onChange={set('spouseName')} /></label>
-        <label>Occupation<input type="text" value={form.spouseOccupation} onChange={set('spouseOccupation')} /></label>
-        <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} /></label>
-        <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} /></label>
-        <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} /></label>
-        <label>Occupation<input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} /></label>
-        <label className="span-2">Family Address<input type="text" value={form.familyAddress} onChange={set('familyAddress')} /></label>
-        <label>Emergency Contact Person<input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} /></label>
-        <label>Address / Contact Number<input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} /></label>
+        <label>Name of Spouse<input type="text" value={form.spouseName} onChange={set('spouseName')} placeholder="Full name of spouse" /></label>
+        <label>Occupation<input type="text" value={form.spouseOccupation} onChange={set('spouseOccupation')} placeholder="Spouse's occupation" /></label>
+        <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} placeholder="Full name of father" /></label>
+        <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} placeholder="Father's occupation" /></label>
+        <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} placeholder="Full name of mother" /></label>
+        <label>Occupation<input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} placeholder="Mother's occupation" /></label>
+        <label className="span-2">Family Address<input type="text" value={form.familyAddress} onChange={set('familyAddress')} placeholder="Complete family address" /></label>
+        <label>Emergency Contact Person<input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} placeholder="Full name" /></label>
+        <label>Address / Contact Number<input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} placeholder="Address or phone number" /></label>
       </div>
     </div>
   );
@@ -256,6 +280,7 @@ export default function PublicApplyPage() {
               type="text"
               value={educationRows[level].school}
               onChange={setEducationField(level, 'school')}
+              placeholder="School name"
             />
             <input
               type="text"
@@ -285,11 +310,11 @@ export default function PublicApplyPage() {
         </div>
         {employmentRows.map((row, i) => (
           <div className="intake-table-row intake-table-4col" key={i}>
-            <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} />
-            <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} />
-            <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} />
+            <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} placeholder="MM/YYYY" />
+            <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} placeholder="MM/YYYY" />
+            <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} placeholder="Job title" />
             <div className="intake-table-cell-with-remove">
-              <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} />
+              <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} placeholder="Company name" />
               {employmentRows.length > 1 && (
                 <button type="button" onClick={() => removeEmploymentRow(i)}>x</button>
               )}
@@ -299,7 +324,7 @@ export default function PublicApplyPage() {
       </div>
 
       {/* Resume upload */}
-      <div style={{ marginTop: 20 }}>
+      <div style={{ marginTop: 22 }}>
         <div className="numbered-section-title" style={{ marginBottom: 12 }}>
           <span className="numbered-section-badge" style={{ background: 'var(--muted-fg)' }}>
             <svg className="icon" viewBox="0 0 24 24" style={{ width: 12, height: 12, color: '#fff' }}><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
@@ -308,10 +333,13 @@ export default function PublicApplyPage() {
           <span className="numbered-section-hint">Optional</span>
         </div>
         <label htmlFor="resume-upload" className="public-file-drop">
-          <div style={{ fontSize: 12, fontWeight: 700 }}>
+          <div className="public-file-drop-icon">
+            <svg className="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+          </div>
+          <div className="public-file-drop-text">
             {resumeFile ? 'Change file' : 'Tap to upload your resume'}
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--muted)', marginTop: 4 }}>
+          <div className="public-file-drop-hint">
             PDF, JPG, or PNG -- a photo of your resume works too
           </div>
           {resumeFile && <div className="public-file-drop-filename">{resumeFile.name}</div>}
@@ -336,10 +364,10 @@ export default function PublicApplyPage() {
         </div>
         {referenceRows.map((row, i) => (
           <div className="intake-table-row intake-table-3col" key={i}>
-            <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} />
-            <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} />
+            <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} placeholder="Full name" />
+            <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} placeholder="Occupation" />
             <div className="intake-table-cell-with-remove">
-              <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} />
+              <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} placeholder="Contact info" />
               {referenceRows.length > 1 && (
                 <button type="button" onClick={() => removeReferenceRow(i)}>x</button>
               )}
@@ -359,81 +387,130 @@ export default function PublicApplyPage() {
   ];
 
   const isLastStep = step === STEPS.length - 1;
+  const progressPercent = ((step + 1) / STEPS.length) * 100;
 
   return (
     <div className="public-apply-page">
-      {/* Header with company logo */}
-      <div className="public-apply-header">
-        <img src={primepowerLogo} alt="PRIMEPOWER Logo" className="public-apply-logo" />
-        <div>
-          <div className="public-apply-brand-name">PRIMEPOWER MANPOWER</div>
-          <div className="public-apply-brand-sub">HR Smart Recruitment System</div>
+      {/* Brand strip — matches system dark navy gradient */}
+      <div className="public-apply-brand-strip">
+        <div className="public-apply-deco">
+          <div className="public-apply-deco-ring public-apply-deco-ring--a" />
+          <div className="public-apply-deco-ring public-apply-deco-ring--b" />
+          <div className="public-apply-deco-ring public-apply-deco-ring--c" />
+          <div className="public-apply-deco-blob" />
+        </div>
+
+        {/* Header with company logo */}
+        <div className="public-apply-header">
+          <img src={primepowerLogo} alt="PRIMEPOWER Logo" className="public-apply-logo" />
+          <div>
+            <div className="public-apply-brand-name">PRIMEPOWER MANPOWER</div>
+            <div className="public-apply-brand-sub">HR Smart Recruitment System</div>
+          </div>
+        </div>
+
+        {/* Hero intro */}
+        <div className="public-apply-intro">
+          <div className="public-apply-title">Apply Now</div>
+          <div className="public-apply-sub">
+            Complete the application form below. All sections can be filled out at your own pace.
+            Our recruitment team will follow up with you after review.
+          </div>
+        </div>
+
+        {/* Trust badges */}
+        <div className="public-apply-trust">
+          <div className="trust-item">
+            <svg className="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+            Secure Submission
+          </div>
+          <div className="trust-item">
+            <svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            5-Minute Process
+          </div>
+          <div className="trust-item">
+            <svg className="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+            No Account Required
+          </div>
         </div>
       </div>
 
-      {/* Intro banner */}
-      <div className="public-apply-intro">
-        <div className="public-apply-title">Apply Now</div>
-        <div className="public-apply-sub">
-          Complete the application form below. All sections can be filled out at your own pace.
-          Our recruitment team will follow up with you after review.
-        </div>
-      </div>
+      {/* Content area on var(--bg) background */}
+      <div className="public-apply-content">
+        {/* Stepper indicator */}
+        <div className="public-apply-stepper">
+          {STEPS.map((s, i) => {
+            let cls = 'pa-step';
+            if (i < step) cls += ' done';
+            else if (i === step) cls += ' current';
+            else cls += ' future';
 
-      {/* Stepper indicator */}
-      <div className="public-apply-stepper">
-        {STEPS.map((s, i) => {
-          let cls = 'pa-step';
-          if (i < step) cls += ' done';
-          else if (i === step) cls += ' current';
-          else cls += ' future';
-
-          return (
-            <div
-              key={s.key}
-              className={cls}
-              onClick={() => goToStep(i)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && goToStep(i)}
-            >
-              <div className="pa-step-dot">
-                {i < step ? (
-                  <svg className="icon" viewBox="0 0 24 24" style={{ width: 11, height: 11 }}><path d="M20 6 9 17l-5-5" /></svg>
-                ) : (
-                  i + 1
-                )}
+            return (
+              <div
+                key={s.key}
+                className={cls}
+                onClick={() => goToStep(i)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && goToStep(i)}
+              >
+                <div className="pa-step-dot">
+                  {i < step ? (
+                    <svg className="icon" viewBox="0 0 24 24" style={{ width: 11, height: 11 }}><path d="M20 6 9 17l-5-5" /></svg>
+                  ) : (
+                    i + 1
+                  )}
+                </div>
+                <div className="pa-step-label">{s.label}</div>
               </div>
-              <div className="pa-step-label">{s.label}</div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Step content */}
-      <div className="public-apply-form">
-        {stepRenderers[step]()}
+        {/* Step progress bar */}
+        <div className="public-apply-step-progress">
+          <div className="step-progress-text">
+            Step <strong>{step + 1}</strong> of <strong>{STEPS.length}</strong>
+          </div>
+          <div className="step-progress-bar">
+            <div className="step-progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
 
-        {error && <div className="actions-warning" style={{ textAlign: 'left', marginBottom: 12 }}>{error}</div>}
+        {/* Step content */}
+        <div className="public-apply-form">
+          <div className="public-apply-step-content" key={stepKey}>
+            {stepRenderers[step]()}
+          </div>
 
-        <div className="public-apply-nav-row">
-          {step > 0 && (
-            <button type="button" className="stage-btn" onClick={goBack}>
-              <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-              Previous
-            </button>
-          )}
-          <div style={{ flex: 1 }} />
-          {!isLastStep ? (
-            <button type="button" className="stage-btn go" onClick={goNext}>
-              Next Step
-              <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: '#fff' }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-            </button>
-          ) : (
-            <button type="button" className="stage-btn go" onClick={handleSubmit}>
-              Submit Application
-            </button>
-          )}
+          {error && <div className="actions-warning" style={{ textAlign: 'left', marginBottom: 12 }}>{error}</div>}
+
+          <div className="public-apply-nav-row">
+            {step > 0 && (
+              <button type="button" className="stage-btn" onClick={goBack}>
+                <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+                Previous
+              </button>
+            )}
+            <div style={{ flex: 1 }} />
+            {!isLastStep ? (
+              <button type="button" className="stage-btn go" onClick={goNext}>
+                Next Step
+                <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: '#fff' }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              </button>
+            ) : (
+              <button type="button" className="stage-btn go" onClick={handleSubmit}>
+                Submit Application
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="public-apply-footer">
+          <div className="public-apply-footer-text">
+            PRIMEPOWER Manpower Services -- HR Smart Recruitment System
+          </div>
         </div>
       </div>
     </div>
