@@ -4,6 +4,8 @@ export default function ControlsBar({
   clients,
   clientFilter,
   onClientFilterChange,
+  activeStatus,
+  onActiveStatusChange,
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
@@ -21,15 +23,33 @@ export default function ControlsBar({
 
       {/* CLIENT FILTER DROPDOWN */}
       <select
+        aria-label="Filter by Client"
         style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: 12, fontWeight: 700, outline: 'none', cursor: 'pointer' }}
         value={clientFilter}
         onChange={(e) => onClientFilterChange(e.target.value)}
       >
-        <option value="all">All Clients</option>
+        <option value="all">All Clients ({clients.length})</option>
         {clients.map((c) => (
           <option key={c} value={c}>{c}</option>
         ))}
       </select>
+
+      {/* DEPLOYMENT STATUS FILTER DROPDOWN */}
+      <select
+        aria-label="Filter by Status"
+        style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: 12, fontWeight: 700, outline: 'none', cursor: 'pointer' }}
+        value={activeStatus || 'all'}
+        onChange={(e) => onActiveStatusChange(e.target.value)}
+      >
+        <option value="all">All Statuses</option>
+        <option value="active">Active Assignment</option>
+        <option value="scheduled">Pre-Deployment / Scheduled</option>
+        <option value="onboarding">On-Site Onboarding</option>
+        <option value="renewal_due">Contract Renewal Due</option>
+        <option value="extended">Extended Contract</option>
+        <option value="completed">Assignment Completed</option>
+      </select>
     </div>
   );
 }
+

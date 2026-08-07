@@ -5,8 +5,11 @@ export default function Header({ onToggleMobileMenu }) {
   const location = useLocation();
   const path = location.pathname;
 
-  // Dynamic system breadcrumbs based on route
+  // Dynamic system breadcrumbs based on route and query parameters
   const getBreadcrumb = () => {
+    const searchParams = new URLSearchParams(location.search);
+    const tabParam = searchParams.get('tab');
+
     if (path.includes('client-management')) {
       return (
         <>
@@ -22,6 +25,13 @@ export default function Header({ onToggleMobileMenu }) {
       );
     }
     if (path.includes('applicant-registration')) {
+      if (path.includes('/register')) {
+        return (
+          <>
+            <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; </span><b>Register Applicant</b>
+          </>
+        );
+      }
       return (
         <>
           <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; </span><b>Applicant Profiling</b>
@@ -43,9 +53,14 @@ export default function Header({ onToggleMobileMenu }) {
       );
     }
     if (path.includes('ai-analytics')) {
+      let activeTabTitle = 'AI Candidate Scoring';
+      if (tabParam === 'pipeline') activeTabTitle = 'Recruitment Intelligence';
+      else if (tabParam === 'retention') activeTabTitle = 'Workforce Retention';
+      else if (tabParam === 'scoring') activeTabTitle = 'AI Candidate Scoring';
+
       return (
         <>
-          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; AI &amp; Analytics &nbsp;›&nbsp; </span><b>Smart Telemetry</b>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; AI &amp; Analytics &nbsp;›&nbsp; </span><b>{activeTabTitle}</b>
         </>
       );
     }

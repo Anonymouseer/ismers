@@ -37,28 +37,44 @@ export default function AiAnalyticsPage() {
 
           {/* KPI STATS STRIP */}
           <div className="ai-kpi-grid">
-            <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: 'var(--shadow-xs)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Total Scored Candidates</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', marginTop: 2 }}>10 Applicants</div>
-              <div style={{ fontSize: 10.5, color: 'var(--green)', fontWeight: 700, marginTop: 2 }}>94% Top Match Fit</div>
+            <div className="executive-kpi-card blue">
+              <div className="kpi-title-strip">
+                <span className="kpi-label">Total Scored Candidates</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val">10 Applicants</span>
+                <span className="kpi-sub-badge green">94% Top Fit</span>
+              </div>
             </div>
 
-            <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: 'var(--shadow-xs)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Avg Time-to-Deploy</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginTop: 2 }}>4.2 Days</div>
-              <div style={{ fontSize: 10.5, color: 'var(--green)', fontWeight: 700, marginTop: 2 }}>-1.5 days vs last month</div>
+            <div className="executive-kpi-card green">
+              <div className="kpi-title-strip">
+                <span className="kpi-label">Avg Time-to-Deploy</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val">4.2 Days</span>
+                <span className="kpi-sub-badge green">-1.5d vs MoM</span>
+              </div>
             </div>
 
-            <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: 'var(--shadow-xs)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Retention Risk Alerts</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--red)', marginTop: 2 }}>2 High Risk</div>
-              <div style={{ fontSize: 10.5, color: 'var(--amber)', fontWeight: 700, marginTop: 2 }}>Pending contract renewal</div>
+            <div className="executive-kpi-card red">
+              <div className="kpi-title-strip">
+                <span className="kpi-label">Retention Risk Alerts</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val" style={{ color: 'var(--red)' }}>2 High Risk</span>
+                <span className="kpi-sub-badge amber">Contract Renewal</span>
+              </div>
             </div>
 
-            <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 14px', boxShadow: 'var(--shadow-xs)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Pipeline Conversion</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--purple)', marginTop: 2 }}>68.5%</div>
-              <div style={{ fontSize: 10.5, color: 'var(--green)', fontWeight: 700, marginTop: 2 }}>+4.2% MoM growth</div>
+            <div className="executive-kpi-card purple">
+              <div className="kpi-title-strip">
+                <span className="kpi-label">Pipeline Conversion</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val" style={{ color: 'var(--purple)' }}>68.5%</span>
+                <span className="kpi-sub-badge green">+4.2% MoM</span>
+              </div>
             </div>
           </div>
 

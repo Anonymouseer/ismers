@@ -75,9 +75,15 @@ export function useDeploymentAssignmentStore() {
         d.client.toLowerCase().includes(q) ||
         d.site.toLowerCase().includes(q);
       const matchesClient = clientFilter === 'all' || d.client === clientFilter;
-      return matchesQ && matchesClient;
+      const matchesStatus =
+        activeStatus === 'all' ||
+        (activeStatus === 'active' && stageToStatus(d.stage) === 'active') ||
+        (activeStatus === 'ending' && stageToStatus(d.stage) === 'ending') ||
+        (activeStatus === 'completed' && stageToStatus(d.stage) === 'completed') ||
+        d.stage === activeStatus;
+      return matchesQ && matchesClient && matchesStatus;
     });
-  }, [deployments, search, clientFilter]);
+  }, [deployments, search, clientFilter, activeStatus]);
 
   const stats = useMemo(() => {
     const total = deployments.length;

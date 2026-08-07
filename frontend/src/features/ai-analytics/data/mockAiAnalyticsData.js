@@ -233,7 +233,6 @@ export const PIPELINE_ANALYTICS = {
     { stage: 'Client Interviewed', count: 122, conversion: '38.1%', trend: '+2.4% MoM' },
     { stage: 'Deployed on Site', count: 98, conversion: '30.6%', trend: '-1.5% MoM' },
   ],
-  // MOCK DATA: Stage duration breakdown summing up to 4.2 days total Avg Time-to-Deploy
   stageDurations: [
     { from: 'Registered', to: 'Profiled', days: 1.2, isBottleneck: true, trend: '-0.2 days' },
     { from: 'Profiled', to: 'Shortlisted', days: 0.8, isBottleneck: false, trend: '+0.1 days' },
@@ -249,6 +248,24 @@ export const PIPELINE_ANALYTICS = {
     { position: 'Security Guard', client: 'ABC Logistics', demand: 6, fulfilled: 5, gap: 1, status: 'Balanced' },
     { position: 'Maintenance Technician', client: 'City Garden Hotel', demand: 4, fulfilled: 3, gap: 1, status: 'Moderate Supply' },
     { position: 'Reservations Agent', client: 'Seda Vertis North', demand: 5, fulfilled: 2, gap: 3, status: 'Supply Deficit' },
+  ],
+  recruiterPerformance: [
+    { name: 'M. Dela Cruz', assignedJOs: 12, placedCandidates: 34, avgDaysToFill: 3.8, conversionRate: '74.2%', rating: 'Exceeding' },
+    { name: 'J. Santos', assignedJOs: 9, placedCandidates: 28, avgDaysToFill: 4.1, conversionRate: '68.9%', rating: 'Optimal' },
+    { name: 'A. Reyes', assignedJOs: 14, placedCandidates: 25, avgDaysToFill: 4.6, conversionRate: '64.5%', rating: 'Optimal' },
+    { name: 'R. Navarro', assignedJOs: 8, placedCandidates: 19, avgDaysToFill: 4.8, conversionRate: '61.0%', rating: 'Needs Review' },
+    { name: 'K. Alonzo', assignedJOs: 11, placedCandidates: 31, avgDaysToFill: 3.9, conversionRate: '72.0%', rating: 'Exceeding' },
+    { name: 'D. Ocampo', assignedJOs: 10, placedCandidates: 24, avgDaysToFill: 4.3, conversionRate: '66.8%', rating: 'Optimal' },
+    { name: 'P. Santiago', assignedJOs: 7, placedCandidates: 21, avgDaysToFill: 4.0, conversionRate: '70.5%', rating: 'Optimal' },
+    { name: 'E. Morales', assignedJOs: 13, placedCandidates: 29, avgDaysToFill: 4.2, conversionRate: '67.4%', rating: 'Optimal' },
+    { name: 'B. Castaneda', assignedJOs: 6, placedCandidates: 15, avgDaysToFill: 4.9, conversionRate: '59.2%', rating: 'Needs Review' },
+    { name: 'T. Mendoza', assignedJOs: 15, placedCandidates: 38, avgDaysToFill: 3.6, conversionRate: '76.1%', rating: 'Exceeding' },
+  ],
+  sourcingChannels: [
+    { channel: 'Direct Portal', applicants: 134, hires: 41, conversionRate: '30.6%', share: '42%' },
+    { channel: 'Employee Referral', applicants: 90, hires: 27, conversionRate: '30.0%', share: '28%' },
+    { channel: 'Walk-in Applicants', applicants: 58, hires: 18, conversionRate: '31.0%', share: '18%' },
+    { channel: 'Social & Digital', applicants: 38, hires: 12, conversionRate: '31.6%', share: '12%' },
   ],
 };
 

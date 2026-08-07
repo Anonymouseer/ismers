@@ -35,15 +35,271 @@
 
 .ai-scoring-split {
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 14px;
+  grid-template-columns: 380px 1fr;
+  gap: 16px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .ai-scoring-split {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==================== EXECUTIVE DASHBOARD ENHANCEMENTS ==================== */
+
+.executive-kpi-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-xs);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.executive-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+
+.executive-kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  opacity: 0.8;
+}
+
+.executive-kpi-card.blue::before { background: linear-gradient(180deg, #007dcc, #0284c7); }
+.executive-kpi-card.green::before { background: linear-gradient(180deg, #10b981, #059669); }
+.executive-kpi-card.red::before { background: linear-gradient(180deg, #ef4444, #dc2626); }
+.executive-kpi-card.purple::before { background: linear-gradient(180deg, #8b5cf6, #7c3aed); }
+
+.kpi-title-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.kpi-label {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--muted-fg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kpi-main-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.kpi-sub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.kpi-sub-badge.green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.kpi-sub-badge.amber {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.kpi-sub-badge.blue {
+  background: rgba(0, 125, 204, 0.1);
+  color: var(--primary);
+}
+
+/* ROSTER CARD ENHANCEMENTS */
+.roster-candidate-card {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-soft);
+  background: transparent;
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+}
+
+.roster-candidate-card:hover {
+  background: var(--secondary);
+  transform: translateX(2px);
+}
+
+.roster-candidate-card.selected {
+  background: var(--secondary);
+  border-left-color: var(--primary);
+  box-shadow: inset 2px 0 0 0 var(--primary);
+}
+
+.rank-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 10.5px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--panel);
+  color: var(--muted-fg);
+  border: 1px solid var(--border);
+}
+
+.rank-badge.rank-1 {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+}
+
+.rank-badge.rank-2 {
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: #ffffff;
+  border: none;
+}
+
+.rank-badge.rank-3 {
+  background: linear-gradient(135deg, #b45309, #78350f);
+  color: #ffffff;
+  border: none;
+}
+
+/* EXECUTIVE SCORECARD PANEL */
+.scorecard-container {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.scorecard-header-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.score-radial-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 12px rgba(0, 125, 204, 0.2);
+}
+
+.score-radial-badge.top-fit {
+  border-color: var(--green);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+.score-radial-num {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-radial-label {
+  font-size: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted-fg);
+  margin-top: 2px;
+}
+
+.executive-summary-callout {
+  background: linear-gradient(135deg, rgba(0, 125, 204, 0.04), rgba(0, 125, 204, 0.08));
+  border: 1px solid rgba(0, 125, 204, 0.15);
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.meter-bar-container {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg);
+  overflow: hidden;
+  margin-top: 6px;
+  border: 1px solid var(--border-soft);
+}
+
+.meter-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--primary), #0284c7);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.meter-bar-fill.green {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.competency-tag {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg);
+  color: var(--primary);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.competency-tag:hover {
+  background: var(--secondary);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
 
 /* ==================== WORKFORCE RETENTION ANALYSIS SCALED STYLES ==================== */
 
