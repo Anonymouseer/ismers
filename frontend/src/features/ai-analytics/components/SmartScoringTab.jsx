@@ -9,6 +9,7 @@ export default function SmartScoringTab() {
   const [selectedId, setSelectedId] = useState(AI_CANDIDATE_MATCHES[0].id);
   const [search, setSearch] = useState('');
   const [clientFilter, setClientFilter] = useState('all');
+  const [matchCategory, setMatchCategory] = useState('all');
   const [sortBy, setSortBy] = useState('score-desc');
   const [page, setPage] = useState(1);
   const [toastMessage, setToastMessage] = useState('');
@@ -34,7 +35,7 @@ export default function SmartScoringTab() {
         {
           label: `Shortlist Candidate (${item.applicantName})`,
           icon: '<polyline points="20 6 9 17 4 12"/>',
-          action: () => showToast(`Candidate ${item.applicantName} shortlisted!`),
+          action: () => showToast(`Candidate ${item.applicantName} shortlisted for client interview!`),
         },
         {
           label: 'View Full AI Scorecard',
@@ -51,6 +52,7 @@ export default function SmartScoringTab() {
     });
   };
 
+  // Filter & Sort Logic
   const filtered = useMemo(() => {
     let list = [...AI_CANDIDATE_MATCHES];
 
@@ -69,29 +71,53 @@ export default function SmartScoringTab() {
       list = list.filter((m) => m.client === clientFilter);
     }
 
+    if (matchCategory !== 'all') {
+      if (matchCategory === 'top') list = list.filter((m) => m.matchScore >= 90);
+      else if (matchCategory === 'strong') list = list.filter((m) => m.matchScore >= 80 && m.matchScore < 90);
+      else if (matchCategory === 'moderate') list = list.filter((m) => m.matchScore < 80);
+    }
+
     if (sortBy === 'score-desc') list.sort((a, b) => b.matchScore - a.matchScore);
     else if (sortBy === 'score-asc') list.sort((a, b) => a.matchScore - b.matchScore);
     else if (sortBy === 'name-asc') list.sort((a, b) => a.applicantName.localeCompare(b.applicantName));
     else if (sortBy === 'name-desc') list.sort((a, b) => b.applicantName.localeCompare(a.applicantName));
 
     return list;
-  }, [search, clientFilter, sortBy]);
+  }, [search, clientFilter, matchCategory, sortBy]);
 
-  useEffect(() => { setPage(1); }, [search, clientFilter, sortBy]);
+  useEffect(() => { setPage(1); }, [search, clientFilter, matchCategory, sortBy]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
   const paginatedRoster = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const selected = AI_CANDIDATE_MATCHES.find((m) => m.id === selectedId) || filtered[0] || AI_CANDIDATE_MATCHES[0];
 
+  const handleShortlistCandidate = () => {
+    showToast(`Candidate ${selected.applicantName} shortlisted for client interview!`);
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, height: 'calc(100vh - 230px)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, height: 'calc(100vh - 200px)' }}>
       {toastMessage && (
-        <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--primary)', color: 'var(--primary-fg)', fontSize: 12, fontWeight: 700 }}>
+        <div style={{ padding: '10px 16px', borderRadius: 10, background: 'var(--primary)', color: 'var(--primary-fg)', fontSize: 12, fontWeight: 700, boxShadow: 'var(--shadow-md)' }}>
           {toastMessage}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
+
+      {/* ── UNIFIED REFERENCE CONTROLS TOOLBAR ── */}
+      <div
+        style={{
+          background: 'var(--secondary)',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          padding: '8px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        {/* SEARCH INPUT */}
+        <div style={{ flex: '1 1 240px', minWidth: 200, position: 'relative' }}>
           <svg viewBox="0 0 24 24" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, stroke: 'var(--muted-fg)', fill: 'none', strokeWidth: 2 }}>
             <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
           </svg>
@@ -101,32 +127,49 @@ export default function SmartScoringTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-              width: '100%', padding: '8px 12px 8px 32px', borderRadius: 10, border: '1px solid var(--border)',
-              background: 'var(--panel)', color: 'var(--text)', fontSize: 12, outline: 'none',
+              width: '100%', padding: '6px 12px 6px 30px', borderRadius: 8, border: '1px solid var(--border)',
+              background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, outline: 'none',
             }}
           />
         </div>
 
+        {/* MATCH CATEGORY FILTER */}
+        <select
+          value={matchCategory}
+          onChange={(e) => setMatchCategory(e.target.value)}
+          style={{
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
+          }}
+        >
+          <option value="all">All Match Fits</option>
+          <option value="top">Top Match Fit (90%+)</option>
+          <option value="strong">Strong Fit (80–89%)</option>
+          <option value="moderate">Moderate Fit (&lt;80%)</option>
+        </select>
+
+        {/* CLIENT FILTER */}
         <select
           value={clientFilter}
           onChange={(e) => setClientFilter(e.target.value)}
           style={{
-            padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)',
-            background: 'var(--panel)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
-          <option value="all">All Clients</option>
+          <option value="all">All Clients / Sites</option>
           {CLIENT_LIST.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
 
+        {/* SORT BY */}
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
           style={{
-            padding: '8px 12px', borderRadius: 10, border: '1px solid var(--border)',
-            background: 'var(--panel)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
           <option value="score-desc">Highest Score First</option>
@@ -135,102 +178,129 @@ export default function SmartScoringTab() {
           <option value="name-desc">Name Z-A</option>
         </select>
 
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          totalItems={filtered.length}
-          pageSize={PAGE_SIZE}
-        />
+        <div style={{ marginLeft: 'auto' }}>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={filtered.length}
+            pageSize={PAGE_SIZE}
+          />
+        </div>
       </div>
 
+      {/* TWO COLUMN SPLIT LAYOUT */}
       <div className="ai-scoring-split">
+        {/* LEFT COLUMN: CANDIDATE RANKING ROSTER */}
         <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, overflow: 'hidden', boxShadow: 'var(--shadow-xs)', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-          <div style={{ padding: '12px 16px', background: 'var(--bg)', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 800, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-            AI Match Ranking Roster
+          <div style={{ padding: '12px 16px', background: 'var(--bg)', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              AI Match Ranking Roster
+            </span>
+            <span style={{ fontSize: 10.5, color: 'var(--muted-fg)', fontWeight: 700 }}>
+              {filtered.length} Scored
+            </span>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {filtered.length === 0 && (
+            {filtered.length === 0 ? (
               <div style={{ padding: 30, textAlign: 'center', color: 'var(--muted-fg)', fontSize: 12 }}>
-                No candidates match the current filters.
+                No candidates match the selected criteria.
               </div>
-            )}
-            {paginatedRoster.map((item, idx) => {
-              const globalIdx = (page - 1) * PAGE_SIZE + idx;
-              const isSelected = item.id === selectedId;
-              const scoreColor = item.matchScore >= 85 ? 'var(--green)' : item.matchScore >= 70 ? 'var(--primary)' : 'var(--amber)';
-              const scoreBg = item.matchScore >= 85 ? 'var(--green-soft)' : item.matchScore >= 70 ? 'var(--secondary)' : 'var(--amber-soft)';
+            ) : (
+              paginatedRoster.map((item, idx) => {
+                const globalIdx = (page - 1) * PAGE_SIZE + idx;
+                const isSelected = item.id === selectedId;
+                const isTop = item.matchScore >= 90;
+                const isStrong = item.matchScore >= 80;
 
-              return (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid var(--border-soft)',
-                    background: isSelected ? 'var(--secondary)' : 'transparent',
-                    borderLeft: isSelected ? '4px solid var(--primary)' : '4px solid transparent',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: 10,
-                  }}
-                  onClick={() => setSelectedId(item.id)}
-                  onContextMenu={(e) => handleItemContextMenu(e, item)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {item.applicantName.charAt(0)}
+                const scoreColor = isTop ? 'var(--green)' : isStrong ? 'var(--primary)' : 'var(--amber)';
+                const scoreBg = isTop ? 'var(--green-soft)' : isStrong ? 'var(--secondary)' : 'var(--amber-soft)';
+                const matchTag = isTop ? 'Top Match' : isStrong ? 'Strong Fit' : 'Moderate';
+
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border-soft)',
+                      background: isSelected ? 'var(--secondary)' : 'transparent',
+                      borderLeft: isSelected ? '4px solid var(--primary)' : '4px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                    }}
+                    onClick={() => setSelectedId(item.id)}
+                    onContextMenu={(e) => handleItemContextMenu(e, item)}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {item.applicantName.charAt(0)}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, fontSize: 12.5, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span style={{ fontSize: 10, color: 'var(--muted-fg)', marginRight: 4, fontWeight: 700 }}>#{globalIdx + 1}</span>
+                          {item.applicantName}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: 'var(--muted-fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
+                          {item.targetJob} · <b style={{ color: 'var(--primary)' }}>{item.client}</b>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        <span style={{ fontSize: 10, color: 'var(--muted-fg)', marginRight: 4 }}>#{globalIdx + 1}</span>
-                        {item.applicantName}
+
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 800, color: scoreColor, background: scoreBg, padding: '2px 8px', borderRadius: 8, display: 'inline-block' }}>
+                        {item.matchScore}%
                       </div>
-                      <div style={{ fontSize: 10.5, color: 'var(--muted-fg)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {item.targetJob} · {item.client}
-                      </div>
+                      <div style={{ fontSize: 9.5, color: 'var(--muted-fg)', fontWeight: 700, marginTop: 2 }}>{matchTag}</div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: scoreColor, background: scoreBg, padding: '3px 8px', borderRadius: 10, flexShrink: 0 }}>
-                    {item.matchScore}%
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
+        {/* RIGHT COLUMN: EXECUTIVE AI CANDIDATE SCORECARD */}
         <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: 18, boxShadow: 'var(--shadow-xs)', display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0, overflowY: 'auto' }}>
+          {/* CANDIDATE SCORECARD HEADER */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {selected.applicantName.charAt(0)}
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text)' }}>{selected.applicantName}</div>
-                <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{selected.applicantName}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--muted-fg)', marginTop: 2 }}>
                   {selected.targetJob} · <b style={{ color: 'var(--primary)' }}>{selected.client}</b>
                 </div>
               </div>
             </div>
+
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 20, fontWeight: 800, color: selected.matchScore >= 85 ? 'var(--green)' : 'var(--primary)' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: selected.matchScore >= 90 ? 'var(--green)' : 'var(--primary)' }}>
                 {selected.matchScore}%
               </div>
-              <div style={{ fontSize: 10, color: 'var(--muted-fg)', textTransform: 'uppercase', fontWeight: 700 }}>Overall Score</div>
+              <div style={{ fontSize: 10, color: 'var(--muted-fg)', textTransform: 'uppercase', fontWeight: 800, letterSpacing: '0.4px' }}>Overall AI Score</div>
             </div>
           </div>
 
+          {/* AI SUMMARY BOX */}
           <div style={{ background: 'var(--bg)', border: '1px solid var(--border-soft)', borderRadius: 10, padding: 12, fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 4 }}>AI Summary</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4 }}>
+              Executive AI Fit Summary
+            </div>
             {selected.summary}
           </div>
 
+          {/* MULTI-FACTOR EVALUATION PROGRESS METERS */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Multi-Factor Evaluation</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              Multi-Factor Match Evaluation
+            </div>
             {[
               { label: 'Skill Matrix Match', value: selected.skillsFit },
               { label: 'Work Experience Relevance', value: selected.experienceFit },
@@ -238,32 +308,40 @@ export default function SmartScoringTab() {
             ].map((factor, i) => (
               <div key={i} style={{ background: 'var(--bg)', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border-soft)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 700, marginBottom: 4 }}>
-                  <span>{factor.label}</span>
-                  <span style={{ color: 'var(--primary)' }}>{factor.value}%</span>
+                  <span style={{ color: 'var(--text)' }}>{factor.label}</span>
+                  <span style={{ color: 'var(--primary)', fontWeight: 800 }}>{factor.value}%</span>
                 </div>
-                <div style={{ height: 5, borderRadius: 3, background: 'var(--panel)', overflow: 'hidden' }}>
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--panel)', overflow: 'hidden' }}>
                   <div style={{ width: `${factor.value}%`, height: '100%', background: 'var(--primary)', borderRadius: 3, transition: 'width 0.3s ease' }} />
                 </div>
               </div>
             ))}
           </div>
 
+          {/* TOP COMPETENCIES */}
           <div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 6 }}>Top Competencies</div>
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+              Verified Top Competencies
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {selected.topSkills.map((skill, i) => (
-                <span key={i} style={{ fontSize: 10.5, fontWeight: 700, background: 'var(--secondary)', color: 'var(--primary)', padding: '3px 8px', borderRadius: 6, border: '1px solid var(--border-soft)' }}>
+                <span key={i} style={{ fontSize: 10.5, fontWeight: 700, background: 'var(--secondary)', color: 'var(--primary)', padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border-soft)' }}>
                   {skill}
                 </span>
               ))}
             </div>
           </div>
 
-          <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>
-              Status: <b style={{ color: 'var(--text)' }}>{selected.recommendedAction}</b>
+          {/* ACTION FOOTER */}
+          <div style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
+              Requisition Status: <b style={{ color: 'var(--text)' }}>{selected.recommendedAction}</b>
             </div>
-            <button className="btn primary" style={{ padding: '7px 14px', fontSize: 11, fontWeight: 700 }}>
+            <button
+              onClick={handleShortlistCandidate}
+              className="btn primary"
+              style={{ padding: '8px 16px', fontSize: 11.5, fontWeight: 700, borderRadius: 10 }}
+            >
               Shortlist for Interview
             </button>
           </div>

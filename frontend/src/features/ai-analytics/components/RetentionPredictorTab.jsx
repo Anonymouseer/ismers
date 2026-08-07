@@ -452,10 +452,10 @@ export default function RetentionPredictorTab() {
         </div>
       </div>
 
-      {/* 2. ADVANCED FILTERS & SEARCH CONTROL TOOLBAR */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', background: 'var(--panel)', border: '1px solid var(--border)', padding: 12, borderRadius: 12 }}>
+      {/* 2. ADVANCED FILTERS & SEARCH CONTROL TOOLBAR (UNIFIED REFERENCE STYLE) */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', background: 'var(--secondary)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: 12 }}>
         {/* SEARCH INPUT */}
-        <div style={{ flex: 1, minWidth: 220, position: 'relative' }}>
+        <div style={{ flex: '1 1 220px', minWidth: 200, position: 'relative' }}>
           <svg viewBox="0 0 24 24" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, stroke: 'var(--muted-fg)', fill: 'none', strokeWidth: 2 }}>
             <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
           </svg>
@@ -465,8 +465,8 @@ export default function RetentionPredictorTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-              width: '100%', padding: '7px 12px 7px 32px', borderRadius: 8, border: '1px solid var(--border)',
-              background: 'var(--bg)', color: 'var(--text)', fontSize: 12, outline: 'none',
+              width: '100%', padding: '6px 12px 6px 30px', borderRadius: 8, border: '1px solid var(--border)',
+              background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, outline: 'none',
             }}
           />
         </div>
@@ -476,8 +476,8 @@ export default function RetentionPredictorTab() {
           value={riskFilter}
           onChange={(e) => setRiskFilter(e.target.value)}
           style={{
-            padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
-            background: 'var(--bg)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
           <option value="all">All Risk Levels</option>
@@ -491,8 +491,8 @@ export default function RetentionPredictorTab() {
           value={clientFilter}
           onChange={(e) => setClientFilter(e.target.value)}
           style={{
-            padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
-            background: 'var(--bg)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
           <option value="all">All Clients / Sites</option>
@@ -506,8 +506,8 @@ export default function RetentionPredictorTab() {
           value={positionFilter}
           onChange={(e) => setPositionFilter(e.target.value)}
           style={{
-            padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
-            background: 'var(--bg)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
           <option value="all">All Roles / Positions</option>
@@ -521,8 +521,8 @@ export default function RetentionPredictorTab() {
           value={contractRange}
           onChange={(e) => setContractRange(e.target.value)}
           style={{
-            padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
-            background: 'var(--bg)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
           <option value="all">All Expiry Dates</option>
@@ -537,8 +537,8 @@ export default function RetentionPredictorTab() {
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
           style={{
-            padding: '7px 12px', borderRadius: 8, border: '1px solid var(--border)',
-            background: 'var(--bg)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--panel)', color: 'var(--text)', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', outline: 'none',
           }}
         >
           <option value="risk-desc">Highest Risk First</option>
@@ -551,22 +551,18 @@ export default function RetentionPredictorTab() {
         <button
           onClick={() => setGroupByClient((prev) => !prev)}
           style={{
-            padding: '7px 12px',
+            padding: '6px 12px',
             borderRadius: 8,
             border: '1px solid var(--border)',
-            background: groupByClient ? 'rgba(0, 125, 204, 0.12)' : 'var(--bg)',
-            color: groupByClient ? 'var(--primary)' : 'var(--text)',
-            fontSize: 12,
+            background: groupByClient ? 'var(--primary)' : 'var(--panel)',
+            color: groupByClient ? '#fff' : 'var(--text)',
+            fontSize: 11.5,
             fontWeight: 700,
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
+            transition: 'all 0.15s ease',
           }}
-          title="Group employee list under client section headers"
         >
-          <span>Group by Client</span>
-          {groupByClient && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', borderRadius: 10, padding: '1px 6px' }}>ON</span>}
+          {groupByClient ? 'Ungroup View' : 'Group by Client'}
         </button>
       </div>
 
