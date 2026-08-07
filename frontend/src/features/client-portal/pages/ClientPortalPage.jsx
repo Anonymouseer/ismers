@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import './ClientPortalPage.css';
 
 const TODAY = new Date().toLocaleDateString('en-US', {
@@ -135,6 +136,97 @@ const UPCOMING_INTERVIEWS = [
   },
 ];
 
+const MOCK_ACCOUNT_MANAGER = {
+  name: 'Mark Anthony Dela Cruz',
+  title: 'Senior Account Manager',
+  branch: 'PRIMEPOWER Head Office (QC)',
+  email: 'm.delacruz@primepower.ph',
+  phone: '+63 917 888 4321',
+  officeLine: '(02) 8923-4567 ext. 104',
+};
+
+const MOCK_ENDORSED_CANDIDATES = [
+  {
+    id: 'cand-101',
+    name: 'Rodrigo P. Estrada',
+    position: 'Production Supervisor',
+    jobRef: 'PRF-2026-0081',
+    matchScore: 94,
+    experience: '6 years in electronics assembly & plant supervision',
+    skills: ['Line Balancing', '5S Methodology', 'Shift Scheduling', 'PLC Basic'],
+    endorsedDate: 'Aug 05, 2026',
+    status: 'Pending Review',
+    recruiter: 'M. Dela Cruz',
+  },
+  {
+    id: 'cand-102',
+    name: 'Maria C. Torres',
+    position: 'Quality Control Analyst',
+    jobRef: 'PRF-2026-0079',
+    matchScore: 89,
+    experience: '4 years in ISO 9001 quality inspection & lab analysis',
+    skills: ['Calipers & Micrometer', 'Chemical Testing', 'Defect Reporting', 'ISO Audit'],
+    endorsedDate: 'Aug 04, 2026',
+    status: 'Accepted for Interview',
+    recruiter: 'J. Santos',
+  },
+  {
+    id: 'cand-103',
+    name: 'Joel R. Abad',
+    position: 'Forklift Operator',
+    jobRef: 'PRF-2026-0066',
+    matchScore: 91,
+    experience: '5 years heavy material handling & warehouse logistics',
+    skills: ['Reach Truck License', 'Inventory Stacking', 'WMS Entry', 'Safety OSHA'],
+    endorsedDate: 'Aug 02, 2026',
+    status: 'Pending Review',
+    recruiter: 'M. Dela Cruz',
+  },
+];
+
+const MOCK_DEPLOYED_ROSTER = [
+  {
+    id: 'dep-501',
+    employeeName: 'Eduardo M. Santos',
+    position: 'Production Line Operator',
+    site: 'Valenzuela Plant 2',
+    startDate: 'Feb 15, 2026',
+    expiryDate: 'Aug 15, 2026',
+    status: 'Expiring Soon',
+    contractType: '6-Month Project',
+  },
+  {
+    id: 'dep-502',
+    employeeName: 'Analyn S. Mendoza',
+    position: 'Quality Control Analyst',
+    site: 'Main Lab - QC Bldg',
+    startDate: 'Jan 10, 2026',
+    expiryDate: 'Jan 10, 2027',
+    status: 'Active',
+    contractType: '1-Year Contract',
+  },
+  {
+    id: 'dep-503',
+    employeeName: 'Benjamin K. Cruz',
+    position: 'Warehouse Associate',
+    site: 'Bulacan Logistics Hub',
+    startDate: 'Mar 01, 2026',
+    expiryDate: 'Sep 01, 2026',
+    status: 'Active',
+    contractType: '6-Month Project',
+  },
+  {
+    id: 'dep-504',
+    employeeName: 'Carla D. Reyes',
+    position: 'Forklift Operator',
+    site: 'Bulacan Logistics Hub',
+    startDate: 'Feb 20, 2026',
+    expiryDate: 'Aug 20, 2026',
+    status: 'Expiring Soon',
+    contractType: '6-Month Project',
+  },
+];
+
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contractual', 'Project-based', 'Others'];
 const PRIORITIES = [
   { value: 'normal', label: 'Normal' },
@@ -146,9 +238,15 @@ const PRIORITIES = [
 export default function ClientPortalPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'account'
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'settings'
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobRequests, setJobRequests] = useState(INITIAL_JOB_REQUESTS);
+  const [endorsedCandidates, setEndorsedCandidates] = useState(MOCK_ENDORSED_CANDIDATES);
+  const [deployedRoster, setDeployedRoster] = useState(MOCK_DEPLOYED_ROSTER);
+  const [endorsementFilter, setEndorsementFilter] = useState('ALL');
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterStatusFilter, setRosterStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [successBanner, setSuccessBanner] = useState('');
@@ -171,6 +269,148 @@ export default function ClientPortalPage() {
 
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Account Information Edit State
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [showAccountSuccessModal, setShowAccountSuccessModal] = useState(false);
+  const [accountForm, setAccountForm] = useState({
+    company: '',
+    industry: '',
+    contactPerson: '',
+    designation: '',
+    email: '',
+    mobile: '',
+    logo: '',
+  });
+  const [accountErrors, setAccountErrors] = useState({});
+  const [accountSaving, setAccountSaving] = useState(false);
+
+  const startEditingAccount = () => {
+    setAccountForm({
+      company: session?.company || 'Sunshine Manufacturing Corp.',
+      industry: session?.industry || 'Manufacturing & Assembly',
+      contactPerson: session?.contactPerson || 'Juanita Dela Cruz',
+      designation: session?.designation || 'Human Resources Manager',
+      email: session?.email || 'hr@sunshinemfg.com.ph',
+      mobile: session?.mobile || '+63 917 555 1234',
+      logo: session?.logo || '',
+    });
+    setAccountErrors({});
+    setIsEditingAccount(true);
+  };
+
+  const cancelEditingAccount = () => {
+    setIsEditingAccount(false);
+    setAccountErrors({});
+  };
+
+  const handleLogoFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      setAccountErrors((prev) => ({ ...prev, logo: 'Logo image file size must be under 3MB.' }));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      setAccountForm((prev) => ({ ...prev, logo: evt.target.result }));
+      if (accountErrors.logo) {
+        setAccountErrors((prev) => ({ ...prev, logo: '' }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setAccountForm((prev) => ({ ...prev, logo: '' }));
+  };
+
+  const handleAccountFormChange = (field) => (e) => {
+    const val = e.target.value;
+    setAccountForm((prev) => ({ ...prev, [field]: val }));
+    if (accountErrors[field]) {
+      setAccountErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleAccountFormSubmit = (e) => {
+    e.preventDefault();
+    const errors = {};
+    if (!accountForm.company.trim()) errors.company = 'Company name is required.';
+    if (!accountForm.contactPerson.trim()) errors.contactPerson = 'Contact person is required.';
+    if (!accountForm.email.trim()) {
+      errors.email = 'Email address is required.';
+    } else if (!/\S+@\S+\.\S+/.test(accountForm.email.trim())) {
+      errors.email = 'Please enter a valid email address.';
+    }
+    if (!accountForm.mobile.trim()) errors.mobile = 'Mobile number is required.';
+
+    if (Object.keys(errors).length > 0) {
+      setAccountErrors(errors);
+      return;
+    }
+
+    setAccountSaving(true);
+
+    setTimeout(() => {
+      const updatedSession = {
+        ...session,
+        company: accountForm.company.trim(),
+        industry: accountForm.industry.trim() || 'Manufacturing & Assembly',
+        contactPerson: accountForm.contactPerson.trim(),
+        designation: accountForm.designation.trim(),
+        email: accountForm.email.trim(),
+        mobile: accountForm.mobile.trim(),
+        logo: accountForm.logo || '',
+      };
+
+      setSession(updatedSession);
+
+      try {
+        localStorage.setItem('cp_session', JSON.stringify(updatedSession));
+
+        // Also update in registered account list if exists
+        const rawAccounts = localStorage.getItem('cp_accounts');
+        if (rawAccounts) {
+          const accounts = JSON.parse(rawAccounts);
+          const updatedAccounts = accounts.map((acc) => {
+            if (acc.email === session?.email || acc.company === session?.company) {
+              return { ...acc, ...updatedSession };
+            }
+            return acc;
+          });
+          localStorage.setItem('cp_accounts', JSON.stringify(updatedAccounts));
+        }
+      } catch {
+        /* ignore */
+      }
+
+      setAccountSaving(false);
+      setIsEditingAccount(false);
+      setShowAccountSuccessModal(true);
+    }, 400);
+  };
+
+  const handleAcceptCandidate = (candId) => {
+    setEndorsedCandidates((prev) =>
+      prev.map((c) => (c.id === candId ? { ...c, status: 'Accepted for Interview' } : c))
+    );
+    setSuccessBanner('Candidate accepted for interview. Notification sent to recruiter.');
+  };
+
+  const handleDeclineCandidate = (candId) => {
+    setEndorsedCandidates((prev) =>
+      prev.map((c) => (c.id === candId ? { ...c, status: 'Declined' } : c))
+    );
+    setSuccessBanner('Candidate status updated to Declined.');
+  };
+
+  const handleRenewRosterContract = (rosterId) => {
+    setDeployedRoster((prev) =>
+      prev.map((r) => (r.id === rosterId ? { ...r, status: 'Renewal Requested' } : r))
+    );
+    setSuccessBanner('Contract renewal request submitted to your Account Manager.');
+  };
 
   const openJobModal = () => {
     setJobForm({
@@ -439,7 +679,39 @@ export default function ClientPortalPage() {
       {/* MAIN CONTAINER: SIDEBAR + CONTENT */}
       <div className="client-portal-main-container">
         {/* LEFT SIDEBAR NAVIGATION */}
-        <aside className="client-portal-sidebar-nav">
+        <aside className={`client-portal-sidebar-nav ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          {/* SIDEBAR COLLAPSE TOGGLE BUTTON ON BORDER LINE */}
+          <button
+            type="button"
+            id="cp-sidebar-collapse-btn"
+            className={`cp-sidebar-collapse-btn ${sidebarCollapsed ? 'collapsed' : ''}`}
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+            <svg className="icon" viewBox="0 0 24 24">
+              <path d="m15 6-6 6 6 6" />
+            </svg>
+          </button>
+
+          {/* CLIENT BRAND / PROFILE HEADER (AT VERY TOP - NO BORDER) */}
+          <div className="client-portal-sidebar-top-profile" title={sidebarCollapsed ? (session?.company || 'Sunshine Mfg. Corp.') : undefined}>
+            <div className="client-portal-sidebar-user-avatar">
+              {session?.logo ? (
+                <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-sidebar-logo-img" />
+              ) : (
+                (session?.company || 'S')[0]
+              )}
+            </div>
+            {!sidebarCollapsed && (
+              <div className="client-portal-sidebar-user-info">
+                <div className="client-portal-sidebar-user-company">
+                  {session?.company || 'Sunshine Mfg. Corp.'}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="client-portal-sidebar-section">
             <div className="client-portal-sidebar-label">Navigation</div>
             <nav className="client-portal-nav-list">
@@ -448,6 +720,7 @@ export default function ClientPortalPage() {
                 id="nav-dashboard"
                 className={`client-portal-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
                 onClick={() => setActiveTab('dashboard')}
+                title={sidebarCollapsed ? 'Dashboard' : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
                   <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -463,6 +736,7 @@ export default function ClientPortalPage() {
                 id="nav-job-orders"
                 className={`client-portal-nav-item ${activeTab === 'job-orders' ? 'active' : ''}`}
                 onClick={() => setActiveTab('job-orders')}
+                title={sidebarCollapsed ? `Job Orders (${jobRequests.length})` : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -476,30 +750,69 @@ export default function ClientPortalPage() {
 
               <button
                 type="button"
-                id="nav-account"
-                className={`client-portal-nav-item ${activeTab === 'account' ? 'active' : ''}`}
-                onClick={() => setActiveTab('account')}
+                id="nav-endorsements"
+                className={`client-portal-nav-item ${activeTab === 'endorsements' ? 'active' : ''}`}
+                onClick={() => setActiveTab('endorsements')}
+                title={sidebarCollapsed ? `Endorsements (${endorsedCandidates.filter((c) => c.status === 'Pending Review').length})` : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <polyline points="17 11 19 13 23 9" />
                 </svg>
-                <span>Account</span>
+                <span>Endorsements</span>
+                <span className="client-portal-nav-count client-portal-nav-count--amber">
+                  {endorsedCandidates.filter((c) => c.status === 'Pending Review').length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                id="nav-deployed-roster"
+                className={`client-portal-nav-item ${activeTab === 'deployed-roster' ? 'active' : ''}`}
+                onClick={() => setActiveTab('deployed-roster')}
+                title={sidebarCollapsed ? `Deployed Roster (${deployedRoster.length})` : undefined}
+              >
+                <svg className="icon" viewBox="0 0 24 24">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span>Deployed Roster</span>
+                <span className="client-portal-nav-count">{deployedRoster.length}</span>
+              </button>
+
+              <button
+                type="button"
+                id="nav-settings"
+                className={`client-portal-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('settings')}
+                title={sidebarCollapsed ? 'Settings' : undefined}
+              >
+                <svg className="icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                <span>Settings</span>
               </button>
             </nav>
           </div>
 
-          {/* SIDEBAR USER FOOTER */}
-          <div className="client-portal-sidebar-footer-card">
-            <div className="client-portal-sidebar-user-avatar">
-              {(session?.company || 'S')[0]}
-            </div>
-            <div className="client-portal-sidebar-user-info">
-              <div className="client-portal-sidebar-user-company">
-                {session?.company || 'Sunshine Mfg. Corp.'}
+          {/* SIDEBAR ACCOUNT MANAGER WIDGET */}
+          <div className="client-portal-sidebar-section client-portal-sidebar-section--am" title={sidebarCollapsed ? `Account Manager: ${MOCK_ACCOUNT_MANAGER.name}` : undefined}>
+            <div className="client-portal-sidebar-label">Assigned Account Manager</div>
+            <div className="client-portal-am-card">
+              <div className="client-portal-am-avatar">
+                {MOCK_ACCOUNT_MANAGER.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
               </div>
-              <div className="client-portal-sidebar-user-email">
-                {session?.contactPerson || 'Client User'}
+              <div className="client-portal-am-info">
+                <div className="client-portal-am-name">{MOCK_ACCOUNT_MANAGER.name}</div>
+                <div className="client-portal-am-title">{MOCK_ACCOUNT_MANAGER.title}</div>
+                <a href={`mailto:${MOCK_ACCOUNT_MANAGER.email}`} className="client-portal-am-email">
+                  {MOCK_ACCOUNT_MANAGER.email}
+                </a>
+                <div className="client-portal-am-phone">{MOCK_ACCOUNT_MANAGER.phone}</div>
               </div>
             </div>
           </div>
@@ -657,6 +970,43 @@ export default function ClientPortalPage() {
                       ))}
                     </div>
                   </div>
+
+                  {/* EXPIRING DEPLOYMENTS ALERT WIDGET */}
+                  <div className="client-portal-card client-portal-sidebar-card">
+                    <div className="client-portal-card-head">
+                      <div className="client-portal-card-title client-portal-card-title--amber">
+                        <svg className="icon" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        Expiring Deployment Alerts
+                      </div>
+                    </div>
+                    <div className="client-portal-expiry-list">
+                      {deployedRoster
+                        .filter((r) => r.status === 'Expiring Soon' || r.status === 'Renewal Requested')
+                        .map((item) => (
+                          <div key={item.id} className="client-portal-expiry-item">
+                            <div className="client-portal-expiry-header">
+                              <span className="client-portal-expiry-name">{item.employeeName}</span>
+                              <span className={`client-portal-badge ${item.status === 'Renewal Requested' ? 'client-portal-badge--active' : 'client-portal-badge--pending'}`}>
+                                {item.status === 'Renewal Requested' ? 'Renewal Requested' : `Expires ${item.expiryDate}`}
+                              </span>
+                            </div>
+                            <div className="client-portal-expiry-sub">{item.position} &middot; {item.site}</div>
+                            {item.status !== 'Renewal Requested' && (
+                              <button
+                                type="button"
+                                className="client-portal-expiry-renew-btn"
+                                onClick={() => handleRenewRosterContract(item.id)}
+                              >
+                                Request Contract Renewal
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
                 </aside>
               </div>
             </div>
@@ -768,56 +1118,207 @@ export default function ClientPortalPage() {
             </div>
           )}
 
-          {/* ── VIEW: ACCOUNT / COMPANY PROFILE ── */}
-          {activeTab === 'account' && (
+          {/* ── VIEW: CANDIDATE ENDORSEMENTS ── */}
+          {activeTab === 'endorsements' && (
             <div className="client-portal-view-container">
               <div className="client-portal-header">
                 <div className="client-portal-header-left">
-                  <div className="client-portal-eyebrow">My Account</div>
-                  <h1 className="client-portal-title">Company Profile</h1>
-                  <div className="client-portal-date">Verified employer details and agency contact information</div>
+                  <div className="client-portal-eyebrow">Recruitment Pipeline</div>
+                  <h1 className="client-portal-title">Candidate Endorsements</h1>
+                  <div className="client-portal-date">Qualified candidates vetted by PRIMEPOWER recruiters ready for client interview approval</div>
                 </div>
               </div>
 
-              <div className="client-portal-card client-portal-profile-card">
-                <div className="client-portal-profile-header">
-                  <div className="client-portal-profile-avatar">
-                    {(session?.company || 'S')[0]}
-                  </div>
-                  <div className="client-portal-profile-title-block">
-                    <h2>{session?.company || 'Sunshine Manufacturing Corp.'}</h2>
-                    <span className="client-portal-profile-badge">Active Client Account</span>
-                  </div>
+              <div className="client-portal-card client-portal-controls-card">
+                <div className="client-portal-status-pills">
+                  {['ALL', 'Pending Review', 'Accepted for Interview', 'Declined'].map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      className={`client-portal-pill ${endorsementFilter === st ? 'active' : ''}`}
+                      onClick={() => setEndorsementFilter(st)}
+                    >
+                      {st}
+                    </button>
+                  ))}
                 </div>
+              </div>
 
-                <div className="client-portal-profile-grid">
-                  <div className="client-portal-profile-item">
-                    <label>Industry</label>
-                    <div>{session?.industry || 'Manufacturing & Assembly'}</div>
-                  </div>
-                  <div className="client-portal-profile-item">
-                    <label>Primary Contact Person</label>
-                    <div>{session?.contactPerson || 'Juanita Dela Cruz'}</div>
-                  </div>
-                  <div className="client-portal-profile-item">
-                    <label>Position / Designation</label>
-                    <div>{session?.designation || 'Human Resources Manager'}</div>
-                  </div>
-                  <div className="client-portal-profile-item">
-                    <label>Official Email Address</label>
-                    <div>{session?.email || 'hr@sunshinemfg.com.ph'}</div>
-                  </div>
-                  <div className="client-portal-profile-item">
-                    <label>Mobile Number</label>
-                    <div>{session?.mobile || '+63 917 555 1234'}</div>
-                  </div>
-                  <div className="client-portal-profile-item">
-                    <label>Servicing Branch</label>
-                    <div>PRIMEPOWER Head Office (QC Branch)</div>
-                  </div>
+              <div className="client-portal-endorsement-grid">
+                {endorsedCandidates
+                  .filter((c) => endorsementFilter === 'ALL' || c.status === endorsementFilter)
+                  .map((cand) => (
+                    <div key={cand.id} className="client-portal-card cp-endorsement-card">
+                      <div className="cp-endorsement-card-header">
+                        <div className="cp-endorsement-avatar">{cand.name[0]}</div>
+                        <div className="cp-endorsement-title-block">
+                          <div className="cp-endorsement-name">{cand.name}</div>
+                          <div className="cp-endorsement-role">{cand.position} &middot; <span className="client-portal-ref-id">{cand.jobRef}</span></div>
+                        </div>
+                        <div className="cp-endorsement-score">
+                          <span className="cp-score-badge">{cand.matchScore}% Match Score</span>
+                        </div>
+                      </div>
+
+                      <div className="cp-endorsement-card-body">
+                        <div className="cp-endorsement-section">
+                          <label>Work Experience Summary</label>
+                          <p>{cand.experience}</p>
+                        </div>
+                        <div className="cp-endorsement-section">
+                          <label>Validated Competencies</label>
+                          <div className="cp-skill-tags">
+                            {cand.skills.map((sk) => (
+                              <span key={sk} className="cp-skill-tag">{sk}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="cp-endorsement-meta-row">
+                          <span>Endorsed on {cand.endorsedDate} by {cand.recruiter}</span>
+                          <span className={`client-portal-badge ${cand.status === 'Accepted for Interview' ? 'client-portal-badge--filled' : cand.status === 'Declined' ? 'cp-badge--declined' : 'client-portal-badge--review'}`}>
+                            {cand.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      {cand.status === 'Pending Review' && (
+                        <div className="cp-endorsement-card-actions">
+                          <button
+                            type="button"
+                            className="cp-btn-decline"
+                            onClick={() => handleDeclineCandidate(cand.id)}
+                          >
+                            Decline Candidate
+                          </button>
+                          <button
+                            type="button"
+                            className="client-portal-btn-primary cp-btn-accept"
+                            onClick={() => handleAcceptCandidate(cand.id)}
+                          >
+                            Accept for Interview
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── VIEW: DEPLOYED WORKFORCE ROSTER ── */}
+          {activeTab === 'deployed-roster' && (
+            <div className="client-portal-view-container">
+              <div className="client-portal-header">
+                <div className="client-portal-header-left">
+                  <div className="client-portal-eyebrow">Workforce Operations</div>
+                  <h1 className="client-portal-title">Deployed Personnel Roster</h1>
+                  <div className="client-portal-date">Active manpower deployed across your plant and site facilities</div>
+                </div>
+              </div>
+
+              <div className="client-portal-card client-portal-controls-card">
+                <div className="client-portal-search-wrap">
+                  <svg className="icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    className="client-portal-search-input"
+                    placeholder="Search by Employee Name, Position, or Site Location..."
+                    value={rosterSearch}
+                    onChange={(e) => setRosterSearch(e.target.value)}
+                  />
+                </div>
+                <div className="client-portal-status-pills">
+                  {['ALL', 'Active', 'Expiring Soon'].map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      className={`client-portal-pill ${rosterStatusFilter === st ? 'active' : ''}`}
+                      onClick={() => setRosterStatusFilter(st)}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="client-portal-card client-portal-table-card">
+                <div className="client-portal-table-wrap">
+                  <table className="client-portal-table">
+                    <thead>
+                      <tr>
+                        <th>Employee Name</th>
+                        <th>Assigned Position</th>
+                        <th>Deployment Site</th>
+                        <th>Contract Type</th>
+                        <th>Start Date</th>
+                        <th>Contract Expiry</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deployedRoster
+                        .filter(
+                          (r) =>
+                            (rosterStatusFilter === 'ALL' || r.status === rosterStatusFilter) &&
+                            (r.employeeName.toLowerCase().includes(rosterSearch.toLowerCase()) ||
+                              r.position.toLowerCase().includes(rosterSearch.toLowerCase()) ||
+                              r.site.toLowerCase().includes(rosterSearch.toLowerCase()))
+                        )
+                        .map((emp) => (
+                          <tr key={emp.id}>
+                            <td className="client-portal-table-position">{emp.employeeName}</td>
+                            <td>{emp.position}</td>
+                            <td className="client-portal-table-muted">{emp.site}</td>
+                            <td className="client-portal-table-muted">{emp.contractType}</td>
+                            <td className="client-portal-table-muted">{emp.startDate}</td>
+                            <td className="client-portal-table-muted">{emp.expiryDate}</td>
+                            <td>
+                              <span
+                                className={`client-portal-badge ${emp.status === 'Active'
+                                    ? 'client-portal-badge--active'
+                                    : emp.status === 'Renewal Requested'
+                                      ? 'client-portal-badge--filled'
+                                      : 'client-portal-badge--pending'
+                                  }`}
+                              >
+                                {emp.status}
+                              </span>
+                            </td>
+                            <td>
+                              {emp.status !== 'Renewal Requested' ? (
+                                <button
+                                  type="button"
+                                  className="cp-table-renew-btn"
+                                  onClick={() => handleRenewRosterContract(emp.id)}
+                                >
+                                  Request Renewal
+                                </button>
+                              ) : (
+                                <span className="cp-table-renew-done">Submitted</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ── VIEW: SETTINGS ── */}
+          {activeTab === 'settings' && (
+            <ClientPortalSettingsPage
+              session={session}
+              onUpdateSession={(updated) => {
+                setSession(updated);
+                localStorage.setItem('cp_session', JSON.stringify(updated));
+              }}
+            />
           )}
         </main>
       </div>
@@ -951,6 +1452,35 @@ export default function ClientPortalPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </>
+      )}
+
+      {/* ── ACCOUNT SUCCESS POPUP MODAL ── */}
+      {showAccountSuccessModal && (
+        <>
+          <div className="cp-modal-overlay" onClick={() => setShowAccountSuccessModal(false)} />
+          <div className="cp-popup-modal" role="dialog" aria-modal="true" aria-label="Account Updated">
+            <div className="cp-popup-modal-icon">
+              <svg className="icon" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </div>
+            <div className="cp-popup-modal-title">Account Information Updated</div>
+            <div className="cp-popup-modal-message">
+              Your company profile details and branding preferences have been successfully updated in the system.
+            </div>
+            <div className="cp-popup-modal-actions">
+              <button
+                type="button"
+                id="cp-account-success-confirm-btn"
+                className="client-portal-btn-primary cp-popup-modal-btn"
+                onClick={() => setShowAccountSuccessModal(false)}
+              >
+                Continue
+              </button>
+            </div>
           </div>
         </>
       )}
