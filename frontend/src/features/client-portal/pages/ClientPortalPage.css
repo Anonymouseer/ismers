@@ -186,6 +186,7 @@
 
 /* ── LEFT SIDEBAR NAVIGATION ── */
 .client-portal-sidebar-nav {
+  position: relative;
   width: 230px;
   background: var(--panel);
   border-right: 1px solid var(--border);
@@ -195,7 +196,103 @@
   padding: 20px 14px;
   flex-shrink: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: thin;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* SIDEBAR COLLAPSE TOGGLE BUTTON OUTSIDE THE SIDEBAR EDGE */
+.cp-sidebar-collapse-btn {
+  position: fixed;
+  top: 70px;
+  left: calc(230px - 14px);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  z-index: 25;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.14s var(--ease), color 0.14s var(--ease), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cp-sidebar-collapse-btn:hover {
+  color: var(--primary);
+  background: var(--bg);
+  box-shadow: var(--shadow-md);
+}
+
+.cp-sidebar-collapse-btn svg {
+  width: 13px;
+  height: 13px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cp-sidebar-collapse-btn.collapsed svg {
+  transform: rotate(180deg);
+}
+
+/* TOP CLIENT PROFILE HEADER (NO BORDER) */
+.client-portal-sidebar-top-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 4px 14px 4px;
+  background: transparent;
+  border: none;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+/* COLLAPSED SIDEBAR STATE */
+.client-portal-sidebar-nav.collapsed {
+  width: 68px;
+  padding: 20px 8px;
+}
+
+.client-portal-sidebar-nav.collapsed .cp-sidebar-collapse-btn {
+  left: calc(68px - 14px);
+  transform: none;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-top-profile {
+  justify-content: center;
+  padding: 2px 0 14px 0;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-label,
+.client-portal-sidebar-nav.collapsed .client-portal-nav-item span,
+.client-portal-sidebar-nav.collapsed .client-portal-nav-count,
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-user-info,
+.client-portal-sidebar-nav.collapsed .client-portal-am-info {
+  display: none !important;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-footer-card {
+  justify-content: center;
+  padding: 8px 0;
+  margin-top: 10px;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-am-card {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-section--am {
+  border-top: none;
+  padding-top: 0;
+  margin-bottom: 8px;
 }
 
 .client-portal-sidebar-section {
@@ -320,15 +417,18 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .client-portal-sidebar-user-company {
   font-size: 11.5px;
   font-weight: 700;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  min-width: 0;
 }
 
 .client-portal-sidebar-user-email {

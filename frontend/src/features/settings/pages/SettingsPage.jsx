@@ -76,7 +76,7 @@ const MOCK_AUDIT_LOGS = [
 ];
 
 export default function SettingsPage() {
-  const { collapsed, setCollapsed } = useOutletContext() || { collapsed: false, setCollapsed: () => {} };
+  const { collapsed, setCollapsed } = useOutletContext() || { collapsed: false, setCollapsed: () => { } };
   const [activeTab, setActiveTab] = useState('appearance');
 
   // Theme & Accent State
@@ -209,7 +209,6 @@ export default function SettingsPage() {
     });
 
     setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
   };
 
   const filteredLogs = useMemo(() => {
@@ -250,9 +249,21 @@ export default function SettingsPage() {
           </div>
 
           {savedSuccess && (
-            <div className="toast-banner">
-              <svg className="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
-              Settings saved successfully!
+            <div className="toast-popup" role="status" aria-live="polite">
+              <div className="toast-popup-content">
+                <div className="toast-popup-icon">
+                  <svg className="icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></svg>
+                </div>
+                <div className="toast-popup-text">Settings saved successfully!</div>
+              </div>
+              <button
+                type="button"
+                className="toast-popup-close"
+                aria-label="Close notification"
+                onClick={() => setSavedSuccess(false)}
+              >
+                ×
+              </button>
             </div>
           )}
 

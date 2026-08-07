@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import './ClientPortalPage.css';
 
 const TODAY = new Date().toLocaleDateString('en-US', {
@@ -237,7 +238,8 @@ const PRIORITIES = [
 export default function ClientPortalPage() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'account'
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'settings'
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobRequests, setJobRequests] = useState(INITIAL_JOB_REQUESTS);
   const [endorsedCandidates, setEndorsedCandidates] = useState(MOCK_ENDORSED_CANDIDATES);
@@ -677,7 +679,39 @@ export default function ClientPortalPage() {
       {/* MAIN CONTAINER: SIDEBAR + CONTENT */}
       <div className="client-portal-main-container">
         {/* LEFT SIDEBAR NAVIGATION */}
-        <aside className="client-portal-sidebar-nav">
+        <aside className={`client-portal-sidebar-nav ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          {/* SIDEBAR COLLAPSE TOGGLE BUTTON ON BORDER LINE */}
+          <button
+            type="button"
+            id="cp-sidebar-collapse-btn"
+            className={`cp-sidebar-collapse-btn ${sidebarCollapsed ? 'collapsed' : ''}`}
+            onClick={() => setSidebarCollapsed((c) => !c)}
+            title={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+            <svg className="icon" viewBox="0 0 24 24">
+              <path d="m15 6-6 6 6 6" />
+            </svg>
+          </button>
+
+          {/* CLIENT BRAND / PROFILE HEADER (AT VERY TOP - NO BORDER) */}
+          <div className="client-portal-sidebar-top-profile" title={sidebarCollapsed ? (session?.company || 'Sunshine Mfg. Corp.') : undefined}>
+            <div className="client-portal-sidebar-user-avatar">
+              {session?.logo ? (
+                <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-sidebar-logo-img" />
+              ) : (
+                (session?.company || 'S')[0]
+              )}
+            </div>
+            {!sidebarCollapsed && (
+              <div className="client-portal-sidebar-user-info">
+                <div className="client-portal-sidebar-user-company">
+                  {session?.company || 'Sunshine Mfg. Corp.'}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="client-portal-sidebar-section">
             <div className="client-portal-sidebar-label">Navigation</div>
             <nav className="client-portal-nav-list">
@@ -686,6 +720,7 @@ export default function ClientPortalPage() {
                 id="nav-dashboard"
                 className={`client-portal-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
                 onClick={() => setActiveTab('dashboard')}
+                title={sidebarCollapsed ? 'Dashboard' : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
                   <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -701,6 +736,7 @@ export default function ClientPortalPage() {
                 id="nav-job-orders"
                 className={`client-portal-nav-item ${activeTab === 'job-orders' ? 'active' : ''}`}
                 onClick={() => setActiveTab('job-orders')}
+                title={sidebarCollapsed ? `Job Orders (${jobRequests.length})` : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -717,6 +753,7 @@ export default function ClientPortalPage() {
                 id="nav-endorsements"
                 className={`client-portal-nav-item ${activeTab === 'endorsements' ? 'active' : ''}`}
                 onClick={() => setActiveTab('endorsements')}
+                title={sidebarCollapsed ? `Endorsements (${endorsedCandidates.filter((c) => c.status === 'Pending Review').length})` : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
                   <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -734,6 +771,7 @@ export default function ClientPortalPage() {
                 id="nav-deployed-roster"
                 className={`client-portal-nav-item ${activeTab === 'deployed-roster' ? 'active' : ''}`}
                 onClick={() => setActiveTab('deployed-roster')}
+                title={sidebarCollapsed ? `Deployed Roster (${deployedRoster.length})` : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -747,21 +785,22 @@ export default function ClientPortalPage() {
 
               <button
                 type="button"
-                id="nav-account"
-                className={`client-portal-nav-item ${activeTab === 'account' ? 'active' : ''}`}
-                onClick={() => setActiveTab('account')}
+                id="nav-settings"
+                className={`client-portal-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+                onClick={() => setActiveTab('settings')}
+                title={sidebarCollapsed ? 'Settings' : undefined}
               >
                 <svg className="icon" viewBox="0 0 24 24">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
-                <span>Account</span>
+                <span>Settings</span>
               </button>
             </nav>
           </div>
 
-          {/* SIDEBAR ACCOUNT MANAGER WIDGET (ABOVE CLIENT PROFILE) */}
-          <div className="client-portal-sidebar-section client-portal-sidebar-section--am">
+          {/* SIDEBAR ACCOUNT MANAGER WIDGET */}
+          <div className="client-portal-sidebar-section client-portal-sidebar-section--am" title={sidebarCollapsed ? `Account Manager: ${MOCK_ACCOUNT_MANAGER.name}` : undefined}>
             <div className="client-portal-sidebar-label">Assigned Account Manager</div>
             <div className="client-portal-am-card">
               <div className="client-portal-am-avatar">
@@ -774,25 +813,6 @@ export default function ClientPortalPage() {
                   {MOCK_ACCOUNT_MANAGER.email}
                 </a>
                 <div className="client-portal-am-phone">{MOCK_ACCOUNT_MANAGER.phone}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* SIDEBAR USER FOOTER (AT VERY BOTTOM) */}
-          <div className="client-portal-sidebar-footer-card">
-            <div className="client-portal-sidebar-user-avatar">
-              {session?.logo ? (
-                <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-sidebar-logo-img" />
-              ) : (
-                (session?.company || 'S')[0]
-              )}
-            </div>
-            <div className="client-portal-sidebar-user-info">
-              <div className="client-portal-sidebar-user-company">
-                {session?.company || 'Sunshine Mfg. Corp.'}
-              </div>
-              <div className="client-portal-sidebar-user-email">
-                {session?.contactPerson || 'Client User'}
               </div>
             </div>
           </div>
@@ -1258,13 +1278,12 @@ export default function ClientPortalPage() {
                             <td className="client-portal-table-muted">{emp.expiryDate}</td>
                             <td>
                               <span
-                                className={`client-portal-badge ${
-                                  emp.status === 'Active'
+                                className={`client-portal-badge ${emp.status === 'Active'
                                     ? 'client-portal-badge--active'
                                     : emp.status === 'Renewal Requested'
-                                    ? 'client-portal-badge--filled'
-                                    : 'client-portal-badge--pending'
-                                }`}
+                                      ? 'client-portal-badge--filled'
+                                      : 'client-portal-badge--pending'
+                                  }`}
                               >
                                 {emp.status}
                               </span>
@@ -1291,219 +1310,15 @@ export default function ClientPortalPage() {
             </div>
           )}
 
-          {/* ── VIEW: ACCOUNT / COMPANY PROFILE ── */}
-          {activeTab === 'account' && (
-            <div className="client-portal-view-container">
-              <div className="client-portal-header">
-                <div className="client-portal-header-left">
-                  <div className="client-portal-eyebrow">My Account</div>
-                  <h1 className="client-portal-title">Company Profile</h1>
-                  <div className="client-portal-date">Verified employer details and agency contact information</div>
-                </div>
-              </div>
-
-              <div className="client-portal-card client-portal-profile-card">
-                <div className="client-portal-profile-header">
-                  <div className="client-portal-profile-avatar">
-                    {session?.logo ? (
-                      <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-profile-logo-img" />
-                    ) : (
-                      (session?.company || 'S')[0]
-                    )}
-                  </div>
-                  <div className="client-portal-profile-title-block">
-                    <h2>{session?.company || 'Sunshine Manufacturing Corp.'}</h2>
-                    <span className="client-portal-profile-badge">Active Client Account</span>
-                  </div>
-                </div>
-
-                {!isEditingAccount ? (
-                  <>
-                    <div className="client-portal-profile-grid">
-                      <div className="client-portal-profile-item">
-                        <label>Company Name</label>
-                        <div>{session?.company || 'Sunshine Manufacturing Corp.'}</div>
-                      </div>
-                      <div className="client-portal-profile-item">
-                        <label>Industry</label>
-                        <div>{session?.industry || 'Manufacturing & Assembly'}</div>
-                      </div>
-                      <div className="client-portal-profile-item">
-                        <label>Primary Contact Person</label>
-                        <div>{session?.contactPerson || 'Juanita Dela Cruz'}</div>
-                      </div>
-                      <div className="client-portal-profile-item">
-                        <label>Position / Designation</label>
-                        <div>{session?.designation || 'Human Resources Manager'}</div>
-                      </div>
-                      <div className="client-portal-profile-item">
-                        <label>Official Email Address</label>
-                        <div>{session?.email || 'hr@sunshinemfg.com.ph'}</div>
-                      </div>
-                      <div className="client-portal-profile-item">
-                        <label>Mobile / Phone Number</label>
-                        <div>{session?.mobile || '+63 917 555 1234'}</div>
-                      </div>
-                      <div className="client-portal-profile-item">
-                        <label>Servicing Branch</label>
-                        <div>PRIMEPOWER Head Office (QC Branch)</div>
-                      </div>
-                    </div>
-
-                    <div className="client-portal-profile-card-footer">
-                      <button
-                        type="button"
-                        id="cp-edit-account-btn"
-                        className="client-portal-btn-primary cp-edit-account-btn-bottom"
-                        onClick={startEditingAccount}
-                      >
-                        <svg className="icon" viewBox="0 0 24 24">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
-                        <span>Edit Account Information</span>
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <form className="client-portal-edit-account-form" onSubmit={handleAccountFormSubmit}>
-                    <div className="cp-modal-section-title">Update Client Account Details</div>
-
-                    {/* Logo Upload Section */}
-                    <div className="cp-modal-field cp-logo-field-container">
-                      <label>Company Branding / Logo</label>
-                      <div className="cp-logo-upload-wrap">
-                        <div className="client-portal-profile-avatar cp-logo-preview">
-                          {accountForm.logo ? (
-                            <img src={accountForm.logo} alt="Company Logo Preview" className="client-portal-profile-logo-img" />
-                          ) : (
-                            (accountForm.company || 'S')[0]
-                          )}
-                        </div>
-                        <div className="cp-logo-upload-controls">
-                          <label htmlFor="cpacc-logo-file" className="cp-logo-upload-btn">
-                            <svg className="icon" viewBox="0 0 24 24">
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                              <polyline points="17 8 12 3 7 8" />
-                              <line x1="12" y1="3" x2="12" y2="15" />
-                            </svg>
-                            <span>Upload New Logo</span>
-                            <input
-                              id="cpacc-logo-file"
-                              type="file"
-                              accept="image/*"
-                              className="cp-logo-file-input"
-                              onChange={handleLogoFileChange}
-                            />
-                          </label>
-                          {accountForm.logo && (
-                            <button type="button" className="cp-logo-remove-btn" onClick={removeLogo}>
-                              Remove Logo
-                            </button>
-                          )}
-                          <span className="cp-logo-hint">Recommended: PNG, JPG, or SVG (Max 3MB)</span>
-                        </div>
-                      </div>
-                      {accountErrors.logo && <span className="cp-modal-error">{accountErrors.logo}</span>}
-                    </div>
-
-                    <div className="cp-modal-row">
-                      <div className="cp-modal-field">
-                        <label htmlFor="cpacc-company">Company Name <span className="cp-modal-req">*</span></label>
-                        <input
-                          id="cpacc-company"
-                          type="text"
-                          className={`cp-modal-input ${accountErrors.company ? 'cp-modal-input--error' : ''}`}
-                          value={accountForm.company}
-                          onChange={handleAccountFormChange('company')}
-                        />
-                        {accountErrors.company && <span className="cp-modal-error">{accountErrors.company}</span>}
-                      </div>
-                      <div className="cp-modal-field">
-                        <label htmlFor="cpacc-industry">Industry Sector</label>
-                        <input
-                          id="cpacc-industry"
-                          type="text"
-                          className="cp-modal-input"
-                          placeholder="e.g. Manufacturing & Assembly"
-                          value={accountForm.industry}
-                          onChange={handleAccountFormChange('industry')}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="cp-modal-row">
-                      <div className="cp-modal-field">
-                        <label htmlFor="cpacc-contact">Primary Contact Person <span className="cp-modal-req">*</span></label>
-                        <input
-                          id="cpacc-contact"
-                          type="text"
-                          className={`cp-modal-input ${accountErrors.contactPerson ? 'cp-modal-input--error' : ''}`}
-                          value={accountForm.contactPerson}
-                          onChange={handleAccountFormChange('contactPerson')}
-                        />
-                        {accountErrors.contactPerson && <span className="cp-modal-error">{accountErrors.contactPerson}</span>}
-                      </div>
-                      <div className="cp-modal-field">
-                        <label htmlFor="cpacc-designation">Position / Designation</label>
-                        <input
-                          id="cpacc-designation"
-                          type="text"
-                          className="cp-modal-input"
-                          value={accountForm.designation}
-                          onChange={handleAccountFormChange('designation')}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="cp-modal-row">
-                      <div className="cp-modal-field">
-                        <label htmlFor="cpacc-email">Official Email Address <span className="cp-modal-req">*</span></label>
-                        <input
-                          id="cpacc-email"
-                          type="email"
-                          className={`cp-modal-input ${accountErrors.email ? 'cp-modal-input--error' : ''}`}
-                          value={accountForm.email}
-                          onChange={handleAccountFormChange('email')}
-                        />
-                        {accountErrors.email && <span className="cp-modal-error">{accountErrors.email}</span>}
-                      </div>
-                      <div className="cp-modal-field">
-                        <label htmlFor="cpacc-mobile">Mobile / Phone Number <span className="cp-modal-req">*</span></label>
-                        <input
-                          id="cpacc-mobile"
-                          type="text"
-                          className={`cp-modal-input ${accountErrors.mobile ? 'cp-modal-input--error' : ''}`}
-                          value={accountForm.mobile}
-                          onChange={handleAccountFormChange('mobile')}
-                        />
-                        {accountErrors.mobile && <span className="cp-modal-error">{accountErrors.mobile}</span>}
-                      </div>
-                    </div>
-
-                    <div className="client-portal-edit-account-actions">
-                      <button
-                        type="button"
-                        id="cp-cancel-account-btn"
-                        className="cp-modal-btn-cancel"
-                        onClick={cancelEditingAccount}
-                        disabled={accountSaving}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        id="cp-save-account-btn"
-                        className="client-portal-btn-primary"
-                        disabled={accountSaving}
-                      >
-                        {accountSaving ? 'Saving Changes...' : 'Save Account Changes'}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </div>
+          {/* ── VIEW: SETTINGS ── */}
+          {activeTab === 'settings' && (
+            <ClientPortalSettingsPage
+              session={session}
+              onUpdateSession={(updated) => {
+                setSession(updated);
+                localStorage.setItem('cp_session', JSON.stringify(updated));
+              }}
+            />
           )}
         </main>
       </div>
