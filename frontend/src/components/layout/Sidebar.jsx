@@ -178,10 +178,16 @@ export default function Sidebar({
 
               <div className={`submenu-wrapper ${openMenus['job-order-management'] && !collapsed ? 'open' : ''}`}>
                 <div className="submenu-inner">
-                  <Link to="/job-order-management" className="submenu-item active">
+                  <Link
+                    to="/job-order-management"
+                    className={`submenu-item${!location.search.includes('view=requisitions') ? ' active' : ''}`}
+                  >
                     Job Orders (PRFs)
                   </Link>
-                  <Link to="/job-order-management" className="submenu-item">
+                  <Link
+                    to="/job-order-management?view=requisitions"
+                    className={`submenu-item${location.search.includes('view=requisitions') ? ' active' : ''}`}
+                  >
                     Position Requisitions
                   </Link>
                 </div>
@@ -292,13 +298,13 @@ export default function Sidebar({
 
               <div className={`submenu-wrapper ${openMenus['recruitment-selection'] && !collapsed ? 'open' : ''}`}>
                 <div className="submenu-inner">
-                  <Link to="/recruitment-selection" className="submenu-item active">
+                  <Link to="/recruitment-selection" className={`submenu-item${!location.search || location.search.includes('view=pipeline') ? ' active' : ''}`}>
                     Selection Pipeline
                   </Link>
-                  <Link to="/recruitment-selection" className="submenu-item">
+                  <Link to="/recruitment-selection?view=schedules" className={`submenu-item${location.search.includes('view=schedules') ? ' active' : ''}`}>
                     Interview Schedules
                   </Link>
-                  <Link to="/recruitment-selection" className="submenu-item">
+                  <Link to="/recruitment-selection?view=evaluations" className={`submenu-item${location.search.includes('view=evaluations') ? ' active' : ''}`}>
                     Candidate Evaluations
                   </Link>
                 </div>

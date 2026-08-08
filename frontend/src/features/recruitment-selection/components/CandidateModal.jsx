@@ -112,7 +112,35 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   }
 
   function handleReject() {
-    update((a) => ({ ...a, status: 'rejected' }));
+    // If at client_interview stage, move to re_pooling instead of rejected
+    if (app.status === 'client_interview') {
+      update((a) => ({
+        ...a,
+        status: 're_pooling',
+        interview: null,
+        notes: [
+          {
+            text: 'Client Final Interview result: Failed. Returned to pooling for re-assignment to other clients within 3 days.',
+            meta: `${CURRENT_ADMIN} · ${formatDate(TODAY)}`,
+          },
+          ...a.notes,
+        ],
+      }));
+    } else {
+      // For other stages, mark as rejected
+      update((a) => ({
+        ...a,
+        status: 'rejected',
+        interview: null,
+        notes: [
+          {
+            text: `Failed at ${STAGES.find((s) => s.key === a.status)?.label || 'this stage'}. Candidate rejected from this position.`,
+            meta: `${CURRENT_ADMIN} · ${formatDate(TODAY)}`,
+          },
+          ...a.notes,
+        ],
+      }));
+    }
     onClose();
   }
 

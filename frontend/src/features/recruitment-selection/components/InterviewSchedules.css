@@ -1,0 +1,691 @@
+/* ===== INTERVIEW SCHEDULES ===== */
+.interview-schedules {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+}
+
+/* CONTROLS BAR */
+.schedule-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 2px 14px 2px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.schedule-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.schedule-tabs .tab {
+  padding: 7px 16px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.schedule-tabs .tab:hover {
+  color: var(--text);
+  background: var(--panel);
+}
+
+.schedule-tabs .tab.active {
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(20, 158, 110, 0.25);
+}
+
+.schedule-filters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+
+.filter-select:hover {
+  border-color: var(--green);
+}
+
+.filter-select:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(20, 158, 110, 0.12);
+}
+
+/* NAVIGATION BUTTONS */
+.nav-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.nav-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+/* EMPTY STATE */
+.empty-schedule {
+  padding: 52px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  border: 1.5px dashed var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+  font-weight: 500;
+}
+
+/* ===== DAY VIEW ===== */
+.schedule-day-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.day-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.day-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.day-display input[type='date'] {
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.14s;
+}
+
+.day-display input[type='date']:focus {
+  border-color: var(--green);
+}
+
+.day-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-display, inherit);
+}
+
+.day-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.time-slot {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.time-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+  padding-top: 12px;
+  letter-spacing: -0.2px;
+}
+
+.time-interviews {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 44px;
+}
+
+/* Day view interview card */
+.interview-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 15px;
+  border-left: 4px solid var(--green);
+  background: var(--panel);
+  border-radius: 0 12px 12px 0;
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.interview-item:hover {
+  box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.08));
+  transform: translateX(2px);
+}
+
+.interview-item.completed {
+  background: var(--green-soft);
+  border-left-color: var(--green);
+  opacity: 0.82;
+}
+
+.completed-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(20, 158, 110, 0.15);
+  padding: 3px 8px;
+  border-radius: 20px;
+  min-width: 48px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.interview-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.interview-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.interview-job {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.interview-type {
+  font-size: 10.5px;
+  color: var(--green);
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.interview-recruiter {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  min-width: 130px;
+  font-weight: 500;
+}
+
+.interview-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.slot-empty {
+  font-size: 12px;
+  color: var(--border);
+  padding: 10px 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* Day view buttons */
+.btn-reschedule {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.btn-reschedule:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.btn-mark-done {
+  padding: 6px 12px;
+  border: 1px solid var(--green);
+  border-radius: 7px;
+  background: var(--green);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(20, 158, 110, 0.2);
+}
+
+.btn-mark-done:hover {
+  background: #118A60;
+  border-color: #118A60;
+  box-shadow: 0 4px 12px rgba(20, 158, 110, 0.32);
+}
+
+.btn-done {
+  padding: 6px 12px;
+  border: 1px solid var(--green);
+  border-radius: 7px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: default;
+  white-space: nowrap;
+}
+
+/* ===== WEEK VIEW ===== */
+.schedule-week-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.week-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.week-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-display, inherit);
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.week-day {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs, 0 1px 4px rgba(0,0,0,0.05));
+  transition: box-shadow 0.15s;
+}
+
+.week-day:hover {
+  box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.08));
+}
+
+.week-day-label {
+  padding: 10px 14px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.week-day-interviews {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 10px;
+  gap: 8px;
+}
+
+.week-interview-card {
+  padding: 11px 12px;
+  border-left: 3px solid var(--green);
+  background: var(--bg);
+  border-radius: 0 10px 10px 0;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  transition: box-shadow 0.14s ease;
+}
+
+.week-interview-card:hover {
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06));
+}
+
+.week-interview-card.completed {
+  background: var(--green-soft);
+  border-left-color: var(--green);
+  opacity: 0.82;
+}
+
+.completed-badge-small {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--green);
+}
+
+.week-interview-time {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+
+.week-interview-candidate {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.week-interview-position {
+  font-size: 10.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.week-interview-recruiter {
+  font-size: 10px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.week-interview-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-small:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.btn-small-mark {
+  padding: 5px 10px;
+  border: 1px solid var(--green);
+  border-radius: 7px;
+  background: var(--green);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-small-mark:hover {
+  background: #118A60;
+  border-color: #118A60;
+}
+
+.btn-small-done {
+  padding: 5px 10px;
+  border: 1px solid var(--green);
+  border-radius: 7px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: default;
+}
+
+/* ===== RECRUITER VIEW ===== */
+.schedule-recruiter-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recruiter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.recruiter-group {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: var(--shadow-xs, 0 1px 4px rgba(0,0,0,0.05));
+}
+
+.recruiter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 18px;
+  background: var(--green-soft);
+  border-bottom: 1px solid var(--border);
+}
+
+.recruiter-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--green);
+  font-family: var(--font-display, inherit);
+}
+
+.recruiter-count {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--panel);
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.recruiter-interviews {
+  display: flex;
+  flex-direction: column;
+}
+
+.recruiter-interview-row {
+  display: grid;
+  grid-template-columns: 130px 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border-soft, var(--border));
+  background: var(--panel);
+  transition: background 0.14s ease;
+}
+
+.recruiter-interview-row:last-child {
+  border-bottom: none;
+}
+
+.recruiter-interview-row:hover {
+  background: var(--bg);
+}
+
+.recruiter-interview-row.completed {
+  background: var(--green-soft);
+  opacity: 0.82;
+}
+
+.recruiter-interview-row.completed:hover {
+  background: var(--green-soft);
+}
+
+.row-date-time {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row-date {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.row-time {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.row-completed-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  margin-top: 3px;
+}
+
+.row-candidate {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.row-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.row-job {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.row-interview-type {
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.row-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-reschedule-small {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-reschedule-small:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.btn-reschedule-small-mark {
+  padding: 6px 12px;
+  border: 1px solid var(--green);
+  border-radius: 7px;
+  background: var(--green);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(20, 158, 110, 0.18);
+}
+
+.btn-reschedule-small-mark:hover {
+  background: #118A60;
+  border-color: #118A60;
+}
+
+.btn-reschedule-small-done {
+  padding: 6px 12px;
+  border: 1px solid var(--green);
+  border-radius: 7px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: default;
+  white-space: nowrap;
+}
