@@ -341,4 +341,16 @@ export function generateId(prefix) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+export function nextRegId(candidates = []) {
+  if (!candidates || !candidates.length) return 'APP-001';
+  const numbers = candidates
+    .map((c) => {
+      const match = c.regId?.match(/APP-(\d+)/i);
+      return match ? parseInt(match[1], 10) : 0;
+    })
+    .filter((n) => !isNaN(n));
+  const max = numbers.length > 0 ? Math.max(...numbers) : 0;
+  return `APP-${String(max + 1).padStart(3, '0')}`;
+}
+
 export const EDUCATION_LEVELS = ['Elementary', 'High School', 'College', 'Vocational'];
