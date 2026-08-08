@@ -59,12 +59,6 @@ export default function JobOrderManagementPage() {
                 : `${store.stats.total} active job orders across ${store.stats.clientCount} clients`}
             </div>
           </div>
-          {viewMode !== 'requisitions' && (
-            <button className="btn primary" onClick={store.openCreateModal}>
-              <svg className="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-              New Job Order
-            </button>
-          )}
         </div>
 
         {viewMode === 'requisitions' ? (
