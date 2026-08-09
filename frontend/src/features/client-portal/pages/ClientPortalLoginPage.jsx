@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { clientPortalService } from '../services/ClientPortalService';
 import './ClientPortalLoginPage.css';
 
 export default function ClientPortalLoginPage() {
@@ -49,36 +50,19 @@ export default function ClientPortalLoginPage() {
 
     setSubmitting(true);
 
-    // Simulate network latency — no real backend
-    setTimeout(() => {
-      try {
-        // Check if a registered account exists for this email
-        const usersRaw = localStorage.getItem('cp_users');
-        const users = usersRaw ? JSON.parse(usersRaw) : [];
-        const match = users.find(
-          (u) => u.email === email.trim().toLowerCase() && u.password === password,
-        );
-
-        if (users.length > 0 && !match) {
-          setError('Incorrect email or password. Please try again.');
-          setSubmitting(false);
-          return;
-        }
-
-        // If no accounts registered yet, allow any valid credentials (demo mode)
-        const sessionUser = match || {
-          email: email.trim().toLowerCase(),
-          company: 'Sunshine Manufacturing Corp.',
-          contactPerson: 'Client User',
-        };
-
+    clientPortalService.login({ email: email.trim(), password })
+      .then((response) => {
+        const sessionUser = response.data;
         localStorage.setItem('cp_session', JSON.stringify({ ...sessionUser, loggedIn: true }));
         navigate('/client-portal', { replace: true });
-      } catch {
-        setError('An unexpected error occurred. Please try again.');
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ||
+          err.response?.data?.email?.[0] ||
+          'Incorrect email or password. Please try again.';
+        setError(message);
         setSubmitting(false);
-      }
-    }, 750);
+      });
   };
 
   return (
