@@ -27,6 +27,22 @@ export function upsertHire(key, data) {
   hireDeploymentMock.set(key, { ...hireDeploymentMock.get(key), ...data });
 }
 
+export async function fetchRecruitmentApplications() {
+  const res = await fetch('http://localhost:8000/api/v1/recruitment/applications');
+  if (!res.ok) throw new Error('Failed to fetch recruitment applications');
+  return res.json();
+}
+
+export async function updateRecruitmentStage(applicantId, stage, status = null) {
+  const res = await fetch(`http://localhost:8000/api/v1/applicants/${applicantId}/recruitment-stage`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ recruitment_stage: stage, ...(status ? { status } : {}) }),
+  });
+  if (!res.ok) throw new Error('Failed to update recruitment stage');
+  return res.json();
+}
+
 // Example real-API shape for later:
 // export async function getApplications() {
 //   const res = await apiClient.get('/applications');

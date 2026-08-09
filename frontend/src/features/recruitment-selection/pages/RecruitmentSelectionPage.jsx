@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import CandidateCard from '../components/CandidateCard';
 import CandidateModal from '../components/CandidateModal';
 import InterviewSchedules from '../components/InterviewSchedules';
 import { APPLICATIONS, JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
+import { fetchRecruitmentApplications } from '../services/RecruitmentSelectionService';
 import './RecruitmentSelectionPage.css';
 
 function buildInitialApplications() {
@@ -25,11 +26,40 @@ export default function RecruitmentSelectionPage() {
   const [searchParams] = useSearchParams();
   const viewMode = searchParams.get('view') || 'pipeline'; // 'pipeline', 'schedules', 'evaluations'
 
-  const [applications, setApplications] = useState(buildInitialApplications);
+  const [applications, setApplications] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [jobFilter, setJobFilter] = useState('all');
   const [scoreFilter, setScoreFilter] = useState('all');
   const [selectedId, setSelectedId] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchRecruitmentApplications()
+      .then((data) => {
+        if (!cancelled) {
+          const mapped = data.map((app, i) => ({
+            ...app,
+            id: app.id || `reg-${i + 1}`,
+            checklist: app.checklist || { requirements: false, identity: false, history: false, reference: false },
+            docStatus: app.docStatus || { resume: false, certificate: false, portfolio: false },
+            recruiterRating: app.recruiterRating || 0,
+          }));
+          setApplications(mapped);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setApplications(buildInitialApplications());
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
@@ -201,8 +231,8 @@ export default function RecruitmentSelectionPage() {
                               </div>
                             </div>
                           </td>
-                          <td><span className="eval-job-title">{job?.title || '—'}</span></td>
-                          <td><span className="eval-client">{job?.client || '—'}</span></td>
+                          <td><span className="eval-job-title">{app.jobTitle || job?.title || '—'}</span></td>
+                          <td><span className="eval-client">{app.client || job?.client || '—'}</span></td>
                           <td>
                             <span className="eval-stage-dot" style={{ background: stage?.dot }} />
                             <span className="eval-stage-label">{stage?.label || app.status}</span>

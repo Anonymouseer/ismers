@@ -7,7 +7,7 @@ const STAGE_LABELS = {
 };
 
 function DeploymentBadge({ app, job }) {
-  const hire = getHire(keyFor(app.name, job.depRef));
+  const hire = job ? getHire(keyFor(app.name, job.depRef)) : null;
   if (!hire || !hire.deploymentId) {
     return <span className="dep-sync-badge pending">Awaiting deployment</span>;
   }
@@ -26,10 +26,10 @@ export default function CandidateCard({ app, job, onSelect }) {
       </div>
       <div className="cand-jo">
         <svg className="icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>
-        {job.title}
+        {job?.title || app.jobTitle || app.jobId || 'Unassigned Job'}
       </div>
       <div className="cand-foot">
-        <span className="cand-client">{job.client}</span>
+        <span className="cand-client">{job?.client || app.client || '—'}</span>
         <span className="cand-days">Applied {app.applied}</span>
       </div>
       {app.fromRegistration && (

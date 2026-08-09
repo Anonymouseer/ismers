@@ -4,7 +4,7 @@ import {
   CURRENT_ADMIN, TODAY,
 } from '../data/mockApplications';
 import { initials, scoreColor, formatDate, addDays, assignedRecruiter, findNextAvailableSlot } from '../utils/recruitmentUtils';
-import { upsertHire, keyFor } from '../services/RecruitmentSelectionService';
+import { upsertHire, keyFor, updateRecruitmentStage } from '../services/RecruitmentSelectionService';
 import DocViewerModal, { DOC_ICONS } from './DocViewerModal';
 
 const SCORE_ROWS = [
@@ -101,18 +101,23 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         notes = [...notes, { text: 'Interview cycle complete — proceeding to background check.', meta: `System · ${formatDate(TODAY)}` }];
       }
       const nextApp = { ...a, status: nextKey, interview, notes };
-      if (nextKey === 'hired') {
+      if (nextKey === 'hired' && job) {
         upsertHire(keyFor(a.name, job.depRef), {
           name: a.name, jobTitle: job.title, client: job.client, jobOrderRef: job.depRef, hiredDate: a.applied,
         });
       }
       return nextApp;
     });
+
+    if (!isNaN(Number(app.id))) {
+      updateRecruitmentStage(app.id, nextKey).catch(() => {});
+    }
     onClose();
   }
 
   function handleReject() {
-    // If at client_interview stage, move to re_pooling instead of rejected
+    const nextStatus = app.status === 'client_interview' ? 're_pooling' : 'rejected';
+    const nextStage = app.status === 'client_interview' ? 're_pooling' : 'pooling';
     if (app.status === 'client_interview') {
       update((a) => ({
         ...a,
@@ -127,7 +132,6 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         ],
       }));
     } else {
-      // For other stages, mark as rejected
       update((a) => ({
         ...a,
         status: 'rejected',
@@ -140,6 +144,10 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           ...a.notes,
         ],
       }));
+    }
+
+    if (!isNaN(Number(app.id))) {
+      updateRecruitmentStage(app.id, nextStage, nextStatus).catch(() => {});
     }
     onClose();
   }
@@ -167,8 +175,8 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         <div className="modal-head">
           <div className="modal-avatar">{initials(app.name)}</div>
           <div className="modal-title-wrap">
-            <div className="modal-jo-title">{app.name}</div>
-            <div className="modal-jo-sub">{job.title} · {job.client}</div>
+          <div className="modal-jo-title">{app.name}</div>
+          <div className="modal-jo-sub">{job?.title || app.jobTitle || app.jobId || 'Unassigned'} · {job?.client || app.client || '—'}</div>
           </div>
           <button className="modal-close" onClick={onClose}>
             <svg className="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -178,7 +186,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         <div className="modal-scroll">
           <div className="modal-info-grid">
             <div className="modal-info-item"><div className="modal-info-label">Applied</div><div className="modal-info-value">{app.applied}</div></div>
-            <div className="modal-info-item"><div className="modal-info-label">Job Order</div><div className="modal-info-value" style={{ fontSize: 11 }}>{job.title}</div></div>
+            <div className="modal-info-item"><div className="modal-info-label">Job Order</div><div className="modal-info-value" style={{ fontSize: 11 }}>{job?.title || app.jobTitle || app.jobId || '—'}</div></div>
             <div className="modal-info-item"><div className="modal-info-label">Experience</div><div className="modal-info-value">{app.experience}</div></div>
             <div className="modal-info-item"><div className="modal-info-label">Location</div><div className="modal-info-value" style={{ fontSize: 11 }}>{app.location}</div></div>
           </div>
