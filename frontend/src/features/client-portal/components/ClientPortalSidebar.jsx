@@ -1,3 +1,5 @@
+import primepowerLogo from '../../../assets/primepower-logo.svg';
+
 export default function ClientPortalSidebar({
   session,
   sidebarCollapsed,
@@ -10,8 +12,11 @@ export default function ClientPortalSidebar({
   accountManager,
   onLogout,
 }) {
+  const pendingEndorsementsCount = endorsedCandidates.filter((c) => c.status === 'Pending Review').length;
+
   return (
     <aside className={`client-portal-sidebar-nav ${sidebarCollapsed ? 'collapsed' : ''}`}>
+      {/* COLLAPSE TOGGLE BUTTON ON SIDEBAR EDGE */}
       <button
         type="button"
         id="cp-sidebar-collapse-btn"
@@ -25,26 +30,42 @@ export default function ClientPortalSidebar({
         </svg>
       </button>
 
+      {/* BRAND LOGO HEADER */}
+      <div className="client-portal-brand">
+        <img src={primepowerLogo} alt="Prime Power Logo" className="client-portal-brand-logo-img" />
+        {!sidebarCollapsed && (
+          <div className="client-portal-brand-text">
+            <div className="client-portal-brand-name">PRIMEPOWER MANPOWER</div>
+            <div className="client-portal-brand-sub">Client Portal</div>
+          </div>
+        )}
+      </div>
+
+      {/* CLIENT COMPANY PROFILE CARD */}
       <div
-        className="client-portal-sidebar-top-profile"
-        title={sidebarCollapsed ? (session?.company || 'Sunshine Mfg. Corp.') : undefined}
+        className="client-portal-sidebar-company-card"
+        title={sidebarCollapsed ? (session?.company || 'ABC Manufacturing Corp.') : undefined}
       >
-        <div className="client-portal-sidebar-user-avatar">
+        <div className="client-portal-sidebar-company-avatar">
           {session?.logo ? (
-            <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-sidebar-logo-img" />
+            <img src={session.logo} alt={session?.company || 'Company Logo'} className="client-portal-sidebar-company-logo-img" />
           ) : (
-            (session?.company || 'S')[0]
+            (session?.company || 'A')[0]
           )}
         </div>
         {!sidebarCollapsed && (
-          <div className="client-portal-sidebar-user-info">
-            <div className="client-portal-sidebar-user-company">
-              {session?.company || 'Sunshine Mfg. Corp.'}
+          <div className="client-portal-sidebar-company-info">
+            <div className="client-portal-sidebar-company-name">
+              {session?.company || 'ABC Manufacturing Corp.'}
+            </div>
+            <div className="client-portal-sidebar-company-sub">
+              {session?.industry || 'Client Account'}
             </div>
           </div>
         )}
       </div>
 
+      {/* NAVIGATION SECTION */}
       <div className="client-portal-sidebar-section">
         <div className="client-portal-sidebar-label">Navigation</div>
         <nav className="client-portal-nav-list">
@@ -56,10 +77,10 @@ export default function ClientPortalSidebar({
             title={sidebarCollapsed ? 'Dashboard' : undefined}
           >
             <svg className="icon" viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
             </svg>
             <span>Dashboard</span>
           </button>
@@ -86,7 +107,7 @@ export default function ClientPortalSidebar({
             id="nav-endorsements"
             className={`client-portal-nav-item ${activeTab === 'endorsements' ? 'active' : ''}`}
             onClick={() => setActiveTab('endorsements')}
-            title={sidebarCollapsed ? `Endorsements (${endorsedCandidates.filter((c) => c.status === 'Pending Review').length})` : undefined}
+            title={sidebarCollapsed ? `Endorsements (${pendingEndorsementsCount})` : undefined}
           >
             <svg className="icon" viewBox="0 0 24 24">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -95,7 +116,7 @@ export default function ClientPortalSidebar({
             </svg>
             <span>Endorsements</span>
             <span className="client-portal-nav-count client-portal-nav-count--amber">
-              {endorsedCandidates.filter((c) => c.status === 'Pending Review').length}
+              {pendingEndorsementsCount}
             </span>
           </button>
 
@@ -132,6 +153,7 @@ export default function ClientPortalSidebar({
         </nav>
       </div>
 
+      {/* ASSIGNED ACCOUNT MANAGER SECTION */}
       <div
         className="client-portal-sidebar-section client-portal-sidebar-section--am"
         title={sidebarCollapsed ? `Account Manager: ${accountManager.name}` : undefined}
@@ -141,17 +163,20 @@ export default function ClientPortalSidebar({
           <div className="client-portal-am-avatar">
             {accountManager.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}
           </div>
-          <div className="client-portal-am-info">
-            <div className="client-portal-am-name">{accountManager.name}</div>
-            <div className="client-portal-am-title">{accountManager.title}</div>
-            <a href={`mailto:${accountManager.email}`} className="client-portal-am-email">
-              {accountManager.email}
-            </a>
-            <div className="client-portal-am-phone">{accountManager.phone}</div>
-          </div>
+          {!sidebarCollapsed && (
+            <div className="client-portal-am-info">
+              <div className="client-portal-am-name">{accountManager.name}</div>
+              <div className="client-portal-am-title">{accountManager.title}</div>
+              <a href={`mailto:${accountManager.email}`} className="client-portal-am-email">
+                {accountManager.email}
+              </a>
+              <div className="client-portal-am-phone">{accountManager.phone}</div>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* SIGN OUT BUTTON */}
       <button
         id="client-portal-logout-btn"
         className="client-portal-logout-btn"
@@ -159,14 +184,13 @@ export default function ClientPortalSidebar({
         onClick={onLogout}
         title="Sign Out"
         aria-label="Sign Out"
-        style={{ marginTop: '12px' }}
       >
         <svg className="icon" viewBox="0 0 24 24">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
           <polyline points="16 17 21 12 16 7" />
           <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
-        <span>Sign Out</span>
+        {!sidebarCollapsed && <span>Sign Out</span>}
       </button>
     </aside>
   );

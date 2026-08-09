@@ -136,6 +136,31 @@ class ApplicantController extends Controller
         return response()->json($this->formatApplicant($applicant));
     }
 
+    private function generateNextRegId(): string
+    {
+        $existingRegIds = Applicant::pluck('reg_id')->toArray();
+        $maxNum = 0;
+
+        foreach ($existingRegIds as $rId) {
+            if (preg_match('/(?:REG|APP)-(\d+)/i', (string) $rId, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxNum) {
+                    $maxNum = $num;
+                }
+            }
+        }
+
+        $nextNum = $maxNum + 1;
+        $candidateRegId = 'REG-'.str_pad((string) $nextNum, 3, '0', STR_PAD_LEFT);
+
+        while (in_array($candidateRegId, $existingRegIds, true)) {
+            $nextNum++;
+            $candidateRegId = 'REG-'.str_pad((string) $nextNum, 3, '0', STR_PAD_LEFT);
+        }
+
+        return $candidateRegId;
+    }
+
     /**
      * POST /api/v1/applicants (Self-service or staff intake registration)
      */
@@ -199,10 +224,8 @@ class ApplicantController extends Controller
             ], 422);
         }
 
-        // Generate next REG-### id
-        $maxId = Applicant::max('id') ?? 0;
-        $nextNum = $maxId + 1;
-        $regId = 'REG-'.str_pad((string) $nextNum, 3, '0', STR_PAD_LEFT);
+        // Generate next collision-proof REG-### id
+        $regId = $this->generateNextRegId();
 
         DB::beginTransaction();
         try {

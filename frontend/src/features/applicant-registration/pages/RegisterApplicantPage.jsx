@@ -40,6 +40,8 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
   const [educationRows, setEducationRows] = useState(emptyEducationRows);
   const [employmentRows, setEmploymentRows] = useState([emptyEmploymentRow()]);
   const [referenceRows, setReferenceRows] = useState([emptyReferenceRow()]);
+  const [noWorkExperience, setNoWorkExperience] = useState(false);
+  const [noReferences, setNoReferences] = useState(false);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -56,48 +58,67 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
   const addReferenceRow = () => setReferenceRows((prev) => [...prev, emptyReferenceRow()]);
   const removeReferenceRow = (index) => setReferenceRows((prev) => prev.filter((_, i) => i !== index));
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.phone.trim()) {
       setError('First name, last name, and mobile number are required at minimum.');
       return;
     }
 
-    const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
+    setSubmitting(true);
+    setError('');
 
-    const education = EDUCATION_LEVELS
-      .filter((level) => educationRows[level].school.trim() || educationRows[level].yearGraduated.trim())
-      .map((level) => ({
-        school: educationRows[level].school.trim(),
-        degree: level,
-        level,
-        startYear: '',
-        endYear: educationRows[level].yearGraduated.trim() || '—',
-      }));
+    try {
+      const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
 
-    const workHistory = employmentRows
-      .filter((r) => r.position.trim() || r.company.trim())
-      .map((r) => ({
-        role: r.position.trim(),
-        company: r.company.trim(),
-        duration: [r.from.trim(), r.to.trim()].filter(Boolean).join(' – ') || '—',
-      }));
+      const education = EDUCATION_LEVELS
+        .filter((level) => educationRows[level].school.trim() || educationRows[level].yearGraduated.trim())
+        .map((level) => ({
+          school: educationRows[level].school.trim(),
+          degree: level,
+          level,
+          startYear: '',
+          endYear: educationRows[level].yearGraduated.trim() || '—',
+        }));
 
-    const references = referenceRows
-      .filter((r) => r.name.trim())
-      .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
+      const workHistory = noWorkExperience
+        ? [{ role: 'First-time Job Seeker / Fresh Graduate', company: 'N/A', duration: 'N/A' }]
+        : employmentRows
+            .filter((r) => r.position.trim() || r.company.trim())
+            .map((r) => ({
+              role: r.position.trim(),
+              company: r.company.trim(),
+              duration: [r.from.trim(), r.to.trim()].filter(Boolean).join(' – ') || '—',
+            }));
 
-    const result = addApplicant({ ...form, name: fullName, education, workHistory, references });
+      const experienceSummary = noWorkExperience
+        ? 'No formal work experience yet (Fresh Graduate / First-time Job Seeker)'
+        : (form.experienceSummary || (workHistory.length > 0 ? `${workHistory.length} previous position(s)` : 'No formal work experience listed'));
 
-    if (!result.ok) {
-      setError(result.message);
-      return;
-    }
+      const references = noReferences
+        ? [{ name: 'N/A', occupation: 'Not Applicable', contact: 'N/A' }]
+        : referenceRows
+            .filter((r) => r.name.trim())
+            .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
 
-    addApplicant(newApplicant);
-    if (onDone) {
-      onDone();
-    } else {
-      navigate('/applicant-registration');
+      const result = await addApplicant({ ...form, name: fullName, experienceSummary, education, workHistory, references });
+
+      if (!result || !result.ok) {
+        setError(result?.message || 'Error registering applicant.');
+        return;
+      }
+
+      if (onDone) {
+        onDone();
+      } else {
+        navigate('/applicant-registration');
+      }
+    } catch (err) {
+      console.error('Error registering applicant:', err);
+      setError('Failed to register applicant. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -128,9 +149,70 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
 
           <div className="intake-section">
             <div className="intake-section-title">Family / Emergency Information</div>
+
+            {/* NO SPOUSE OPTION TOGGLE */}
+            <div
+              className="no-spouse-banner"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 14px',
+                background: 'var(--secondary, #E4F0F8)',
+                border: '1px solid var(--border, rgba(0, 125, 204, 0.15))',
+                borderRadius: '10px',
+                marginBottom: '14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text)',
+              }}
+            >
+              <input
+                type="checkbox"
+                id="staffNoSpouseCheck"
+                checked={Boolean(form.noSpouse || (form.spouseName === 'N/A' && form.spouseOccupation === 'N/A'))}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setForm((prev) => ({
+                    ...prev,
+                    noSpouse: checked,
+                    spouseName: checked ? 'N/A' : (prev.spouseName === 'N/A' ? '' : prev.spouseName),
+                    spouseOccupation: checked ? 'N/A' : (prev.spouseOccupation === 'N/A' ? '' : prev.spouseOccupation),
+                  }));
+                }}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary, #007DCC)' }}
+              />
+              <label htmlFor="staffNoSpouseCheck" style={{ cursor: 'pointer', margin: 0, flex: 1, userSelect: 'none' }}>
+                Applicant has no spouse (Single / Not Applicable)
+              </label>
+              {(form.noSpouse || (form.spouseName === 'N/A' && form.spouseOccupation === 'N/A')) && (
+                <span style={{ fontSize: '11px', background: 'var(--primary, #007DCC)', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                  N/A Selected
+                </span>
+              )}
+            </div>
+
             <div className="edit-form-grid intake-grid">
-              <label>Name of Spouse<input type="text" value={form.spouseName} onChange={set('spouseName')} /></label>
-              <label>Occupation<input type="text" value={form.spouseOccupation} onChange={set('spouseOccupation')} /></label>
+              <label style={{ opacity: (form.noSpouse || form.spouseName === 'N/A') ? 0.65 : 1 }}>
+                Name of Spouse
+                <input
+                  type="text"
+                  value={form.spouseName}
+                  onChange={set('spouseName')}
+                  placeholder={(form.noSpouse || form.spouseName === 'N/A') ? 'N/A' : ''}
+                  disabled={form.noSpouse || form.spouseName === 'N/A'}
+                />
+              </label>
+              <label style={{ opacity: (form.noSpouse || form.spouseOccupation === 'N/A') ? 0.65 : 1 }}>
+                Occupation
+                <input
+                  type="text"
+                  value={form.spouseOccupation}
+                  onChange={set('spouseOccupation')}
+                  placeholder={(form.noSpouse || form.spouseOccupation === 'N/A') ? 'N/A' : ''}
+                  disabled={form.noSpouse || form.spouseOccupation === 'N/A'}
+                />
+              </label>
               <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} /></label>
               <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} /></label>
               <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} /></label>
@@ -171,55 +253,141 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
           <div className="intake-section">
             <div className="intake-section-title">
               Employment Record
-              <button type="button" className="link-btn" onClick={addEmploymentRow}>+ Add Row</button>
+              {!noWorkExperience && (
+                <button type="button" className="link-btn" onClick={addEmploymentRow}>+ Add Row</button>
+              )}
             </div>
-            <div className="intake-table intake-table-4col">
-              <div className="intake-table-head">
-                <div>From (Month/Year)</div>
-                <div>To (Month/Year)</div>
-                <div>Position</div>
-                <div>Company</div>
+
+            {/* NO PREVIOUS WORK EXPERIENCE TOGGLE */}
+            <div
+              className="no-experience-banner"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 14px',
+                background: 'var(--secondary, #E4F0F8)',
+                border: '1px solid var(--border, rgba(0, 125, 204, 0.15))',
+                borderRadius: '10px',
+                marginBottom: '14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text)',
+              }}
+            >
+              <input
+                type="checkbox"
+                id="staffNoExperienceCheck"
+                checked={noWorkExperience}
+                onChange={(e) => setNoWorkExperience(e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary, #007DCC)' }}
+              />
+              <label htmlFor="staffNoExperienceCheck" style={{ cursor: 'pointer', margin: 0, flex: 1, userSelect: 'none' }}>
+                Applicant has no previous employment (Fresh Graduate / First-Time Job Seeker)
+              </label>
+              {noWorkExperience && (
+                <span style={{ fontSize: '11px', background: 'var(--primary, #007DCC)', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                  First-Time Job Seeker
+                </span>
+              )}
+            </div>
+
+            {noWorkExperience ? (
+              <div style={{ padding: '16px 20px', background: 'var(--panel, #EDF5FB)', border: '1px dashed var(--border)', borderRadius: '10px', color: 'var(--muted-fg)', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
+                Indicated as <strong>First-Time Job Seeker / Fresh Graduate</strong> with no prior employment history.
               </div>
-              {employmentRows.map((row, i) => (
-                <div className="intake-table-row intake-table-4col" key={i}>
-                  <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} />
-                  <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} />
-                  <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} />
-                  <div className="intake-table-cell-with-remove">
-                    <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} />
-                    {employmentRows.length > 1 && (
-                      <button type="button" onClick={() => removeEmploymentRow(i)}>✕</button>
-                    )}
-                  </div>
+            ) : (
+              <div className="intake-table intake-table-4col">
+                <div className="intake-table-head">
+                  <div>From (Month/Year)</div>
+                  <div>To (Month/Year)</div>
+                  <div>Position</div>
+                  <div>Company</div>
                 </div>
-              ))}
-            </div>
+                {employmentRows.map((row, i) => (
+                  <div className="intake-table-row intake-table-4col" key={i}>
+                    <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} />
+                    <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} />
+                    <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} />
+                    <div className="intake-table-cell-with-remove">
+                      <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} />
+                      {employmentRows.length > 1 && (
+                        <button type="button" onClick={() => removeEmploymentRow(i)}>✕</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="intake-section">
             <div className="intake-section-title">
               References
-              <button type="button" className="link-btn" onClick={addReferenceRow}>+ Add Row</button>
+              {!noReferences && (
+                <button type="button" className="link-btn" onClick={addReferenceRow}>+ Add Row</button>
+              )}
             </div>
-            <div className="intake-table intake-table-3col">
-              <div className="intake-table-head">
-                <div>Name</div>
-                <div>Occupation</div>
-                <div>Address / Tel. No.</div>
+
+            {/* NO REFERENCES TOGGLE */}
+            <div
+              className="no-references-banner"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 14px',
+                background: 'var(--secondary, #E4F0F8)',
+                border: '1px solid var(--border, rgba(0, 125, 204, 0.15))',
+                borderRadius: '10px',
+                marginBottom: '14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text)',
+              }}
+            >
+              <input
+                type="checkbox"
+                id="staffNoReferencesCheck"
+                checked={noReferences}
+                onChange={(e) => setNoReferences(e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--primary, #007DCC)' }}
+              />
+              <label htmlFor="staffNoReferencesCheck" style={{ cursor: 'pointer', margin: 0, flex: 1, userSelect: 'none' }}>
+                Applicant has no character references to list (Not Applicable)
+              </label>
+              {noReferences && (
+                <span style={{ fontSize: '11px', background: 'var(--primary, #007DCC)', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                  N/A Selected
+                </span>
+              )}
+            </div>
+
+            {noReferences ? (
+              <div style={{ padding: '16px 20px', background: 'var(--panel, #EDF5FB)', border: '1px dashed var(--border)', borderRadius: '10px', color: 'var(--muted-fg)', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
+                Indicated as <strong>No Character References Available (N/A)</strong>.
               </div>
-              {referenceRows.map((row, i) => (
-                <div className="intake-table-row intake-table-3col" key={i}>
-                  <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} />
-                  <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} />
-                  <div className="intake-table-cell-with-remove">
-                    <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} />
-                    {referenceRows.length > 1 && (
-                      <button type="button" onClick={() => removeReferenceRow(i)}>✕</button>
-                    )}
-                  </div>
+            ) : (
+              <div className="intake-table intake-table-3col">
+                <div className="intake-table-head">
+                  <div>Name</div>
+                  <div>Occupation</div>
+                  <div>Address / Tel. No.</div>
                 </div>
-              ))}
-            </div>
+                {referenceRows.map((row, i) => (
+                  <div className="intake-table-row intake-table-3col" key={i}>
+                    <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} />
+                    <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} />
+                    <div className="intake-table-cell-with-remove">
+                      <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} />
+                      {referenceRows.length > 1 && (
+                        <button type="button" onClick={() => removeReferenceRow(i)}>✕</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {error && <div className="actions-warning" style={{ textAlign: 'left', marginBottom: 12 }}>{error}</div>}

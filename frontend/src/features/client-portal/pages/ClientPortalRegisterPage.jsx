@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { clientPortalService } from '../services/ClientPortalService';
+import primepowerLogo from '../../../assets/primepower-logo.svg';
 import './ClientPortalRegisterPage.css';
 
 const INDUSTRIES = [
@@ -195,7 +196,9 @@ export default function ClientPortalRegisterPage() {
 
         <div className="cp-reg-brand-body">
           <div className="cp-reg-logo-block">
-            <div className="cp-reg-logo-mark">PM</div>
+            <div className="cp-reg-logo-mark">
+              <img src={primepowerLogo} alt="PRIMEPOWER Logo" className="cp-reg-logo-img" />
+            </div>
             <div className="cp-reg-logo-text">
               <div className="cp-reg-logo-name">
                 <span className="cp-reg-logo-prime">PRIME</span>

@@ -51,6 +51,8 @@ export default function PublicApplyPage() {
   const [educationRows, setEducationRows] = useState(emptyEducationRows);
   const [employmentRows, setEmploymentRows] = useState([emptyEmploymentRow()]);
   const [referenceRows, setReferenceRows] = useState([emptyReferenceRow()]);
+  const [noWorkExperience, setNoWorkExperience] = useState(false);
+  const [noReferences, setNoReferences] = useState(false);
   const [resumeFile, setResumeFile] = useState(null);
   const [error, setError] = useState('');
   const [submittedRegId, setSubmittedRegId] = useState(null);
@@ -111,56 +113,77 @@ export default function PublicApplyPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.phone.trim()) {
       setError('First name, last name, and mobile number are required.');
       return;
     }
 
-    const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
+    setSubmitting(true);
+    setError('');
 
-    const education = EDUCATION_LEVELS
-      .filter((level) => educationRows[level].school.trim() || educationRows[level].yearGraduated.trim())
-      .map((level) => ({
-        school: educationRows[level].school.trim(),
-        degree: level,
-        level,
-        startYear: '',
-        endYear: educationRows[level].yearGraduated.trim() || '',
-      }));
+    try {
+      const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
 
-    const workHistory = employmentRows
-      .filter((r) => r.position.trim() || r.company.trim())
-      .map((r) => ({
-        role: r.position.trim(),
-        company: r.company.trim(),
-        duration: [r.from.trim(), r.to.trim()].filter(Boolean).join(' - ') || '',
-      }));
+      const education = EDUCATION_LEVELS
+        .filter((level) => educationRows[level].school.trim() || educationRows[level].yearGraduated.trim())
+        .map((level) => ({
+          school: educationRows[level].school.trim(),
+          degree: level,
+          level,
+          startYear: '',
+          endYear: educationRows[level].yearGraduated.trim() || '',
+        }));
 
-    const references = referenceRows
-      .filter((r) => r.name.trim())
-      .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
+      const workHistory = noWorkExperience
+        ? [{ role: 'First-time Job Seeker / Fresh Graduate', company: 'N/A', duration: 'N/A' }]
+        : employmentRows
+            .filter((r) => r.position.trim() || r.company.trim())
+            .map((r) => ({
+              role: r.position.trim(),
+              company: r.company.trim(),
+              duration: [r.from.trim(), r.to.trim()].filter(Boolean).join(' - ') || '',
+            }));
 
-    const documents = resumeFile
-      ? [{ name: resumeFile.name, type: 'Resume / CV' }]
-      : [];
+      const experienceSummary = noWorkExperience
+        ? 'No formal work experience yet (Fresh Graduate / First-Time Job Seeker)'
+        : (form.experienceSummary || (workHistory.length > 0 ? `${workHistory.length} previous position(s)` : 'No formal work experience listed'));
 
-    const result = addApplicant({
-      ...form,
-      name: fullName,
-      education,
-      workHistory,
-      references,
-      documents,
-      submissionSource: 'self-service',
-    });
+      const references = noReferences
+        ? [{ name: 'N/A', occupation: 'Not Applicable', contact: 'N/A' }]
+        : referenceRows
+            .filter((r) => r.name.trim())
+            .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
 
-    if (!result.ok) {
-      setError(result.message);
-      return;
+      const documents = resumeFile
+        ? [{ name: resumeFile.name, type: 'Resume / CV' }]
+        : [];
+
+      const result = await addApplicant({
+        ...form,
+        name: fullName,
+        experienceSummary,
+        education,
+        workHistory,
+        references,
+        documents,
+        submissionSource: 'self-service',
+      });
+
+      if (!result || !result.ok) {
+        setError(result?.message || 'Submission failed. Please verify your inputs and try again.');
+        return;
+      }
+
+      setSubmittedRegId(result.regId);
+    } catch (err) {
+      console.error('Error submitting application:', err);
+      setError('An error occurred while submitting your application. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmittedRegId(result.regId);
   };
 
   // ---- Success state ----
@@ -220,6 +243,31 @@ export default function PublicApplyPage() {
         <label>Cel #<input type="text" value={form.phone} onChange={set('phone')} placeholder="09XX XXX XXXX" /></label>
         <label>Alternate Contact<input type="text" value={form.alternateContact} onChange={set('alternateContact')} placeholder="Alternative number" /></label>
         <label>Email<input type="email" value={form.email} onChange={set('email')} placeholder="email@example.com" /></label>
+        <label>
+          Civil Status
+          <select
+            value={form.civilStatus}
+            onChange={(e) => {
+              const val = e.target.value;
+              setForm((prev) => {
+                const isSingle = val === 'Single';
+                return {
+                  ...prev,
+                  civilStatus: val,
+                  noSpouse: isSingle ? true : prev.noSpouse,
+                  spouseName: isSingle && (!prev.spouseName || prev.spouseName === '') ? 'N/A' : (prev.spouseName === 'N/A' && !isSingle ? '' : prev.spouseName),
+                  spouseOccupation: isSingle && (!prev.spouseOccupation || prev.spouseOccupation === '') ? 'N/A' : (prev.spouseOccupation === 'N/A' && !isSingle ? '' : prev.spouseOccupation),
+                };
+              });
+            }}
+          >
+            <option value="">-- Select Civil Status --</option>
+            <option value="Single">Single</option>
+            <option value="Married">Married</option>
+            <option value="Widowed">Widowed</option>
+            <option value="Separated">Separated</option>
+          </select>
+        </label>
         <label>Age<input type="text" value={form.age} onChange={set('age')} placeholder="e.g. 25" /></label>
         <label>Sex<input type="text" value={form.gender} onChange={set('gender')} placeholder="Male / Female" /></label>
         <label>Date of Birth<input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} /></label>
@@ -241,25 +289,91 @@ export default function PublicApplyPage() {
     </div>
   );
 
-  const renderFamilyInfo = () => (
-    <div className="numbered-section">
-      <div className="numbered-section-title">
-        <span className="numbered-section-badge">2</span>
-        Family / Emergency Information
+  const renderFamilyInfo = () => {
+    const isNoSpouseActive = Boolean(form.noSpouse || (form.spouseName === 'N/A' && form.spouseOccupation === 'N/A'));
+
+    return (
+      <div className="numbered-section">
+        <div className="numbered-section-title">
+          <span className="numbered-section-badge">2</span>
+          Family / Emergency Information
+        </div>
+
+        {/* NO SPOUSE OPTION TOGGLE */}
+        <div
+          className="no-spouse-banner"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '12px 16px',
+            background: 'var(--secondary, #E4F0F8)',
+            border: '1px solid var(--border, rgba(0, 125, 204, 0.15))',
+            borderRadius: '12px',
+            marginBottom: '16px',
+            fontSize: '13px',
+            fontWeight: 600,
+            color: 'var(--text)',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
+          }}
+        >
+          <input
+            type="checkbox"
+            id="noSpouseCheck"
+            checked={isNoSpouseActive}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setForm((prev) => ({
+                ...prev,
+                noSpouse: checked,
+                spouseName: checked ? 'N/A' : (prev.spouseName === 'N/A' ? '' : prev.spouseName),
+                spouseOccupation: checked ? 'N/A' : (prev.spouseOccupation === 'N/A' ? '' : prev.spouseOccupation),
+              }));
+            }}
+            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary, #007DCC)' }}
+          />
+          <label htmlFor="noSpouseCheck" style={{ cursor: 'pointer', margin: 0, flex: 1, userSelect: 'none', lineHeight: 1.3 }}>
+            I do not have a spouse (Single / Not Applicable)
+          </label>
+          {isNoSpouseActive && (
+            <span style={{ fontSize: '11px', background: 'var(--primary, #007DCC)', color: '#fff', padding: '2px 9px', borderRadius: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+              N/A Active
+            </span>
+          )}
+        </div>
+
+        <div className="edit-form-grid intake-grid">
+          <label style={{ opacity: isNoSpouseActive ? 0.65 : 1 }}>
+            Name of Spouse
+            <input
+              type="text"
+              value={form.spouseName}
+              onChange={set('spouseName')}
+              placeholder={isNoSpouseActive ? 'Not Applicable (N/A)' : 'Full name of spouse'}
+              disabled={isNoSpouseActive}
+            />
+          </label>
+          <label style={{ opacity: isNoSpouseActive ? 0.65 : 1 }}>
+            Occupation
+            <input
+              type="text"
+              value={form.spouseOccupation}
+              onChange={set('spouseOccupation')}
+              placeholder={isNoSpouseActive ? 'Not Applicable (N/A)' : "Spouse's occupation"}
+              disabled={isNoSpouseActive}
+            />
+          </label>
+          <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} placeholder="Full name of father" /></label>
+          <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} placeholder="Father's occupation" /></label>
+          <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} placeholder="Full name of mother" /></label>
+          <label>Occupation<input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} placeholder="Mother's occupation" /></label>
+          <label className="span-2">Family Address<input type="text" value={form.familyAddress} onChange={set('familyAddress')} placeholder="Complete family address" /></label>
+          <label>Emergency Contact Person<input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} placeholder="Full name" /></label>
+          <label>Address / Contact Number<input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} placeholder="Address or phone number" /></label>
+        </div>
       </div>
-      <div className="edit-form-grid intake-grid">
-        <label>Name of Spouse<input type="text" value={form.spouseName} onChange={set('spouseName')} placeholder="Full name of spouse" /></label>
-        <label>Occupation<input type="text" value={form.spouseOccupation} onChange={set('spouseOccupation')} placeholder="Spouse's occupation" /></label>
-        <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} placeholder="Full name of father" /></label>
-        <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} placeholder="Father's occupation" /></label>
-        <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} placeholder="Full name of mother" /></label>
-        <label>Occupation<input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} placeholder="Mother's occupation" /></label>
-        <label className="span-2">Family Address<input type="text" value={form.familyAddress} onChange={set('familyAddress')} placeholder="Complete family address" /></label>
-        <label>Emergency Contact Person<input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} placeholder="Full name" /></label>
-        <label>Address / Contact Number<input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} placeholder="Address or phone number" /></label>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderEducation = () => (
     <div className="numbered-section">
@@ -299,29 +413,73 @@ export default function PublicApplyPage() {
       <div className="numbered-section-title">
         <span className="numbered-section-badge">4</span>
         Employment Record
-        <button type="button" className="link-btn" style={{ marginLeft: 'auto' }} onClick={addEmploymentRow}>+ Add Row</button>
+        {!noWorkExperience && (
+          <button type="button" className="link-btn" style={{ marginLeft: 'auto' }} onClick={addEmploymentRow}>+ Add Row</button>
+        )}
       </div>
-      <div className="intake-table intake-table-4col">
-        <div className="intake-table-head">
-          <div>From (Month/Year)</div>
-          <div>To (Month/Year)</div>
-          <div>Position</div>
-          <div>Company</div>
+
+      {/* NO PREVIOUS WORK EXPERIENCE TOGGLE */}
+      <div
+        className="no-experience-banner"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          background: 'var(--secondary, #E4F0F8)',
+          border: '1px solid var(--border, rgba(0, 125, 204, 0.15))',
+          borderRadius: '12px',
+          marginBottom: '16px',
+          fontSize: '13px',
+          fontWeight: 600,
+          color: 'var(--text)',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
+        }}
+      >
+        <input
+          type="checkbox"
+          id="noWorkExperienceCheck"
+          checked={noWorkExperience}
+          onChange={(e) => setNoWorkExperience(e.target.checked)}
+          style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary, #007DCC)' }}
+        />
+        <label htmlFor="noWorkExperienceCheck" style={{ cursor: 'pointer', margin: 0, flex: 1, userSelect: 'none', lineHeight: 1.3 }}>
+          I have no previous employment (Fresh Graduate / First-Time Job Seeker)
+        </label>
+        {noWorkExperience && (
+          <span style={{ fontSize: '11px', background: 'var(--primary, #007DCC)', color: '#fff', padding: '2px 9px', borderRadius: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+            First-Time Job Seeker
+          </span>
+        )}
+      </div>
+
+      {noWorkExperience ? (
+        <div style={{ padding: '18px 20px', background: 'var(--panel, #EDF5FB)', border: '1px dashed var(--border)', borderRadius: '12px', color: 'var(--muted-fg)', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
+          Indicated as <strong>First-Time Job Seeker / Fresh Graduate</strong> with no prior employment history. You may proceed to the next step.
         </div>
-        {employmentRows.map((row, i) => (
-          <div className="intake-table-row intake-table-4col" key={i}>
-            <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} placeholder="MM/YYYY" />
-            <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} placeholder="MM/YYYY" />
-            <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} placeholder="Job title" />
-            <div className="intake-table-cell-with-remove">
-              <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} placeholder="Company name" />
-              {employmentRows.length > 1 && (
-                <button type="button" onClick={() => removeEmploymentRow(i)}>x</button>
-              )}
-            </div>
+      ) : (
+        <div className="intake-table intake-table-4col">
+          <div className="intake-table-head">
+            <div>From (Month/Year)</div>
+            <div>To (Month/Year)</div>
+            <div>Position</div>
+            <div>Company</div>
           </div>
-        ))}
-      </div>
+          {employmentRows.map((row, i) => (
+            <div className="intake-table-row intake-table-4col" key={i}>
+              <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} placeholder="MM/YYYY" />
+              <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} placeholder="MM/YYYY" />
+              <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} placeholder="Job title" />
+              <div className="intake-table-cell-with-remove">
+                <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} placeholder="Company name" />
+                {employmentRows.length > 1 && (
+                  <button type="button" onClick={() => removeEmploymentRow(i)}>x</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Resume upload */}
       <div style={{ marginTop: 22 }}>
@@ -354,27 +512,71 @@ export default function PublicApplyPage() {
       <div className="numbered-section-title">
         <span className="numbered-section-badge">5</span>
         References
-        <button type="button" className="link-btn" style={{ marginLeft: 'auto' }} onClick={addReferenceRow}>+ Add Row</button>
+        {!noReferences && (
+          <button type="button" className="link-btn" style={{ marginLeft: 'auto' }} onClick={addReferenceRow}>+ Add Row</button>
+        )}
       </div>
-      <div className="intake-table intake-table-3col">
-        <div className="intake-table-head">
-          <div>Name</div>
-          <div>Occupation</div>
-          <div>Address / Tel. No.</div>
+
+      {/* NO REFERENCES TOGGLE */}
+      <div
+        className="no-references-banner"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '12px 16px',
+          background: 'var(--secondary, #E4F0F8)',
+          border: '1px solid var(--border, rgba(0, 125, 204, 0.15))',
+          borderRadius: '12px',
+          marginBottom: '16px',
+          fontSize: '13px',
+          fontWeight: 600,
+          color: 'var(--text)',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
+        }}
+      >
+        <input
+          type="checkbox"
+          id="noReferencesCheck"
+          checked={noReferences}
+          onChange={(e) => setNoReferences(e.target.checked)}
+          style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary, #007DCC)' }}
+        />
+        <label htmlFor="noReferencesCheck" style={{ cursor: 'pointer', margin: 0, flex: 1, userSelect: 'none', lineHeight: 1.3 }}>
+          I do not have character references to list (Not Applicable)
+        </label>
+        {noReferences && (
+          <span style={{ fontSize: '11px', background: 'var(--primary, #007DCC)', color: '#fff', padding: '2px 9px', borderRadius: '12px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+            N/A Selected
+          </span>
+        )}
+      </div>
+
+      {noReferences ? (
+        <div style={{ padding: '18px 20px', background: 'var(--panel, #EDF5FB)', border: '1px dashed var(--border)', borderRadius: '12px', color: 'var(--muted-fg)', fontSize: '13px', textAlign: 'center', fontWeight: 500 }}>
+          Indicated as <strong>No Character References Available (N/A)</strong>. You may proceed to submit your application.
         </div>
-        {referenceRows.map((row, i) => (
-          <div className="intake-table-row intake-table-3col" key={i}>
-            <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} placeholder="Full name" />
-            <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} placeholder="Occupation" />
-            <div className="intake-table-cell-with-remove">
-              <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} placeholder="Contact info" />
-              {referenceRows.length > 1 && (
-                <button type="button" onClick={() => removeReferenceRow(i)}>x</button>
-              )}
-            </div>
+      ) : (
+        <div className="intake-table intake-table-3col">
+          <div className="intake-table-head">
+            <div>Name</div>
+            <div>Occupation</div>
+            <div>Address / Tel. No.</div>
           </div>
-        ))}
-      </div>
+          {referenceRows.map((row, i) => (
+            <div className="intake-table-row intake-table-3col" key={i}>
+              <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} placeholder="Full name" />
+              <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} placeholder="Occupation" />
+              <div className="intake-table-cell-with-remove">
+                <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} placeholder="Contact info" />
+                {referenceRows.length > 1 && (
+                  <button type="button" onClick={() => removeReferenceRow(i)}>x</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -499,8 +701,8 @@ export default function PublicApplyPage() {
                 <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: '#fff' }}><path d="M5 12h14M12 5l7 7-7 7" /></svg>
               </button>
             ) : (
-              <button type="button" className="stage-btn go" onClick={handleSubmit}>
-                Submit Application
+              <button type="button" className="stage-btn go" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? 'Submitting Application...' : 'Submit Application'}
               </button>
             )}
           </div>

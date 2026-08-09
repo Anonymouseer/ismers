@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { clientPortalService } from '../services/ClientPortalService';
+import primepowerLogo from '../../../assets/primepower-logo.svg';
 import './ClientPortalLoginPage.css';
 
 export default function ClientPortalLoginPage() {
@@ -67,19 +68,22 @@ export default function ClientPortalLoginPage() {
 
   return (
     <div className="cp-login-shell">
+      {/* Decorative ambient rings */}
+      <div className="cp-login-brand-deco" aria-hidden="true">
+        <div className="cp-login-deco-ring cp-login-deco-ring--a" />
+        <div className="cp-login-deco-ring cp-login-deco-ring--b" />
+        <div className="cp-login-deco-ring cp-login-deco-ring--c" />
+        <div className="cp-login-deco-blob" />
+      </div>
 
-      {/* ── BRAND PANEL ── */}
-      <aside className="cp-login-brand">
-        <div className="cp-login-brand-deco" aria-hidden="true">
-          <div className="cp-login-deco-ring cp-login-deco-ring--a" />
-          <div className="cp-login-deco-ring cp-login-deco-ring--b" />
-          <div className="cp-login-deco-ring cp-login-deco-ring--c" />
-          <div className="cp-login-deco-blob" />
-        </div>
-
-        <div className="cp-login-brand-body">
+      {/* Centered Panel */}
+      <main className="cp-login-center-panel">
+        <div className="cp-login-card">
+          {/* Brand Logo Header */}
           <div className="cp-login-logo-block">
-            <div className="cp-login-logo-mark">PM</div>
+            <div className="cp-login-logo-mark">
+              <img src={primepowerLogo} alt="PRIMEPOWER Logo" className="cp-login-logo-img" />
+            </div>
             <div className="cp-login-logo-text">
               <div className="cp-login-logo-name">
                 <span className="cp-login-logo-prime">PRIME</span>
@@ -89,69 +93,10 @@ export default function ClientPortalLoginPage() {
             </div>
           </div>
 
-          <h2 className="cp-login-brand-headline">
-            Your Recruitment Partner,<br />Always Within Reach.
-          </h2>
-          <p className="cp-login-brand-desc">
-            Access your dedicated client dashboard to track job requests, monitor applicant pipelines, and coordinate directly with your assigned recruiter.
-          </p>
-
-          <div className="cp-login-feature-list">
-            <div className="cp-login-feature">
-              <div className="cp-login-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-              </div>
-              <span>Real-time job request tracking</span>
-            </div>
-            <div className="cp-login-feature">
-              <div className="cp-login-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-              <span>Direct recruiter communication</span>
-            </div>
-            <div className="cp-login-feature">
-              <div className="cp-login-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-              </div>
-              <span>Interview scheduling and updates</span>
-            </div>
-            <div className="cp-login-feature">
-              <div className="cp-login-feature-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
-              </div>
-              <span>Instant recruiter messaging</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="cp-login-brand-foot">
-          DOLE Accredited &nbsp;&middot;&nbsp; POEA Licensed &nbsp;&middot;&nbsp; ISO Compliant
-        </div>
-      </aside>
-
-      {/* ── FORM PANEL ── */}
-      <main className="cp-login-form-panel">
-        <div className="cp-login-form-inner">
-
-          <div className="cp-login-form-eyebrow">Client Portal</div>
+          <div className="cp-login-form-eyebrow">Client Portal Access</div>
           <h1 className="cp-login-form-heading">Welcome Back</h1>
           <p className="cp-login-form-desc">
-            Sign in with your registered credentials to access your dashboard.
+            Sign in with your registered credentials to access your client dashboard.
           </p>
 
           {error && (
@@ -194,9 +139,6 @@ export default function ClientPortalLoginPage() {
                 <label className="cp-login-label" htmlFor="cp-login-password">
                   Password
                 </label>
-                <button type="button" className="cp-login-forgot">
-                  Forgot Password?
-                </button>
               </div>
               <div className="cp-login-input-wrap">
                 <svg className="cp-login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -246,25 +188,27 @@ export default function ClientPortalLoginPage() {
 
           </form>
 
-          <div className="cp-login-divider">
-            <span>New to the portal?</span>
+          {/* Quick feature highlights */}
+          <div className="cp-login-card-badges">
+            <div className="cp-login-badge-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Secure Portal
+            </div>
+            <div className="cp-login-badge-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Real-Time Tracking
+            </div>
+            <div className="cp-login-badge-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Recruiter Messaging
+            </div>
           </div>
-
-          <Link
-            id="cp-login-to-register"
-            to="/client-portal/register"
-            className="cp-login-register-link"
-          >
-            Register Your Company
-          </Link>
-
         </div>
 
         <footer className="cp-login-panel-footer">
-          &copy; {new Date().getFullYear()} PRIMEPOWER MANPOWER SERVICES. All rights reserved.
+          &copy; {new Date().getFullYear()} PRIMEPOWER MANPOWER SERVICES. All rights reserved. &nbsp;&middot;&nbsp; DOLE Accredited &nbsp;&middot;&nbsp; POEA Licensed &nbsp;&middot;&nbsp; ISO Compliant
         </footer>
       </main>
-
     </div>
   );
 }

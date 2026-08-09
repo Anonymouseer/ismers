@@ -148,32 +148,32 @@
 }
 
 .client-portal-logout-btn {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  background: var(--panel);
-  border: 1px solid var(--border);
+  gap: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted-fg);
+  margin-top: auto;
+  padding: 8px 10px;
   border-radius: 9px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: border-color 0.14s var(--ease), color 0.14s var(--ease);
-  box-shadow: var(--shadow-sm);
-  white-space: nowrap;
+  width: 100%;
+  transition: background 0.14s var(--ease), color 0.14s var(--ease);
 }
 
 .client-portal-logout-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
 .client-portal-logout-btn:hover {
-  border-color: var(--red);
-  color: var(--red);
+  background: var(--red-soft, #FBEAEA);
+  color: var(--destructive, #d32f2f);
 }
 
 /* ── MAIN LAYOUT WRAPPER (SIDEBAR + CONTENT) ── */
@@ -187,27 +187,27 @@
 /* ── LEFT SIDEBAR NAVIGATION ── */
 .client-portal-sidebar-nav {
   position: relative;
-  width: 230px;
-  background: var(--panel);
+  width: var(--sidebar-w, 236px);
+  background: var(--sidebar-bg, var(--panel));
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 20px 14px;
   flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.03);
 }
 
 /* SIDEBAR COLLAPSE TOGGLE BUTTON OUTSIDE THE SIDEBAR EDGE */
 .cp-sidebar-collapse-btn {
   position: fixed;
   top: 70px;
-  left: calc(230px - 14px);
-  width: 28px;
-  height: 28px;
+  left: calc(var(--sidebar-w, 236px) - 14px);
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -215,7 +215,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
+  color: var(--muted-fg);
   cursor: pointer;
   z-index: 25;
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.14s var(--ease), color 0.14s var(--ease), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -228,8 +228,8 @@
 }
 
 .cp-sidebar-collapse-btn svg {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -237,51 +237,140 @@
   transform: rotate(180deg);
 }
 
-/* TOP CLIENT PROFILE HEADER (NO BORDER) */
-.client-portal-sidebar-top-profile {
+/* BRAND HEADER IN SIDEBAR */
+.client-portal-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 2px 4px 14px 4px;
-  background: transparent;
-  border: none;
-  margin-bottom: 8px;
+  padding: 2px 8px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.client-portal-brand-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.client-portal-brand-text {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+}
+
+.client-portal-brand-name {
+  font-family: var(--font-display, "Manrope", sans-serif);
+  font-weight: 800;
+  font-size: 11.5px;
+  letter-spacing: 0.4px;
+  color: var(--logo-primepower, #e05252);
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.client-portal-brand-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted-fg, #486F91);
+  margin-top: 1px;
+}
+
+/* CLIENT COMPANY PROFILE CARD */
+.client-portal-sidebar-company-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.client-portal-sidebar-company-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #0062a8, #33A1E6);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 8px rgba(0, 125, 204, 0.25);
+  overflow: hidden;
+}
+
+.client-portal-sidebar-company-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.client-portal-sidebar-company-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.client-portal-sidebar-company-name {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.client-portal-sidebar-company-sub {
+  font-size: 10.5px;
+  color: var(--muted-fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* COLLAPSED SIDEBAR STATE */
 .client-portal-sidebar-nav.collapsed {
-  width: 68px;
+  width: var(--sidebar-w-collapsed, 72px);
   padding: 20px 8px;
 }
 
 .client-portal-sidebar-nav.collapsed .cp-sidebar-collapse-btn {
-  left: calc(68px - 14px);
+  left: calc(var(--sidebar-w-collapsed, 72px) - 14px);
   transform: none;
 }
 
-.client-portal-sidebar-nav.collapsed .client-portal-sidebar-top-profile {
+.client-portal-sidebar-nav.collapsed .client-portal-brand {
   justify-content: center;
   padding: 2px 0 14px 0;
 }
 
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-company-card {
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.client-portal-sidebar-nav.collapsed .client-portal-brand-text,
 .client-portal-sidebar-nav.collapsed .client-portal-sidebar-label,
 .client-portal-sidebar-nav.collapsed .client-portal-nav-item span,
 .client-portal-sidebar-nav.collapsed .client-portal-nav-count,
-.client-portal-sidebar-nav.collapsed .client-portal-sidebar-user-info,
+.client-portal-sidebar-nav.collapsed .client-portal-sidebar-company-info,
 .client-portal-sidebar-nav.collapsed .client-portal-am-info {
   display: none !important;
 }
 
 .client-portal-sidebar-nav.collapsed .client-portal-nav-item {
   justify-content: center;
-  padding: 10px 0;
-}
-
-.client-portal-sidebar-nav.collapsed .client-portal-sidebar-footer-card {
-  justify-content: center;
-  padding: 8px 0;
-  margin-top: 10px;
+  padding: 9px 0;
 }
 
 .client-portal-sidebar-nav.collapsed .client-portal-am-card {
@@ -298,17 +387,28 @@
 .client-portal-sidebar-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .client-portal-sidebar-label {
   font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
-  color: var(--muted);
-  padding: 0 10px 4px;
-  font-family: "Manrope", "Inter", sans-serif;
+  color: var(--muted-fg);
+  padding: 0 10px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-portal-sidebar-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
 .client-portal-nav-list {
@@ -320,70 +420,58 @@
 .client-portal-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 9px;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   color: var(--text);
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.14s var(--ease), color 0.14s var(--ease), border-color 0.14s var(--ease);
+  transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1), color 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
   width: 100%;
 }
 
 .client-portal-nav-item svg {
-  width: 16px;
-  height: 16px;
-  color: var(--muted);
+  width: 17px;
+  height: 17px;
+  color: var(--muted-fg);
   flex-shrink: 0;
-  transition: color 0.14s var(--ease);
+  transition: color 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.client-portal-nav-item:hover {
-  background: var(--bg);
-  color: var(--primary);
-}
-
-.client-portal-nav-item:hover svg {
-  color: var(--primary);
+.client-portal-nav-item:hover:not(.active) {
+  background: var(--secondary);
 }
 
 .client-portal-nav-item.active {
   background: var(--secondary);
   color: var(--primary);
-  border-color: rgba(0, 125, 204, 0.25);
   font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .client-portal-nav-item.active svg {
   color: var(--primary);
 }
 
-.client-portal-nav-badge {
-  margin-left: auto;
-  font-size: 9.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 2px 7px;
-  border-radius: 12px;
-  background: var(--primary);
-  color: var(--primary-fg);
-}
-
 .client-portal-nav-count {
   margin-left: auto;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   padding: 2px 7px;
-  border-radius: 12px;
-  background: var(--bg);
-  color: var(--muted);
-  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--secondary);
+  color: var(--primary);
+  border: none;
+}
+
+.client-portal-nav-count--amber {
+  background: var(--amber-soft);
+  color: var(--amber);
 }
 
 /* Sidebar Footer User Card */
