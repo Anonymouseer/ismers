@@ -63,7 +63,6 @@ export default function ClientDetailPanel({ client, clientIndex, onClose }) {
           </div>
         </div>
         <div className="d-actions">
-          <button className="btn"><svg className="icon" viewBox="0 0 24 24"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>Edit</button>
           <button className="btn primary"><svg className="icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
           {/* NEW: Client Status Management */}
           <div className="status-menu-wrap">

@@ -49,7 +49,6 @@ export default function ClientProfile({ client, clientIndex, onBack }) {
                 </div>
               </div>
               <div className="hero-actions">
-                <button className="hero-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>Edit</button>
                 <button className="hero-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
                 <div className="status-menu-wrap">
                   <button className="hero-btn" onClick={() => setStatusMenuOpen((v) => !v)}>
