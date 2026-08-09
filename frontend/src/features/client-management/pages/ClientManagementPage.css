@@ -1130,7 +1130,7 @@
     padding: 24px 28px 24px 28px;
     margin-bottom: 20px;
     overflow: hidden;
-    background: linear-gradient(135deg, #FFFFFF 0%, #F4F7FB 100%);
+    background: var(--panel);
     border: 1px solid var(--border);
     box-shadow: 0 4px 20px rgba(0, 125, 204, 0.06);
   }
@@ -1163,9 +1163,9 @@
     border-radius: 16px;
     flex-shrink: 0;
     box-shadow: 0 4px 14px rgba(10, 27, 46, 0.08);
-    border: 2px solid #FFFFFF;
+    border: 2px solid var(--border);
     object-fit: cover;
-    background: #FFFFFF;
+    background: var(--panel);
   }
 
   .hero-title-wrap {
@@ -1208,9 +1208,9 @@
   }
 
   .hero-pill.status-active {
-    background: #EAF5FF;
+    background: var(--secondary);
     color: var(--primary);
-    border: 1px solid rgba(0, 125, 204, 0.2);
+    border: 1px solid rgba(0, 125, 204, 0.25);
   }
 
   .hero-pill.status-prospect {
@@ -1252,7 +1252,7 @@
     padding: 8px 16px;
     border-radius: 10px;
     border: 1px solid var(--border);
-    background: #FFFFFF;
+    background: var(--bg);
     color: var(--text);
     display: flex;
     align-items: center;
@@ -1350,8 +1350,8 @@
   }
 
   .stat-strip-item {
-    background: #FFFFFF;
-    border: 1px solid var(--border-soft);
+    background: var(--bg);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 12px 16px;
     display: flex;

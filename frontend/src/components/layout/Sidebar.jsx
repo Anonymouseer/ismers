@@ -109,42 +109,18 @@ export default function Sidebar({
             <div className="nav-label">Recruitment Operations</div>
 
             {/* Client Management */}
-            <div className="nav-menu-wrapper">
-              <Link
-                to="/client-management"
-                className={`nav-item${activeItem === 'client-management' ? ' active' : ''}`}
-                onClick={() => handleParentClick('client-management')}
-              >
-                <span className="icon-slot">
-                  <svg className="icon" viewBox="0 0 24 24">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                  </svg>
-                </span>
-                <span className="label">Client Management</span>
-                <button
-                  type="button"
-                  className="chevron-slot"
-                  onClick={(e) => toggleSubmenu('client-management', e)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <svg className={`chevron ${openMenus['client-management'] ? 'open' : ''}`} viewBox="0 0 24 24">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
-              </Link>
-
-              <div className={`submenu-wrapper ${openMenus['client-management'] && !collapsed ? 'open' : ''}`}>
-                <div className="submenu-inner">
-                  <Link to="/client-management" className="submenu-item active">
-                    Client Directory
-                  </Link>
-                  <Link to="/client-management" className="submenu-item">
-                    Account Contracts
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <Link
+              to="/client-management"
+              className={`nav-item${activeItem === 'client-management' ? ' active' : ''}`}
+            >
+              <span className="icon-slot">
+                <svg className="icon" viewBox="0 0 24 24">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg>
+              </span>
+              <span className="label">Client Management</span>
+            </Link>
 
             {/* Job Order Management */}
             <div className="nav-menu-wrapper">
@@ -231,37 +207,37 @@ export default function Sidebar({
                 <div className="submenu-inner">
                   <Link
                     to="/applicant-registration?view=register"
-                    className={`submenu-item${location.search.includes('view=register') ? ' active' : ''}`}
+                    className={`submenu-item${new URLSearchParams(location.search).get('view') === 'register' ? ' active' : ''}`}
                   >
                     Register New Applicant
                   </Link>
                   <Link
                     to="/applicant-registration"
-                    className={`submenu-item${(!location.search || location.search.includes('view=all')) ? ' active' : ''}`}
+                    className={`submenu-item${(!new URLSearchParams(location.search).get('view') || new URLSearchParams(location.search).get('view') === 'all') ? ' active' : ''}`}
                   >
                     Intake &amp; Profiling Board
                   </Link>
                   <Link
                     to="/applicant-registration?view=registered"
-                    className={`submenu-item${location.search.includes('view=registered') ? ' active' : ''}`}
+                    className={`submenu-item${new URLSearchParams(location.search).get('view') === 'registered' ? ' active' : ''}`}
                   >
                     Registered
                   </Link>
                   <Link
                     to="/applicant-registration?view=profiling"
-                    className={`submenu-item${location.search.includes('view=profiling') ? ' active' : ''}`}
+                    className={`submenu-item${new URLSearchParams(location.search).get('view') === 'profiling' ? ' active' : ''}`}
                   >
                     Profiling
                   </Link>
                   <Link
                     to="/applicant-registration?view=profiled"
-                    className={`submenu-item${location.search.includes('view=profiled') ? ' active' : ''}`}
+                    className={`submenu-item${new URLSearchParams(location.search).get('view') === 'profiled' ? ' active' : ''}`}
                   >
                     Profiled — Ready
                   </Link>
                   <Link
                     to="/applicant-registration?view=sent"
-                    className={`submenu-item${location.search.includes('view=sent') ? ' active' : ''}`}
+                    className={`submenu-item${new URLSearchParams(location.search).get('view') === 'sent' ? ' active' : ''}`}
                   >
                     Sent to Recruitment
                   </Link>
