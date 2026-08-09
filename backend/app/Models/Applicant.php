@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -74,5 +75,10 @@ class Applicant extends Model
     public function history(): HasMany
     {
         return $this->hasMany(ApplicantHistory::class);
+    }
+
+    public function jobOrder(): BelongsTo
+    {
+        return $this->belongsTo(JobOrder::class, 'target_job_id', 'id');
     }
 }

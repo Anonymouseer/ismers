@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\ClientAccountController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -43,4 +44,12 @@ Route::prefix('v1')->group(function () {
     Route::patch('/applicants/{regId}/category', [ApplicantController::class, 'updateCategory']);
     Route::patch('/applicants/{regId}/target-job', [ApplicantController::class, 'updateTargetJob']);
     Route::post('/applicants/{regId}/send-to-recruitment', [ApplicantController::class, 'sendToRecruitment']);
+    Route::get('/recruitment/applications', [ApplicantController::class, 'recruitmentApplications']);
+    Route::patch('/applicants/{id}/recruitment-stage', [ApplicantController::class, 'updateRecruitmentStage']);
+
+    // ── Client Portal Auth ──
+    Route::prefix('client-portal')->group(function () {
+        Route::post('/login', [ClientAccountController::class, 'login']);
+        Route::post('/register', [ClientAccountController::class, 'register']);
+    });
 });

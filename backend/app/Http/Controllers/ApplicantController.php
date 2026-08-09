@@ -3,12 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Applicant;
-use App\Models\ApplicantDocument;
-use App\Models\ApplicantEducation;
-use App\Models\ApplicantHistory;
-use App\Models\ApplicantReference;
-use App\Models\ApplicantSkill;
-use App\Models\ApplicantWorkHistory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +132,7 @@ class ApplicantController extends Controller
     public function show(string $regId): JsonResponse
     {
         $applicant = $this->findApplicant($regId);
+
         return response()->json($this->formatApplicant($applicant));
     }
 
@@ -207,7 +202,7 @@ class ApplicantController extends Controller
         // Generate next REG-### id
         $maxId = Applicant::max('id') ?? 0;
         $nextNum = $maxId + 1;
-        $regId = 'REG-' . str_pad((string) $nextNum, 3, '0', STR_PAD_LEFT);
+        $regId = 'REG-'.str_pad((string) $nextNum, 3, '0', STR_PAD_LEFT);
 
         DB::beginTransaction();
         try {
@@ -222,7 +217,7 @@ class ApplicantController extends Controller
                 'alternate_contact' => trim($validated['alternateContact'] ?? ''),
                 'city_address' => trim($validated['location'] ?? ''),
                 'provincial_address' => trim($validated['address'] ?? ''),
-                'date_of_birth' => !empty($validated['dateOfBirth']) ? $validated['dateOfBirth'] : null,
+                'date_of_birth' => ! empty($validated['dateOfBirth']) ? $validated['dateOfBirth'] : null,
                 'gender' => trim($validated['gender'] ?? ''),
                 'civil_status' => trim($validated['civilStatus'] ?? ''),
                 'nationality' => trim($validated['nationality'] ?? ''),
@@ -251,9 +246,9 @@ class ApplicantController extends Controller
             ]);
 
             // Save Education
-            if (!empty($validated['education'])) {
+            if (! empty($validated['education'])) {
                 foreach ($validated['education'] as $edu) {
-                    if (!empty($edu['school'])) {
+                    if (! empty($edu['school'])) {
                         $applicant->education()->create([
                             'level' => $edu['level'] ?? '—',
                             'school' => trim($edu['school']),
@@ -265,9 +260,9 @@ class ApplicantController extends Controller
             }
 
             // Save Work History
-            if (!empty($validated['workHistory'])) {
+            if (! empty($validated['workHistory'])) {
                 foreach ($validated['workHistory'] as $w) {
-                    if (!empty($w['role']) || !empty($w['company'])) {
+                    if (! empty($w['role']) || ! empty($w['company'])) {
                         $applicant->workHistory()->create([
                             'role' => trim($w['role'] ?? ''),
                             'company' => trim($w['company'] ?? ''),
@@ -278,9 +273,9 @@ class ApplicantController extends Controller
             }
 
             // Save References
-            if (!empty($validated['references'])) {
+            if (! empty($validated['references'])) {
                 foreach ($validated['references'] as $r) {
-                    if (!empty($r['name'])) {
+                    if (! empty($r['name'])) {
                         $applicant->references()->create([
                             'name' => trim($r['name']),
                             'occupation' => trim($r['occupation'] ?? ''),
@@ -296,10 +291,12 @@ class ApplicantController extends Controller
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 500);
         }
 
         $applicant->load(['family', 'education', 'workHistory', 'skills', 'documents', 'references', 'history']);
+
         return response()->json(['ok' => true, 'regId' => $regId, 'applicant' => $this->formatApplicant($applicant)], 201);
     }
 
@@ -349,8 +346,12 @@ class ApplicantController extends Controller
         if ($email || $phone) {
             $duplicate = Applicant::where('id', '!=', $applicant->id)
                 ->where(function ($q) use ($email, $phone) {
-                    if ($email) $q->whereRaw('LOWER(email) = ?', [$email]);
-                    if ($phone) $q->orWhere('phone', $phone);
+                    if ($email) {
+                        $q->whereRaw('LOWER(email) = ?', [$email]);
+                    }
+                    if ($phone) {
+                        $q->orWhere('phone', $phone);
+                    }
                 })->first();
 
             if ($duplicate) {
@@ -411,6 +412,7 @@ class ApplicantController extends Controller
     {
         $applicant = $this->findApplicant($regId);
         $applicant->delete();
+
         return response()->json(['ok' => true, 'message' => 'Applicant deleted successfully']);
     }
 
@@ -426,6 +428,7 @@ class ApplicantController extends Controller
         $this->logHistory($applicant, "Skill added: {$name}");
 
         $applicant->load('skills');
+
         return response()->json(['ok' => true, 'skills' => $applicant->skills->pluck('name')->toArray()]);
     }
 
@@ -449,6 +452,7 @@ class ApplicantController extends Controller
         }
 
         $applicant->load('skills');
+
         return response()->json(['ok' => true, 'skills' => $applicant->skills->pluck('name')->toArray()]);
     }
 
@@ -469,6 +473,7 @@ class ApplicantController extends Controller
         $this->logHistory($applicant, "Work history added: {$validated['role']} at {$validated['company']}");
 
         $applicant->load('workHistory');
+
         return response()->json(['ok' => true]);
     }
 
@@ -477,6 +482,7 @@ class ApplicantController extends Controller
         $applicant = $this->findApplicant($regId);
         $applicant->workHistory()->where('id', $id)->delete();
         $this->logHistory($applicant, 'Work history entry removed');
+
         return response()->json(['ok' => true]);
     }
 
@@ -498,7 +504,7 @@ class ApplicantController extends Controller
             'start_year' => trim($validated['startYear'] ?? ''),
             'end_year' => trim($validated['endYear'] ?? 'Present'),
         ]);
-        $this->logHistory($applicant, "Education added: " . ($validated['degree'] ?? '') . " at {$validated['school']}");
+        $this->logHistory($applicant, 'Education added: '.($validated['degree'] ?? '')." at {$validated['school']}");
 
         return response()->json(['ok' => true]);
     }
@@ -508,6 +514,7 @@ class ApplicantController extends Controller
         $applicant = $this->findApplicant($regId);
         $applicant->education()->where('id', $id)->delete();
         $this->logHistory($applicant, 'Education entry removed');
+
         return response()->json(['ok' => true]);
     }
 
@@ -537,6 +544,7 @@ class ApplicantController extends Controller
         ]);
 
         $this->logHistory($applicant, "Document uploaded: {$fileName}");
+
         return response()->json(['ok' => true, 'document' => [
             'id' => $doc->id,
             'name' => $doc->name,
@@ -570,6 +578,7 @@ class ApplicantController extends Controller
             $doc->delete();
             $this->logHistory($applicant, "Document removed: {$name}");
         }
+
         return response()->json(['ok' => true]);
     }
 
@@ -588,6 +597,7 @@ class ApplicantController extends Controller
             'contact' => trim($validated['contact'] ?? '—'),
         ]);
         $this->logHistory($applicant, "Reference added: {$validated['name']}");
+
         return response()->json(['ok' => true]);
     }
 
@@ -596,6 +606,7 @@ class ApplicantController extends Controller
         $applicant = $this->findApplicant($regId);
         $applicant->references()->where('id', $id)->delete();
         $this->logHistory($applicant, 'Reference removed');
+
         return response()->json(['ok' => true]);
     }
 
@@ -612,16 +623,16 @@ class ApplicantController extends Controller
             $this->logHistory($applicant, 'Started profiling');
         } elseif ($stage === 'profiled') {
             // Validation rules matching store logic
-            if (!$applicant->category) {
+            if (! $applicant->category) {
                 return response()->json(['ok' => false, 'message' => 'Assign a category before marking the profile complete.'], 400);
             }
-            if (!$applicant->target_job_id) {
+            if (! $applicant->target_job_id) {
                 return response()->json(['ok' => false, 'message' => 'Assign a target job order before marking the profile complete.'], 400);
             }
-            if (!$applicant->skills()->count()) {
+            if (! $applicant->skills()->count()) {
                 return response()->json(['ok' => false, 'message' => 'Add at least one skill before marking the profile complete.'], 400);
             }
-            if (!$applicant->workHistory()->count()) {
+            if (! $applicant->workHistory()->count()) {
                 return response()->json(['ok' => false, 'message' => 'Add at least one work history entry before marking the profile complete.'], 400);
             }
             $applicant->update(['stage' => 'profiled']);
@@ -629,6 +640,7 @@ class ApplicantController extends Controller
         }
 
         $applicant->load(['family', 'education', 'workHistory', 'skills', 'documents', 'references', 'history']);
+
         return response()->json(['ok' => true, 'applicant' => $this->formatApplicant($applicant)]);
     }
 
@@ -680,8 +692,81 @@ class ApplicantController extends Controller
     public function sendToRecruitment(string $regId): JsonResponse
     {
         $applicant = $this->findApplicant($regId);
-        $applicant->update(['sent_to_recruitment' => true]);
+        $applicant->update([
+            'sent_to_recruitment' => true,
+            'recruitment_stage' => 'pooling',
+        ]);
         $this->logHistory($applicant, 'Sent to Recruitment & Selection');
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function recruitmentApplications(): JsonResponse
+    {
+        $applicants = Applicant::where('sent_to_recruitment', true)
+            ->with(['skills', 'workHistory', 'education', 'documents', 'references', 'history', 'jobOrder'])
+            ->get()
+            ->map(function ($applicant) {
+                $fullName = trim("{$applicant->first_name} {$applicant->last_name}");
+                $job = $applicant->jobOrder;
+
+                return [
+                    'id' => (string) $applicant->id,
+                    'name' => $fullName,
+                    'jobId' => $applicant->target_job_id ?? 'jo1',
+                    'jobTitle' => $job?->title,
+                    'client' => $job?->client,
+                    'status' => $applicant->recruitment_stage ?? 'pooling',
+                    'score' => 70,
+                    'applied' => $applicant->created_at->format('M d, Y'),
+                    'experience' => $applicant->experience_summary ?: '—',
+                    'location' => $applicant->city_address ?? '—',
+                    'fromRegistration' => true,
+                    'regId' => $applicant->reg_id,
+                    'breakdown' => [
+                        'skills' => 70,
+                        'experience' => 70,
+                        'screening' => 70,
+                        'availability' => 70,
+                    ],
+                    'interview' => null,
+                    'notes' => $applicant->history->map(fn ($h) => [
+                        'text' => $h->text,
+                        'meta' => 'System · ' . $h->created_at->format('M d, Y'),
+                    ])->toArray(),
+                    'checklist' => [
+                        'requirements' => false,
+                        'identity' => false,
+                        'history' => false,
+                        'reference' => false,
+                    ],
+                    'docStatus' => [
+                        'resume' => false,
+                        'certificate' => false,
+                        'portfolio' => false,
+                    ],
+                    'recruiterRating' => 0,
+                ];
+            });
+
+        return response()->json($applicants);
+    }
+
+    public function updateRecruitmentStage(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'recruitment_stage' => 'required|string|in:pooling,area_manager,client_interview,hr_requirements,contract_signing,for_deployment,re_pooling',
+            'status' => 'nullable|string|in:active,inactive,on_hold,hired,rejected,withdrawn,blacklisted',
+        ]);
+
+        $applicant = Applicant::where('id', $id)->firstOrFail();
+
+        $applicant->update([
+            'recruitment_stage' => $request->recruitment_stage,
+            'status' => $request->status ?? $applicant->status,
+        ]);
+
+        $this->logHistory($applicant, "Recruitment stage updated to: {$request->recruitment_stage}");
 
         return response()->json(['ok' => true]);
     }
