@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { clientPortalService } from '../services/ClientPortalService';
 import './ClientPortalRegisterPage.css';
 
 const INDUSTRIES = [
@@ -108,38 +109,28 @@ export default function ClientPortalRegisterPage() {
 
     setSubmitting(true);
 
-    setTimeout(() => {
-      try {
-        const newUser = {
-          company: form.company.trim(),
-          industry: form.industry,
-          contactPerson: form.contactPerson.trim(),
-          designation: form.designation.trim(),
-          email: form.email.trim().toLowerCase(),
-          mobile: form.mobile.trim(),
-          password: form.password,
-        };
-
-        // Persist user record for future logins
-        const existing = localStorage.getItem('cp_users');
-        const users = existing ? JSON.parse(existing) : [];
-        const duplicate = users.find((u) => u.email === newUser.email);
-        if (duplicate) {
-          setErrors({ email: 'An account with this email address already exists.' });
-          setSubmitting(false);
-          return;
-        }
-        users.push(newUser);
-        localStorage.setItem('cp_users', JSON.stringify(users));
-
-        // Create session immediately after registration
+    clientPortalService.register({
+      company: form.company.trim(),
+      industry: form.industry,
+      contactPerson: form.contactPerson.trim(),
+      designation: form.designation.trim(),
+      email: form.email.trim().toLowerCase(),
+      mobile: form.mobile.trim(),
+      password: form.password,
+      agreed: form.agreed,
+    })
+      .then((response) => {
+        const newUser = response.data;
         localStorage.setItem('cp_session', JSON.stringify({ ...newUser, loggedIn: true }));
         navigate('/client-portal', { replace: true });
-      } catch {
-        setErrors({ _global: 'An unexpected error occurred. Please try again.' });
+      })
+      .catch((err) => {
+        const message = err.response?.data?.message ||
+          err.response?.data?.email?.[0] ||
+          'An unexpected error occurred. Please try again.';
+        setErrors({ _global: message });
         setSubmitting(false);
-      }
-    }, 900);
+      });
   };
 
   const field = (id, label, type = 'text', placeholder = '', opts = {}) => (
