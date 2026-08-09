@@ -87,9 +87,9 @@ export default function ProfileDrawer({ regId, onClose }) {
     setWhDuration('');
   };
 
-  const handleCompleteProfile = () => {
-    const result = completeProfile(candidate.regId);
-    if (!result.ok) flashWarning(result.message);
+  const handleCompleteProfile = async () => {
+    const result = await completeProfile(candidate.regId);
+    if (result && !result.ok) flashWarning(result.message);
   };
 
   const handleDelete = () => {

@@ -1404,3 +1404,28 @@ select.chip:hover {
   font-size: 10.5px;
   padding: 5px 12px;
 }
+
+.board-warning-banner {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  border-radius: var(--radius, 8px);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.board-warning-banner .close-warning {
+  background: transparent;
+  border: none;
+  color: #991b1b;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 4px;
+}

@@ -41,7 +41,7 @@ const STAGE_PAGE_META = {
 };
 
 export default function ApplicantProfilingBoard() {
-  const { candidates, role, setRole, updateStage, sendToRecruitment } = useApplicantRegistration();
+  const { candidates, role, setRole, startProfiling, completeProfile, sendToRecruitment, updateStage } = useApplicantRegistration();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = searchParams.get('view') || 'all';
 
@@ -50,6 +50,7 @@ export default function ApplicantProfilingBoard() {
   const [jobFilter, setJobFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [openRegId, setOpenRegId] = useState(null);
+  const [boardWarning, setBoardWarning] = useState('');
 
   useEffect(() => {
     const v = searchParams.get('view') || 'all';
@@ -91,10 +92,27 @@ export default function ApplicantProfilingBoard() {
     return base;
   }, [candidates]);
 
-  const handleAdvanceStage = (regId, currentStage) => {
-    if (currentStage === 'registered') updateStage(regId, 'profiling');
-    else if (currentStage === 'profiling') updateStage(regId, 'profiled');
-    else if (currentStage === 'profiled') sendToRecruitment(regId);
+  const flashBoardWarning = (msg) => {
+    setBoardWarning(msg);
+    setTimeout(() => setBoardWarning(''), 5000);
+  };
+
+  const handleAdvanceStage = async (regId, currentStage) => {
+    let result;
+    if (currentStage === 'registered') {
+      result = await startProfiling(regId);
+    } else if (currentStage === 'profiling') {
+      result = await completeProfile(regId);
+    } else if (currentStage === 'profiled') {
+      result = await sendToRecruitment(regId);
+    } else {
+      result = await updateStage(regId, currentStage);
+    }
+
+    if (result && result.ok === false) {
+      flashBoardWarning(result.message);
+      setOpenRegId(regId);
+    }
   };
 
   return (
@@ -126,6 +144,13 @@ export default function ApplicantProfilingBoard() {
           )}
         </div>
       </div>
+
+      {boardWarning && (
+        <div className="board-warning-banner">
+          <span>{boardWarning}</span>
+          <button type="button" className="close-warning" onClick={() => setBoardWarning('')}>✕</button>
+        </div>
+      )}
 
       <DispatchStrip counts={counts} total={candidates.length} />
 

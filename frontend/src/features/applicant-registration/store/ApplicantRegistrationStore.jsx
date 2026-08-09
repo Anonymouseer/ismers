@@ -392,9 +392,15 @@ export function ApplicantRegistrationProvider({ children }) {
       history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: 'Started profiling' }],
     }));
     try {
-      await updateStageApi(regId, 'profiling');
+      const res = await updateStageApi(regId, 'profiling');
+      if (res && res.ok === false) {
+        await loadCandidates();
+        return { ok: false, message: res.message || 'Failed to start profiling.' };
+      }
+      return { ok: true };
     } catch (err) {
       await loadCandidates();
+      return { ok: false, message: 'Server error starting profiling.' };
     }
   };
 
@@ -407,10 +413,10 @@ export function ApplicantRegistrationProvider({ children }) {
     if (!c.targetJobId) {
       return { ok: false, message: 'Assign a target job order before marking the profile complete.' };
     }
-    if (!c.skills.length) {
+    if (!c.skills || !c.skills.length) {
       return { ok: false, message: 'Add at least one skill before marking the profile complete.' };
     }
-    if (!c.workHistory.length) {
+    if (!c.workHistory || !c.workHistory.length) {
       return { ok: false, message: 'Add at least one work history entry before marking the profile complete.' };
     }
 
@@ -422,9 +428,9 @@ export function ApplicantRegistrationProvider({ children }) {
 
     try {
       const res = await updateStageApi(regId, 'profiled');
-      if (res.ok === false) {
+      if (res && res.ok === false) {
         await loadCandidates();
-        return { ok: false, message: res.message };
+        return { ok: false, message: res.message || 'Failed to mark profile complete on server.' };
       }
       return { ok: true };
     } catch (err) {
@@ -437,13 +443,27 @@ export function ApplicantRegistrationProvider({ children }) {
     patchCandidateLocal(regId, (c) => ({
       ...c,
       sentToRecruitment: true,
+      stage: 'sent',
       history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: 'Sent to Recruitment & Selection' }],
     }));
     try {
-      await sendToRecruitmentApi(regId);
+      const res = await sendToRecruitmentApi(regId);
+      if (res && res.ok === false) {
+        await loadCandidates();
+        return { ok: false, message: res.message || 'Failed to send to recruitment.' };
+      }
+      return { ok: true };
     } catch (err) {
       await loadCandidates();
+      return { ok: false, message: 'Server error sending to recruitment.' };
     }
+  };
+
+  const updateStage = async (regId, stage) => {
+    if (stage === 'profiling') return await startProfiling(regId);
+    if (stage === 'profiled') return await completeProfile(regId);
+    if (stage === 'sent') return await sendToRecruitment(regId);
+    return { ok: false, message: 'Invalid stage specified.' };
   };
 
   const updateStatus = async (regId, status) => {
@@ -495,6 +515,7 @@ export function ApplicantRegistrationProvider({ children }) {
     startProfiling,
     completeProfile,
     sendToRecruitment,
+    updateStage,
     updateStatus,
     updateCategory,
     updateTargetJob,
