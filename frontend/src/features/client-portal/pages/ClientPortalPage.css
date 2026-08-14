@@ -1801,6 +1801,23 @@
   font-weight: 600;
 }
 
+.cp-modal-api-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .cp-modal-api-error {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #fca5a5;
+}
+
 .cp-modal-actions {
   display: flex;
   align-items: center;

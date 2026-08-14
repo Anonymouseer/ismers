@@ -10,6 +10,7 @@ import JobOrderManagementService, {
   daysLeft,
   nowStamp,
   recomputeStatus,
+  assignDefaults,
 } from '../services/JobOrderManagementService';
 
 function logActivity(job, text, type = 'system') {
@@ -41,9 +42,18 @@ export default function useJobOrderManagementStore() {
 
   useEffect(() => {
     let alive = true;
-    JobOrderManagementService.getAll().then((data) => {
-      if (alive) { setJobOrders(data); setLoading(false); }
-    });
+    JobOrderManagementService.getAll()
+      .then((res) => {
+        if (!alive) return;
+        // Real API returns axios response: { data: [...] }
+        // Apply assignDefaults to fill in stage, recruiter, activityLog etc.
+        const raw = Array.isArray(res) ? res : (res?.data ?? []);
+        setJobOrders(raw.map(assignDefaults));
+        setLoading(false);
+      })
+      .catch(() => {
+        if (alive) setLoading(false);
+      });
     return () => { alive = false; };
   }, []);
 
@@ -107,18 +117,34 @@ export default function useJobOrderManagementStore() {
 
   const submitJob = useCallback(async (formValues) => {
     if (modalMode === 'edit' && currentRef) {
-      updateJob(currentRef, (j) => {
-        const merged = { ...j, ...formValues };
-        recomputeStatus(merged);
-        return logActivity(merged, 'Job order details updated.');
-      });
+      try {
+        const res = await JobOrderManagementService.update(currentRef, formValues);
+        const updated = assignDefaults(Array.isArray(res) ? res : (res?.data ?? { ref: currentRef, ...formValues }));
+        updateJob(currentRef, (j) => {
+          const merged = { ...j, ...updated };
+          recomputeStatus(merged);
+          return logActivity(merged, 'Job order details updated.');
+        });
+      } catch {
+        // Optimistic local update on network failure
+        updateJob(currentRef, (j) => {
+          const merged = { ...j, ...formValues };
+          recomputeStatus(merged);
+          return logActivity(merged, 'Job order details updated.');
+        });
+      }
       setModalOpen(false);
       setDrawerOpen(true);
     } else {
-      const newJob = await JobOrderManagementService.create(
-        { ...formValues, status: formValues.filled >= formValues.total ? 'filled' : (formValues.filled > 0 ? 'filling' : 'open') },
-        jobOrders
-      );
+      const payload = {
+        ...formValues,
+        client: formValues.client || 'Internal',
+        status: formValues.filled >= formValues.total ? 'filled' : (formValues.filled > 0 ? 'filling' : 'open'),
+        source: 'internal',
+      };
+      const res = await JobOrderManagementService.create(payload, jobOrders);
+      const raw = Array.isArray(res) ? res : (res?.data ?? res);
+      const newJob = assignDefaults(raw);
       const withLog = logActivity(newJob, 'Job order created.');
       setJobOrders((prev) => [...prev, withLog]);
       setModalOpen(false);
@@ -127,7 +153,12 @@ export default function useJobOrderManagementStore() {
     }
   }, [modalMode, currentRef, updateJob, jobOrders]);
 
-  const deleteJob = useCallback((ref) => {
+  const deleteJob = useCallback(async (ref) => {
+    try {
+      await JobOrderManagementService.remove(ref);
+    } catch {
+      // Continue with local state removal even if API call fails
+    }
     setJobOrders((prev) => prev.filter((j) => j.ref !== ref));
     setDrawerOpen(false);
   }, []);

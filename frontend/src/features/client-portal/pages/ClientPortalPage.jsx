@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { clientPortalService } from '../services/ClientPortalService';
 import ClientPortalSidebar from '../components/ClientPortalSidebar';
 import ClientPortalTopbar from '../components/ClientPortalTopbar';
 import ClientPortalSuccessToast from '../components/ClientPortalSuccessToast';
@@ -7,6 +8,7 @@ import ClientPortalSummaryCards from '../components/ClientPortalSummaryCards';
 import ClientPortalDashboardSidebar from '../components/ClientPortalDashboardSidebar';
 import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import './ClientPortalPage.css';
+
 
 const TODAY = new Date().toLocaleDateString('en-US', {
   weekday: 'long',
@@ -460,23 +462,66 @@ export default function ClientPortalPage() {
 
   // Auth guard — redirect to login if no active session
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('cp_session');
-      if (!raw) {
-        navigate('/client-portal/login', { replace: true });
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      setSession(parsed);
+    let cancelled = false;
+    const init = async () => {
+      try {
+        const raw = localStorage.getItem('cp_session');
+        if (!raw) {
+          navigate('/client-portal/login', { replace: true });
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (!cancelled) setSession(parsed);
 
-      // Load client's stored job requests if available
-      const storedJobs = localStorage.getItem(`cp_jobs_${parsed.email}`);
-      if (storedJobs) {
-        setJobRequests(JSON.parse(storedJobs));
+        // Load job orders from the API if the account has an id
+        if (parsed?.id) {
+          try {
+            const res = await clientPortalService.getJobOrders(parsed.id);
+            if (!cancelled && res?.data?.length) {
+              // Map the API shape to the Client Portal display shape
+              const mapped = res.data.map((j) => ({
+                id: j.ref,
+                position: j.title,
+                type: j.type,
+                total: j.total,
+                filled: j.filled,
+                location: j.location,
+                requested: j.createdAt
+                  ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                  : '',
+                deadline: j.deadline,
+                status: j.status === 'open' ? 'In Review'
+                  : j.status === 'filling' ? 'Active'
+                  : j.status === 'filled'  ? 'Filled'
+                  : j.status === 'urgent'  ? 'Active'
+                  : 'Pending',
+                statusClass: j.status === 'open' ? 'client-portal-badge--review'
+                  : j.status === 'filling' ? 'client-portal-badge--active'
+                  : j.status === 'filled'  ? 'client-portal-badge--filled'
+                  : j.status === 'urgent'  ? 'client-portal-badge--active'
+                  : 'client-portal-badge--pending',
+                recruiter: j.recruiter || 'Unassigned',
+                priority: j.priority,
+                rate: j.rate || 'Undisclosed',
+              }));
+              setJobRequests(mapped);
+            }
+          } catch {
+            // Non-fatal: fall back to initial mock data
+          }
+        } else {
+          // Fallback: load from localStorage cache if no account id
+          const storedJobs = localStorage.getItem(`cp_jobs_${parsed.email}`);
+          if (storedJobs && !cancelled) {
+            setJobRequests(JSON.parse(storedJobs));
+          }
+        }
+      } catch {
+        navigate('/client-portal/login', { replace: true });
       }
-    } catch {
-      navigate('/client-portal/login', { replace: true });
-    }
+    };
+    init();
+    return () => { cancelled = true; };
   }, [navigate]);
 
   const handleLogout = () => {
@@ -507,7 +552,7 @@ export default function ClientPortalPage() {
     return errors;
   };
 
-  const handleJobFormSubmit = (e) => {
+  const handleJobFormSubmit = async (e) => {
     e.preventDefault();
     const errors = validateJobForm();
     if (Object.keys(errors).length > 0) {
@@ -517,40 +562,54 @@ export default function ClientPortalPage() {
 
     setSubmitting(true);
 
-    setTimeout(() => {
-      const refNum = `PRF-2026-00${82 + jobRequests.length - 5}`;
-      const newRequest = {
-        id: refNum,
-        position: jobForm.title.trim(),
-        type: jobForm.type === 'Others' ? jobForm.typeOther.trim() : jobForm.type,
-        total: parseInt(jobForm.total, 10),
-        filled: 0,
-        location: jobForm.location.trim(),
-        requested: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        deadline: new Date(jobForm.deadline).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        status: 'In Review',
-        statusClass: 'client-portal-badge--review',
-        recruiter: 'Assigned Recruiter',
-        priority: jobForm.priority,
-        rate: jobForm.rate ? `₱${jobForm.rate} ${jobForm.ratePeriod === 'daily' ? '/ day' : '/ mo'}` : 'Undisclosed',
+    try {
+      const payload = {
+        client_account_id: session?.id ?? null,
+        client:     session?.company || 'Unknown Client',
+        title:      jobForm.title.trim(),
+        type:       jobForm.type === 'Others' ? jobForm.typeOther.trim() : jobForm.type,
+        total:      parseInt(jobForm.total, 10),
+        location:   jobForm.location.trim(),
+        deadline:   new Date(jobForm.deadline).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        priority:   jobForm.priority,
+        rate:       jobForm.rate
+          ? `₱${jobForm.rate}${jobForm.ratePeriod === 'daily' ? '/day' : '/mo'}`
+          : null,
+        description:  jobForm.description.trim(),
+        requirements: jobForm.requirements.trim() || null,
+        source:       'client_portal',
       };
 
-      const updated = [newRequest, ...jobRequests];
-      setJobRequests(updated);
+      const res = await clientPortalService.createJobOrder(payload);
+      const created = res.data;
 
-      if (session?.email) {
-        try {
-          localStorage.setItem(`cp_jobs_${session.email}`, JSON.stringify(updated));
-        } catch {
-          /* ignore */
-        }
-      }
+      const newRequest = {
+        id:         created.ref,
+        position:   created.title,
+        type:       created.type,
+        total:      created.total,
+        filled:     0,
+        location:   created.location,
+        requested:  new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        deadline:   created.deadline,
+        status:     'In Review',
+        statusClass:'client-portal-badge--review',
+        recruiter:  'Unassigned',
+        priority:   created.priority,
+        rate:       created.rate || 'Undisclosed',
+      };
 
+      setJobRequests((prev) => [newRequest, ...prev]);
       setSubmitting(false);
-      setSuccessBanner(`Job Order Request ${refNum} has been created and submitted for review.`);
+      setSuccessBanner(`Job Order Request ${created.ref} has been submitted successfully and is now under review.`);
       setShowJobModal(false);
       setActiveTab('job-orders');
-    }, 600);
+    } catch (err) {
+      setSubmitting(false);
+      const msg = err?.response?.data?.message || 'An error occurred while submitting your job order. Please try again.';
+      setSuccessBanner('');
+      setFormErrors((prev) => ({ ...prev, _api: msg }));
+    }
   };
 
   // Filtered requests for 'job-orders' tab
@@ -1171,6 +1230,11 @@ export default function ClientPortalPage() {
                 </div>
               </div>
 
+              {formErrors._api && (
+                <div className="cp-modal-api-error" role="alert">
+                  {formErrors._api}
+                </div>
+              )}
               <div className="cp-modal-actions">
                 <button type="button" className="cp-modal-btn-cancel" onClick={closeJobModal}>Cancel</button>
                 <button type="submit" className="cp-modal-btn-submit" disabled={submitting}>

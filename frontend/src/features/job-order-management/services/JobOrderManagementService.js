@@ -2,7 +2,7 @@
 // API calls for the job-order-management feature
 import api from '../../../services/apiClient';
 
-const BASE_URL = '/job-order-management';
+const BASE_URL = '/job-orders';
 
 // ---- Real API (wire the store to this once the backend endpoints are ready) ----
 export const jobOrderManagementService = {
@@ -235,6 +235,7 @@ const RAW_JOB_ORDERS = [
 ];
 
 // ---- mock CRUD facade used by the store for now — swap for jobOrderManagementService above once the backend is ready ----
+// NOTE: mockJobOrderApi is kept for local-only fallback but the store now uses the real API above.
 const mockJobOrderApi = {
   async getAll() {
     return RAW_JOB_ORDERS.map(assignDefaults);
@@ -258,4 +259,4 @@ const mockJobOrderApi = {
   },
 };
 
-export default mockJobOrderApi;
+export default jobOrderManagementService;
