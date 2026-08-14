@@ -1239,6 +1239,31 @@
     border: 1px solid var(--border);
   }
 
+  .hero-pill.company-id {
+    background: rgba(0, 125, 204, 0.08);
+    color: var(--primary);
+    border: 1px solid rgba(0, 125, 204, 0.28);
+    font-family: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .cc-id-tag {
+    font-size: 10px;
+    font-weight: 700;
+    font-family: ui-monospace, 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', monospace;
+    color: var(--primary);
+    background: rgba(0, 125, 204, 0.08);
+    border: 1px solid rgba(0, 125, 204, 0.2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-bottom: 4px;
+  }
+
   .hero-actions {
     display: flex;
     align-items: center;

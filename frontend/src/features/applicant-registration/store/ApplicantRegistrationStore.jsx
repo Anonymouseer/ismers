@@ -15,6 +15,8 @@ import {
   removeSkillApi,
   removeWorkHistoryApi,
   sendToRecruitmentApi,
+  returnToProfilingApi,
+  bulkReturnToProfilingApi,
   updateBasicInfoApi,
   updateCategoryApi,
   updateStageApi,
@@ -439,7 +441,49 @@ export function ApplicantRegistrationProvider({ children }) {
     }
   };
 
+  const clearApplicantRecruitmentCache = (targetCand) => {
+    if (!targetCand) return;
+    try {
+      const keysToRemove = [
+        `cp_endorsement_${targetCand.name}`,
+        `cp_endorsement_${targetCand.id}`,
+        `cp_endorsement_${targetCand.regId}`,
+        `cp_endorsement_cand-${targetCand.id}`,
+        `cp_endorsement_cand-${targetCand.regId}`,
+      ];
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+      const stagesKey = 'ismers_recruitment_stages_v5';
+      const raw = localStorage.getItem(stagesKey);
+      if (raw) {
+        const stages = JSON.parse(raw);
+        delete stages[String(targetCand.id)];
+        delete stages[String(targetCand.regId)];
+        delete stages[String(targetCand.name)];
+        localStorage.setItem(stagesKey, JSON.stringify(stages));
+      }
+
+      const appsCacheKey = 'ismers_recruitment_apps_cache_v5';
+      const appsRaw = localStorage.getItem(appsCacheKey);
+      if (appsRaw) {
+        const apps = JSON.parse(appsRaw);
+        const filtered = apps.filter(
+          (a) =>
+            String(a.id) !== String(targetCand.id) &&
+            String(a.regId) !== String(targetCand.regId) &&
+            a.name !== targetCand.name
+        );
+        localStorage.setItem(appsCacheKey, JSON.stringify(filtered));
+      }
+    } catch (e) {
+      console.warn('Error clearing applicant recruitment cache:', e);
+    }
+  };
+
   const sendToRecruitment = async (regId) => {
+    const cand = candidates.find((c) => c.regId === regId);
+    clearApplicantRecruitmentCache(cand);
+
     patchCandidateLocal(regId, (c) => ({
       ...c,
       sentToRecruitment: true,
@@ -456,6 +500,49 @@ export function ApplicantRegistrationProvider({ children }) {
     } catch (err) {
       await loadCandidates();
       return { ok: false, message: 'Server error sending to recruitment.' };
+    }
+  };
+
+  const returnToProfiling = async (regId) => {
+    const cand = candidates.find((c) => c.regId === regId);
+    clearApplicantRecruitmentCache(cand);
+
+    patchCandidateLocal(regId, (c) => ({
+      ...c,
+      sentToRecruitment: false,
+      stage: c.stage === 'sent' ? 'profiled' : c.stage,
+      history: [...c.history, { id: `h-${Date.now()}`, date: today(), text: 'Returned to Applicant Profiling' }],
+    }));
+    try {
+      const res = await returnToProfilingApi(regId);
+      if (res && res.ok === false) {
+        await loadCandidates();
+        return { ok: false, message: res.message || 'Failed to return to profiling.' };
+      }
+      return { ok: true };
+    } catch (err) {
+      await loadCandidates();
+      return { ok: false, message: 'Server error returning to profiling.' };
+    }
+  };
+
+  const bulkReturnToProfiling = async () => {
+    try {
+      localStorage.removeItem('ismers_recruitment_stages_v5');
+      localStorage.removeItem('ismers_recruitment_apps_cache_v5');
+      const allKeys = Object.keys(localStorage);
+      allKeys.forEach((k) => {
+        if (k.startsWith('cp_endorsement_') || k.startsWith('cp_interview_')) {
+          localStorage.removeItem(k);
+        }
+      });
+
+      const res = await bulkReturnToProfilingApi();
+      await loadCandidates();
+      return res;
+    } catch (err) {
+      await loadCandidates();
+      return { ok: false, message: 'Server error returning all applicants to profiling.' };
     }
   };
 
@@ -515,6 +602,8 @@ export function ApplicantRegistrationProvider({ children }) {
     startProfiling,
     completeProfile,
     sendToRecruitment,
+    returnToProfiling,
+    bulkReturnToProfiling,
     updateStage,
     updateStatus,
     updateCategory,

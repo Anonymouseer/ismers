@@ -784,10 +784,132 @@ class ApplicantController extends Controller
         $applicant->update([
             'sent_to_recruitment' => true,
             'recruitment_stage' => 'pooling',
+            'client_endorsement_status' => 'Pending Review',
+            'recruiter_rating' => 0,
+            'screening_checklist' => [
+                'requirements' => false,
+                'identity' => false,
+                'history' => false,
+                'reference' => false,
+            ],
+            'document_status' => [
+                'resume' => false,
+                'certificate' => false,
+                'portfolio' => false,
+            ],
+            'interview_schedule' => null,
+            'pre_employment_checklist' => [
+                'medical_exam' => false,
+                'nbi_clearance' => false,
+                'sss_document' => false,
+                'philhealth_mdr' => false,
+                'pagibig_mid' => false,
+                'bir_tin' => false,
+                'psa_birth_cert' => false,
+            ],
+            'medical_referral' => null,
+            'statutory_numbers' => null,
+            'employment_contract' => null,
+            'orientation_modules' => null,
+            'atm_endorsement' => null,
+            'deployment_details' => null,
+            'ppe_issuance' => null,
         ]);
-        $this->logHistory($applicant, 'Sent to Recruitment & Selection');
+        $this->logHistory($applicant, 'Sent to Recruitment & Selection (Initialized in Pooling)');
 
         return response()->json(['ok' => true]);
+    }
+
+    public function returnToProfiling(string $regId): JsonResponse
+    {
+        $applicant = $this->findApplicant($regId);
+        $applicant->update([
+            'sent_to_recruitment' => false,
+            'recruitment_stage' => null,
+            'stage' => $applicant->stage === 'sent' ? 'profiled' : $applicant->stage,
+            'client_endorsement_status' => 'Pending Review',
+            'recruiter_rating' => 0,
+            'screening_checklist' => [
+                'requirements' => false,
+                'identity' => false,
+                'history' => false,
+                'reference' => false,
+            ],
+            'document_status' => [
+                'resume' => false,
+                'certificate' => false,
+                'portfolio' => false,
+            ],
+            'interview_schedule' => null,
+            'pre_employment_checklist' => [
+                'medical_exam' => false,
+                'nbi_clearance' => false,
+                'sss_document' => false,
+                'philhealth_mdr' => false,
+                'pagibig_mid' => false,
+                'bir_tin' => false,
+                'psa_birth_cert' => false,
+            ],
+            'medical_referral' => null,
+            'statutory_numbers' => null,
+            'employment_contract' => null,
+            'orientation_modules' => null,
+            'atm_endorsement' => null,
+            'deployment_details' => null,
+            'ppe_issuance' => null,
+        ]);
+        $this->logHistory($applicant, 'Returned to Applicant Profiling');
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function bulkReturnToProfiling(): JsonResponse
+    {
+        $applicants = Applicant::where('sent_to_recruitment', true)->get();
+        foreach ($applicants as $applicant) {
+            $applicant->update([
+                'sent_to_recruitment' => false,
+                'recruitment_stage' => null,
+                'stage' => $applicant->stage === 'sent' ? 'profiled' : $applicant->stage,
+                'client_endorsement_status' => 'Pending Review',
+                'recruiter_rating' => 0,
+                'screening_checklist' => [
+                    'requirements' => false,
+                    'identity' => false,
+                    'history' => false,
+                    'reference' => false,
+                ],
+                'document_status' => [
+                    'resume' => false,
+                    'certificate' => false,
+                    'portfolio' => false,
+                ],
+                'interview_schedule' => null,
+                'pre_employment_checklist' => [
+                    'medical_exam' => false,
+                    'nbi_clearance' => false,
+                    'sss_document' => false,
+                    'philhealth_mdr' => false,
+                    'pagibig_mid' => false,
+                    'bir_tin' => false,
+                    'psa_birth_cert' => false,
+                ],
+                'medical_referral' => null,
+                'statutory_numbers' => null,
+                'employment_contract' => null,
+                'orientation_modules' => null,
+                'atm_endorsement' => null,
+                'deployment_details' => null,
+                'ppe_issuance' => null,
+            ]);
+            $this->logHistory($applicant, 'Returned to Applicant Profiling');
+        }
+
+        return response()->json([
+            'ok' => true,
+            'count' => $applicants->count(),
+            'message' => "All {$applicants->count()} applicants returned to Profiling.",
+        ]);
     }
 
     public function recruitmentApplications(): JsonResponse

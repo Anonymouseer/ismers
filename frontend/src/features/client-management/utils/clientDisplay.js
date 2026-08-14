@@ -70,6 +70,13 @@ export function refCode(clientName, jobIdx) {
   return `JO-${String(jobIdx + 1).padStart(3, '0')}-${(clientName.replace(/[^A-Za-z]/g, '') || 'CLT').slice(0, 3).toUpperCase()}`;
 }
 
+export function getCompanyId(client, index) {
+  if (client?.companyId) return client.companyId;
+  if (client?.id && String(client.id).startsWith('CLT-')) return client.id;
+  const idx = typeof index === 'number' ? index + 1 : 1;
+  return `CLT-2026-${String(idx).padStart(4, '0')}`;
+}
+
 // ----- Contract expiry / renewal date helpers -----
 
 /**

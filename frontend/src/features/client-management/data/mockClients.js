@@ -1,5 +1,6 @@
 export const CLIENTS = [
   {
+    "companyId": "CLT-2026-0001",
     "name": "ABC Logistics",
     "industry": "Warehousing & Logistics",
     "status": "active",
@@ -288,6 +289,7 @@ export const CLIENTS = [
     "address": "412 Katipunan Ave, Quezon City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0002",
     "name": "Northline BPO",
     "industry": "Business Process Outsourcing",
     "status": "active",
@@ -546,6 +548,7 @@ export const CLIENTS = [
     "address": "88 Ayala Ave, Makati City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0003",
     "name": "Delta Manufacturing",
     "industry": "Manufacturing",
     "status": "active",
@@ -738,6 +741,7 @@ export const CLIENTS = [
     "address": "25 Mindanao Ave, Caloocan City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0004",
     "name": "Coastal Retail Group",
     "industry": "Retail",
     "status": "active",
@@ -934,6 +938,7 @@ export const CLIENTS = [
     "address": "150 Roxas Blvd, Pasay City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0005",
     "name": "Vantage Tech Solutions",
     "industry": "Information Technology",
     "status": "prospect",
@@ -951,6 +956,7 @@ export const CLIENTS = [
     "address": "7 Commonwealth Ave, Quezon City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0006",
     "name": "Everwell Health Group",
     "industry": "Healthcare",
     "status": "prospect",
@@ -968,6 +974,7 @@ export const CLIENTS = [
     "address": "33 EDSA, Mandaluyong City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0007",
     "name": "Ironclad Freight Co.",
     "industry": "Freight & Transport",
     "status": "inactive",
@@ -985,6 +992,7 @@ export const CLIENTS = [
     "address": "19 J.P. Rizal St, Marikina City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0008",
     "name": "Sunrise Hospitality Group",
     "industry": "Hospitality",
     "status": "active",
@@ -1676,6 +1684,7 @@ export const CLIENTS = [
     "address": "4 Alabang-Zapote Rd, Muntinlupa City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0011",
     "name": "Apex Construction Builders",
     "industry": "Construction",
     "status": "active",
@@ -1835,6 +1844,7 @@ export const CLIENTS = [
     "address": "77 Congressional Ave, Quezon City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0013",
     "name": "Nordic Freight Co.",
     "industry": "Freight & Cargo",
     "status": "suspended",
@@ -1852,6 +1862,7 @@ export const CLIENTS = [
     "address": "15 Gil Puyat Ave, Makati City, Metro Manila"
   },
   {
+    "companyId": "CLT-2026-0014",
     "name": "Coastline Retail Group",
     "industry": "Retail Staffing",
     "status": "archived",

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ClientAccount extends Model
 {
     protected $fillable = [
+        'company_id',
         'company',
         'industry',
         'contact_person',

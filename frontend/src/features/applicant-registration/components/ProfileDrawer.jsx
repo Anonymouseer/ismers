@@ -37,6 +37,7 @@ export default function ProfileDrawer({ regId, onClose }) {
     startProfiling,
     completeProfile,
     sendToRecruitment,
+    returnToProfiling,
     deleteCandidate,
   } = useApplicantRegistration();
 
@@ -200,7 +201,7 @@ export default function ProfileDrawer({ regId, onClose }) {
                     Sent to Recruitment & Selection. This applicant now appears there as a new
                     &quot;Applied&quot; candidate.
                   </div>
-                  <div className="stage-btn-row">
+                  <div className="stage-btn-row" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <a
                       className="stage-btn go"
                       href="/recruitment-selection"
@@ -208,6 +209,16 @@ export default function ProfileDrawer({ regId, onClose }) {
                     >
                       Open in Recruitment & Selection
                     </a>
+                    {canChangeStage && (
+                      <button
+                        className="stage-btn cancel"
+                        type="button"
+                        onClick={() => returnToProfiling(candidate.regId)}
+                        style={{ border: '1px solid var(--border)' }}
+                      >
+                        Return to Profiling
+                      </button>
+                    )}
                   </div>
                 </>
               )}

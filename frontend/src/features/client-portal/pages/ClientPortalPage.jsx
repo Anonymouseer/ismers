@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clientPortalService } from '../services/ClientPortalService';
 import ClientPortalSidebar from '../components/ClientPortalSidebar';
@@ -10,6 +10,7 @@ import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import ClientCandidateModal from '../components/ClientCandidateModal';
 import ClientScheduleInterviewModal from '../components/ClientScheduleInterviewModal';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
+import { CLIENTS } from '../../client-management/data/mockClients';
 import './ClientPortalPage.css';
 
 
@@ -119,80 +120,46 @@ const ANNOUNCEMENTS = [
   },
 ];
 
-const UPCOMING_INTERVIEWS = [
-  {
-    id: 'iv-1',
-    candidate: 'Rodrigo P. Estrada',
-    position: 'Production Supervisor',
-    date: 'Aug 08, 2026',
-    time: '10:00 AM',
-    type: 'On-site',
+const AM_DIRECTORY = {
+  'Karla Reyes': {
+    name: 'Karla Reyes',
+    title: 'Senior Account Manager (Industrial & Logistics)',
+    branch: 'PRIMEPOWER Head Office (QC)',
+    email: 'k.reyes@primepower.ph',
+    phone: '+63 917 888 4321',
+    officeLine: '(02) 8923-4567 ext. 104',
   },
-  {
-    id: 'iv-2',
-    candidate: 'Maria C. Torres',
-    position: 'QC Analyst',
-    date: 'Aug 09, 2026',
-    time: '2:00 PM',
-    type: 'Video Call',
+  'Dennis Ocampo': {
+    name: 'Dennis Ocampo',
+    title: 'Senior Account Manager (Corporate & Services)',
+    branch: 'PRIMEPOWER Makati Operations Center',
+    email: 'd.ocampo@primepower.ph',
+    phone: '+63 918 777 5432',
+    officeLine: '(02) 8923-4567 ext. 108',
   },
-  {
-    id: 'iv-3',
-    candidate: 'Joel R. Abad',
-    position: 'Warehouse Associate',
-    date: 'Aug 11, 2026',
-    time: '9:00 AM',
-    type: 'On-site',
+  'Jasmine Uy': {
+    name: 'Jasmine Uy',
+    title: 'Client Relations Officer',
+    branch: 'PRIMEPOWER Ortigas Branch',
+    email: 'j.uy@primepower.ph',
+    phone: '+63 919 666 3210',
+    officeLine: '(02) 8923-4567 ext. 112',
   },
-];
-
-const MOCK_ACCOUNT_MANAGER = {
-  name: 'Mark Anthony Dela Cruz',
-  title: 'Senior Account Manager',
-  branch: 'PRIMEPOWER Head Office (QC)',
-  email: 'm.delacruz@primepower.ph',
-  phone: '+63 917 888 4321',
-  officeLine: '(02) 8923-4567 ext. 104',
 };
 
-const MOCK_ENDORSED_CANDIDATES = [
-  {
-    id: 'cand-101',
-    name: 'Rodrigo P. Estrada',
-    position: 'Production Supervisor',
-    jobRef: 'PRF-2026-0081',
-    matchScore: 94,
-    experience: '6 years in electronics assembly & plant supervision',
-    skills: ['Line Balancing', '5S Methodology', 'Shift Scheduling', 'PLC Basic'],
-    endorsedDate: 'Aug 05, 2026',
-    status: 'Pending Review',
-    recruiter: 'M. Dela Cruz',
-  },
-  {
-    id: 'cand-102',
-    name: 'Maria C. Torres',
-    position: 'Quality Control Analyst',
-    jobRef: 'PRF-2026-0079',
-    matchScore: 89,
-    experience: '4 years in ISO 9001 quality inspection & lab analysis',
-    skills: ['Calipers & Micrometer', 'Chemical Testing', 'Defect Reporting', 'ISO Audit'],
-    endorsedDate: 'Aug 04, 2026',
-    status: 'Accepted for Interview',
-    recruiter: 'J. Santos',
-  },
-  {
-    id: 'cand-103',
-    name: 'Joel R. Abad',
-    position: 'Forklift Operator',
-    jobRef: 'PRF-2026-0066',
-    matchScore: 91,
-    experience: '5 years heavy material handling & warehouse logistics',
-    skills: ['Reach Truck License', 'Inventory Stacking', 'WMS Entry', 'Safety OSHA'],
-    endorsedDate: 'Aug 02, 2026',
-    status: 'Pending Review',
-    recruiter: 'M. Dela Cruz',
-  },
-];
+const MOCK_ACCOUNT_MANAGER = AM_DIRECTORY['Karla Reyes'];
+
+export function resolveAccountManager(amName) {
+  if (!amName) return MOCK_ACCOUNT_MANAGER;
+  return AM_DIRECTORY[amName] || {
+    name: amName,
+    title: 'Senior Account Manager',
+    branch: 'PRIMEPOWER Head Office (QC)',
+    email: `${amName.toLowerCase().replace(/[^a-z]/g, '.')}@primepower.ph`,
+    phone: '+63 917 888 4321',
+    officeLine: '(02) 8923-4567 ext. 100',
+  };
+}
 
 const MOCK_DEPLOYED_ROSTER = [
   {
@@ -252,7 +219,7 @@ export default function ClientPortalPage() {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'settings'
   const [showJobModal, setShowJobModal] = useState(false);
   const [jobRequests, setJobRequests] = useState(INITIAL_JOB_REQUESTS);
-  const [endorsedCandidates, setEndorsedCandidates] = useState(MOCK_ENDORSED_CANDIDATES);
+  const [endorsedCandidates, setEndorsedCandidates] = useState([]);
   const [deployedRoster, setDeployedRoster] = useState(MOCK_DEPLOYED_ROSTER);
   const [endorsementFilter, setEndorsementFilter] = useState('ALL');
   const [endorsementSearch, setEndorsementSearch] = useState('');
@@ -795,7 +762,7 @@ export default function ClientPortalPage() {
     }
   }, []);
 
-  // Auth guard — redirect to login if no active session
+  // Auth guard — redirect to login if no active session & load company-specific data
   useEffect(() => {
     let cancelled = false;
     const init = async () => {
@@ -808,13 +775,22 @@ export default function ClientPortalPage() {
         const parsed = JSON.parse(raw);
         if (!cancelled) setSession(parsed);
 
-        // Load job orders from the API if the account has an id
+        // Look up corresponding Client Management profile
+        const clientCompName = parsed?.company?.trim() || '';
+        const clientEmail = parsed?.email?.trim() || '';
+        const matchedCm = CLIENTS.find(
+          (c) =>
+            (clientCompName && c.name.toLowerCase() === clientCompName.toLowerCase()) ||
+            (clientEmail && c.email && c.email.toLowerCase() === clientEmail.toLowerCase())
+        );
+
+        // 1. Load Job Orders: check backend API first, fallback to matched Client Management jobs
+        let loadedJobs = [];
         if (parsed?.id) {
           try {
             const res = await clientPortalService.getJobOrders(parsed.id);
             if (!cancelled && res?.data?.length) {
-              // Map the API shape to the Client Portal display shape
-              const mapped = res.data.map((j) => ({
+              loadedJobs = res.data.map((j) => ({
                 id: j.ref,
                 position: j.title,
                 type: j.type,
@@ -835,80 +811,129 @@ export default function ClientPortalPage() {
                   : j.status === 'filled'  ? 'client-portal-badge--filled'
                   : j.status === 'urgent'  ? 'client-portal-badge--active'
                   : 'client-portal-badge--pending',
-                recruiter: j.recruiter || 'Unassigned',
+                recruiter: j.recruiter || matchedCm?.am || 'PRIMEPOWER Recruitment',
                 priority: j.priority,
-                rate: j.rate || 'Undisclosed',
+                rate: j.rate || matchedCm?.rate || '₱20,000 / mo',
               }));
-              setJobRequests(mapped);
             }
           } catch {
-            // Non-fatal: fall back to initial mock data
-          }
-        } else {
-          // Fallback: load from localStorage cache if no account id
-          const storedJobs = localStorage.getItem(`cp_jobs_${parsed?.email}`);
-          if (storedJobs && !cancelled) {
-            setJobRequests(JSON.parse(storedJobs));
+            // Non-fatal fallback
           }
         }
 
-        // Load dynamic candidate endorsements from recruitment
+        if (!loadedJobs.length && matchedCm?.jobs?.length) {
+          loadedJobs = matchedCm.jobs.map((j, idx) => ({
+            id: `PRF-2026-${String(idx + 1).padStart(4, '0')}`,
+            position: j.title,
+            type: j.type?.split('·')[0]?.trim() || 'Full-time',
+            total: j.total,
+            filled: j.filled,
+            location: j.location || 'Metro Manila',
+            requested: 'Jul 15, 2026',
+            deadline: j.deadline || 'Aug 30, 2026',
+            status: j.filled >= j.total ? 'Filled' : j.badge === 'urgent' ? 'Active' : j.badge === 'filling' ? 'Active' : 'In Review',
+            statusClass: j.filled >= j.total ? 'client-portal-badge--filled' : j.badge === 'urgent' ? 'client-portal-badge--active' : j.badge === 'filling' ? 'client-portal-badge--active' : 'client-portal-badge--review',
+            recruiter: matchedCm.am,
+            priority: j.badge === 'urgent' ? 'urgent' : j.badge === 'filling' ? 'high' : 'normal',
+            rate: j.rate || matchedCm.rate || '₱22,000 / mo',
+          }));
+        } else if (!loadedJobs.length) {
+          const storedJobs = localStorage.getItem(`cp_jobs_${parsed?.email}`);
+          if (storedJobs) {
+            try { loadedJobs = JSON.parse(storedJobs); } catch { /* ignore */ }
+          }
+        }
+
+        if (!cancelled && loadedJobs.length > 0) {
+          setJobRequests(loadedJobs);
+        }
+
+        // 2. Load Deployed Roster: extract hired employees from matched Client Management jobs
+        if (matchedCm?.jobs?.length) {
+          const rosterItems = [];
+          matchedCm.jobs.forEach((j, jIdx) => {
+            (j.applicants || []).filter((a) => a.status === 'hired').forEach((a, aIdx) => {
+              rosterItems.push({
+                id: `dep-${matchedCm.name.slice(0, 3).toLowerCase()}-${jIdx + 1}-${aIdx + 1}`,
+                employeeName: a.name,
+                position: j.title,
+                site: j.location || 'Client Facility',
+                startDate: a.applied || 'Jul 01, 2026',
+                expiryDate: matchedCm.renewal || 'Jan 15, 2027',
+                status: 'Active',
+                contractType: j.type || 'Full-time · Contractual',
+              });
+            });
+          });
+          if (!cancelled && rosterItems.length > 0) {
+            setDeployedRoster(rosterItems);
+          }
+        }
+
+        // 3. Load Candidate Endorsements (Scoped to this Client only)
+        const companyKey = matchedCm?.name || clientCompName;
+        const clientJobTitles = (matchedCm?.jobs || []).map((j) => j.title.toLowerCase());
+        const dynamicEndorsed = [];
+
         try {
           const recRes = await fetch('http://localhost:8000/api/v1/recruitment/applications');
           if (recRes.ok) {
             const apps = await recRes.json();
             const endorsedStages = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired'];
-            const dynamicEndorsed = apps
-              .filter((a) => endorsedStages.includes(a.status))
-              .map((a) => {
-                const skillsArr = Array.isArray(a.skills) && a.skills.length > 0
-                  ? a.skills.map((s) => (typeof s === 'string' ? s : s.name))
-                  : ['BOSH Certified', 'PPE Compliance', 'Hazard Inspection', 'OSHS'];
-                return {
-                  id: `cand-${a.id || a.regId}`,
-                  dbId: a.id,
-                  regId: a.regId,
-                  name: a.name,
-                  position: a.jobTitle || 'Safety Officer',
-                  jobRef: a.jobId ? `PRF-2026-${String(a.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
-                  matchScore: a.score || 80,
-                  experience: a.experience || '4 years accredited safety officer in construction site projects',
-                  skills: skillsArr,
-                  workHistory: a.workHistory || [],
-                  education: a.education || [],
-                  documents: a.documents || [],
-                  breakdown: a.breakdown || null,
-                  phone: a.phone || null,
-                  email: a.email || null,
-                  endorsedDate: a.applied || 'Aug 14, 2026',
-                  status: (a.clientEndorsementStatus && a.clientEndorsementStatus !== 'Pending Review')
-                    ? a.clientEndorsementStatus
-                    : (localStorage.getItem(`cp_endorsement_${a.name}`) ||
-                       localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
-                       localStorage.getItem(`cp_endorsement_cand-${a.regId}`) ||
-                       localStorage.getItem(`cp_endorsement_${a.id}`) ||
-                       localStorage.getItem(`cp_endorsement_${a.regId}`) ||
-                       a.clientEndorsementStatus ||
-                       'Pending Review'),
-                  recruiter: a.assignedManager || 'PRIMEPOWER Recruitment',
-                  client: a.client,
-                };
-              });
+            
+            // Filter strictly for this client
+            const matchedApps = apps.filter((a) => {
+              if (!endorsedStages.includes(a.status)) return false;
+              const candClient = (a.client || '').toLowerCase();
+              const candJob = (a.jobTitle || '').toLowerCase();
+              return (
+                candClient === companyKey.toLowerCase() ||
+                (companyKey && candClient.includes(companyKey.toLowerCase())) ||
+                clientJobTitles.includes(candJob)
+              );
+            });
 
-            if (!cancelled && dynamicEndorsed.length > 0) {
-              setEndorsedCandidates(() => {
-                const combined = [...dynamicEndorsed];
-                MOCK_ENDORSED_CANDIDATES.forEach((m) => {
-                  if (!combined.some((c) => c.name === m.name)) {
-                    combined.push(m);
-                  }
-                });
-                return combined;
+            matchedApps.forEach((a) => {
+              const skillsArr = Array.isArray(a.skills) && a.skills.length > 0
+                ? a.skills.map((s) => (typeof s === 'string' ? s : s.name))
+                : ['BOSH Certified', 'PPE Compliance', 'Hazard Inspection', 'OSHS'];
+              dynamicEndorsed.push({
+                id: `cand-${a.id || a.regId}`,
+                dbId: a.id,
+                regId: a.regId,
+                name: a.name,
+                position: a.jobTitle || 'Safety Officer',
+                jobRef: a.jobId ? `PRF-2026-${String(a.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
+                matchScore: a.score || 80,
+                experience: a.experience || '4 years accredited safety officer in construction site projects',
+                skills: skillsArr,
+                workHistory: a.workHistory || [],
+                education: a.education || [],
+                documents: a.documents || [],
+                breakdown: a.breakdown || null,
+                phone: a.phone || null,
+                email: a.email || null,
+                endorsedDate: a.applied || 'Aug 14, 2026',
+                status: (a.clientEndorsementStatus && a.clientEndorsementStatus !== 'Pending Review')
+                  ? a.clientEndorsementStatus
+                  : (localStorage.getItem(`cp_endorsement_${a.name}`) ||
+                     localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
+                     localStorage.getItem(`cp_endorsement_cand-${a.regId}`) ||
+                     localStorage.getItem(`cp_endorsement_${a.id}`) ||
+                     localStorage.getItem(`cp_endorsement_${a.regId}`) ||
+                     a.clientEndorsementStatus ||
+                     'Pending Review'),
+                recruiter: a.assignedManager || matchedCm?.am || 'PRIMEPOWER Recruitment',
+                client: a.client || companyKey,
               });
-            }
+            });
           }
         } catch {
-          // Fallback to initial mock data
+          // fallback
+        }
+
+        if (!cancelled) {
+          setEndorsedCandidates(dynamicEndorsed);
         }
       } catch {
         navigate('/client-portal/login', { replace: true });
@@ -923,6 +948,19 @@ export default function ClientPortalPage() {
       if (data.type === 'CANDIDATE_ENDORSED' || data.type === 'STAGE_CHANGED') {
         const { applicant } = data.payload || {};
         if (applicant) {
+          const rawCurrent = localStorage.getItem('cp_session');
+          const currentSession = rawCurrent ? JSON.parse(rawCurrent) : null;
+          const currentCompany = currentSession?.company?.toLowerCase() || '';
+
+          // Only accept realtime candidate events that match this client company
+          const candClient = (applicant.client || '').toLowerCase();
+          const isForThisClient = !currentCompany ||
+            candClient === currentCompany ||
+            candClient.includes(currentCompany) ||
+            currentCompany.includes(candClient);
+
+          if (!isForThisClient) return;
+
           setEndorsedCandidates((prev) => {
             if (prev.some((c) => c.name === applicant.name || (applicant.id && c.dbId === applicant.id))) {
               return prev.map((c) => {
@@ -941,15 +979,15 @@ export default function ClientPortalPage() {
                 dbId: applicant.id,
                 regId: applicant.regId,
                 name: applicant.name,
-                position: applicant.jobTitle || 'Safety Officer',
+                position: applicant.jobTitle || 'Candidate',
                 jobRef: applicant.jobId ? `PRF-2026-${String(applicant.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
                 matchScore: applicant.score || 80,
-                experience: applicant.experience || '4 years accredited safety officer in construction site projects',
+                experience: applicant.experience || 'Verified candidate for client final interview',
                 skills: skillsArr,
                 endorsedDate: applicant.applied || new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
                 status: applicant.clientEndorsementStatus || 'Pending Review',
                 recruiter: applicant.assignedManager || 'PRIMEPOWER Recruitment',
-                client: applicant.client,
+                client: applicant.client || currentSession?.company,
               },
               ...prev,
             ];
@@ -1137,6 +1175,32 @@ export default function ClientPortalPage() {
     },
   ];
 
+  const matchedClient = useMemo(() => {
+    if (!session?.company && !session?.email) return null;
+    return CLIENTS.find(
+      (c) =>
+        (session?.company && c.name?.toLowerCase() === session.company.toLowerCase()) ||
+        (session?.email && c.email && c.email.toLowerCase() === session.email.toLowerCase())
+    ) || null;
+  }, [session]);
+
+  const currentAccountManager = useMemo(() => {
+    return resolveAccountManager(matchedClient?.am);
+  }, [matchedClient]);
+
+  const upcomingInterviews = useMemo(() => {
+    return endorsedCandidates
+      .filter((c) => c.status === 'Accepted for Interview' || c.interview)
+      .map((c, idx) => ({
+        id: `iv-${c.id || idx}`,
+        candidate: c.name,
+        position: c.position,
+        date: c.interview?.date || c.endorsedDate || 'TBD',
+        time: c.interview?.time || '10:00 AM',
+        type: c.interview?.mode || c.interview?.title || 'Video Call',
+      }));
+  }, [endorsedCandidates]);
+
   return (
     <div className="client-portal-shell">
       <ClientPortalTopbar />
@@ -1153,7 +1217,7 @@ export default function ClientPortalPage() {
           jobRequests={jobRequests}
           endorsedCandidates={endorsedCandidates}
           deployedRoster={deployedRoster}
-          accountManager={MOCK_ACCOUNT_MANAGER}
+          accountManager={currentAccountManager}
           onLogout={handleLogout}
         />
 
@@ -1233,7 +1297,7 @@ export default function ClientPortalPage() {
 
                 <ClientPortalDashboardSidebar
                   announcements={ANNOUNCEMENTS}
-                  interviews={UPCOMING_INTERVIEWS}
+                  interviews={upcomingInterviews}
                   deployedRoster={deployedRoster}
                   onRenewRosterContract={handleRenewRosterContract}
                 />
@@ -1401,142 +1465,179 @@ export default function ClientPortalPage() {
                       (c.jobRef && c.jobRef.toLowerCase().includes(q)) ||
                       (c.skills && c.skills.some((sk) => sk.toLowerCase().includes(q)));
                     return matchesStatus && matchesSearch;
-                  })
-                  .map((cand) => (
-                    <div
-                      key={cand.id}
-                      className="client-portal-card cp-endorsement-card"
-                      onClick={() => setSelectedCandidate(cand)}
-                      title="Click to view full AI Profile & validated credentials"
-                    >
-                      <div className="cp-endorsement-card-header">
-                        <div className="cp-endorsement-avatar">{cand.name[0]}</div>
-                        <div className="cp-endorsement-title-block">
-                          <div className="cp-endorsement-name">{cand.name}</div>
-                          <div className="cp-endorsement-role">{cand.position} &middot; <span className="client-portal-ref-id">{cand.jobRef}</span></div>
-                        </div>
-                        <div className="cp-endorsement-score">
-                          <span className="cp-score-badge">{cand.matchScore}% Match Score</span>
-                        </div>
+                  }).length === 0 ? (
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      padding: '48px 24px',
+                      background: 'var(--panel, #0f172a)',
+                      border: '1px dashed var(--border, #1e293b)',
+                      borderRadius: 12,
+                      textAlign: 'center',
+                      color: 'var(--muted, #888)',
+                    }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 44, height: 44, margin: '0 auto 12px', opacity: 0.45 }}>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="8.5" cy="7" r="4" />
+                        <line x1="20" y1="8" x2="20" y2="14" />
+                        <line x1="23" y1="11" x2="17" y2="11" />
+                      </svg>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #fff)', marginBottom: 6 }}>
+                        No Endorsed Candidates
                       </div>
-
-                      <div className="cp-endorsement-card-body">
-                        <div className="cp-endorsement-section">
-                          <label>Work Experience Summary</label>
-                          <p>{cand.experience}</p>
-                        </div>
-                        <div className="cp-endorsement-section">
-                          <label>Validated Competencies</label>
-                          <div className="cp-skill-tags">
-                            {cand.skills.map((sk) => (
-                              <span key={sk} className="cp-skill-tag">{sk}</span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="cp-endorsement-meta-row">
-                          <span>Endorsed on {cand.endorsedDate} by {cand.recruiter}</span>
-                          <span className={`client-portal-badge ${
-                            cand.status === 'Accepted for Interview'
-                              ? 'client-portal-badge--filled'
-                              : cand.status === 'Declined'
-                              ? 'cp-badge--declined'
-                              : 'client-portal-badge--review'
-                          }`}>
-                            {cand.status}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="cp-endorsement-card-footer" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          className="cp-card-review-btn"
-                          onClick={() => setSelectedCandidate(cand)}
-                        >
-                          <span>Review Full AI Profile &amp; Credentials</span>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M5 12h14M12 5l7 7-7 7" />
-                          </svg>
-                        </button>
-
-                        <div className="cp-endorsement-actions-row">
-                          {cand.status === 'Pending Review' && (
-                            <>
-                              <button
-                                type="button"
-                                className="cp-btn-decline"
-                                onClick={() => handleDeclineCandidate(cand.id)}
-                              >
-                                Decline
-                              </button>
-                              <button
-                                type="button"
-                                className="client-portal-btn-primary cp-btn-accept"
-                                onClick={() => handleAcceptCandidate(cand.id)}
-                              >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
-                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                  <line x1="16" y1="2" x2="16" y2="6" />
-                                  <line x1="8" y1="2" x2="8" y2="6" />
-                                </svg>
-                                Accept &amp; Schedule
-                              </button>
-                            </>
-                          )}
-                          {cand.status === 'Accepted for Interview' && (
-                            <>
-                              <button
-                                type="button"
-                                className="cp-btn-decline"
-                                onClick={() => handleDeclineCandidate(cand.id)}
-                              >
-                                Decline
-                              </button>
-                              <button
-                                type="button"
-                                className="cp-btn-reschedule"
-                                onClick={() => handleAcceptCandidate(cand.id)}
-                              >
-                                Reschedule
-                              </button>
-                              <button
-                                type="button"
-                                className="client-portal-btn-primary cp-btn-pass"
-                                onClick={() => handlePassCandidate(cand.id)}
-                              >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                                Pass Candidate
-                              </button>
-                            </>
-                          )}
-                          {(cand.status === 'Passed Interview' || cand.status === 'Passed Client Interview' || cand.status === 'Hired') && (
-                            <div className="cp-passed-pill" style={{ width: '100%', justifyContent: 'center' }}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--green, #149e6e)' }}>
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                              <span>Passed Client Final Interview &middot; Approved</span>
-                            </div>
-                          )}
-                          {cand.status === 'Declined' && (
-                            <button
-                              type="button"
-                              className="client-portal-btn-primary cp-btn-accept"
-                              style={{ width: '100%', justifyContent: 'center' }}
-                              onClick={() => handleAcceptCandidate(cand.id)}
-                            >
-                              Reopen &amp; Schedule Interview
-                            </button>
-                          )}
-                        </div>
+                      <div style={{ fontSize: 12, maxWidth: 440, margin: '0 auto', lineHeight: 1.6 }}>
+                        {endorsementFilter === 'ALL'
+                          ? 'There are currently no candidates in the endorsement pipeline for your organization. When PRIMEPOWER recruiters endorse qualified applicants for your job orders, they will appear here.'
+                          : `No candidate records currently found under '${endorsementFilter}'.`}
                       </div>
                     </div>
-                  ))}
+                  ) : (
+                    endorsedCandidates
+                      .filter((c) => {
+                        const matchesStatus = endorsementFilter === 'ALL' || c.status === endorsementFilter;
+                        const q = endorsementSearch.trim().toLowerCase();
+                        if (!q) return matchesStatus;
+                        const matchesSearch =
+                          (c.name && c.name.toLowerCase().includes(q)) ||
+                          (c.position && c.position.toLowerCase().includes(q)) ||
+                          (c.jobRef && c.jobRef.toLowerCase().includes(q)) ||
+                          (c.skills && c.skills.some((sk) => sk.toLowerCase().includes(q)));
+                        return matchesStatus && matchesSearch;
+                      })
+                      .map((cand) => (
+                        <div
+                          key={cand.id}
+                          className="client-portal-card cp-endorsement-card"
+                          onClick={() => setSelectedCandidate(cand)}
+                          title="Click to view full AI Profile & validated credentials"
+                        >
+                          <div className="cp-endorsement-card-header">
+                            <div className="cp-endorsement-avatar">{cand.name[0]}</div>
+                            <div className="cp-endorsement-title-block">
+                              <div className="cp-endorsement-name">{cand.name}</div>
+                              <div className="cp-endorsement-role">{cand.position} &middot; <span className="client-portal-ref-id">{cand.jobRef}</span></div>
+                            </div>
+                            <div className="cp-endorsement-score">
+                              <span className="cp-score-badge">{cand.matchScore}% Match Score</span>
+                            </div>
+                          </div>
+
+                          <div className="cp-endorsement-card-body">
+                            <div className="cp-endorsement-section">
+                              <label>Work Experience Summary</label>
+                              <p>{cand.experience}</p>
+                            </div>
+                            <div className="cp-endorsement-section">
+                              <label>Validated Competencies</label>
+                              <div className="cp-skill-tags">
+                                {cand.skills.map((sk) => (
+                                  <span key={sk} className="cp-skill-tag">{sk}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="cp-endorsement-meta-row">
+                              <span>Endorsed on {cand.endorsedDate} by {cand.recruiter}</span>
+                              <span className={`client-portal-badge ${
+                                cand.status === 'Accepted for Interview'
+                                  ? 'client-portal-badge--filled'
+                                  : cand.status === 'Declined'
+                                  ? 'cp-badge--declined'
+                                  : 'client-portal-badge--review'
+                              }`}>
+                                {cand.status}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="cp-endorsement-card-footer" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              className="cp-card-review-btn"
+                              onClick={() => setSelectedCandidate(cand)}
+                            >
+                              <span>Review Full AI Profile &amp; Credentials</span>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7" />
+                              </svg>
+                            </button>
+
+                            <div className="cp-card-actions">
+                              {cand.status === 'Pending Review' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="cp-btn-decline"
+                                    onClick={() => handleDeclineCandidate(cand.id)}
+                                  >
+                                    Decline
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="client-portal-btn-primary cp-btn-accept"
+                                    onClick={() => handleAcceptCandidate(cand.id)}
+                                  >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                      <line x1="16" y1="2" x2="16" y2="6" />
+                                      <line x1="8" y1="2" x2="8" y2="6" />
+                                    </svg>
+                                    Accept &amp; Schedule
+                                  </button>
+                                </>
+                              )}
+                              {cand.status === 'Accepted for Interview' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="cp-btn-decline"
+                                    onClick={() => handleDeclineCandidate(cand.id)}
+                                  >
+                                    Decline
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="cp-btn-reschedule"
+                                    onClick={() => handleAcceptCandidate(cand.id)}
+                                  >
+                                    Reschedule
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="client-portal-btn-primary cp-btn-pass"
+                                    onClick={() => handlePassCandidate(cand.id)}
+                                  >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    Pass Candidate
+                                  </button>
+                                </>
+                              )}
+                              {(cand.status === 'Passed Interview' || cand.status === 'Passed Client Interview' || cand.status === 'Hired') && (
+                                <div className="cp-passed-pill" style={{ width: '100%', justifyContent: 'center' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--green, #149e6e)' }}>
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  <span>Passed Client Final Interview &middot; Approved</span>
+                                </div>
+                              )}
+                              {cand.status === 'Declined' && (
+                                <button
+                                  type="button"
+                                  className="client-portal-btn-primary cp-btn-accept"
+                                  style={{ width: '100%', justifyContent: 'center' }}
+                                  onClick={() => handleAcceptCandidate(cand.id)}
+                                >
+                                  Reopen &amp; Schedule Interview
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                  )}
               </div>
             </div>
           )}
-
           {/* ── VIEW: DEPLOYED WORKFORCE ROSTER ── */}
           {activeTab === 'deployed-roster' && (
             <div className="client-portal-view-container">

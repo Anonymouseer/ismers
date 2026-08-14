@@ -35,19 +35,25 @@ export default function ClientPortalDashboardSidebar({ announcements, interviews
           </div>
         </div>
         <div className="client-portal-interview-list">
-          {interviews.map((iv) => (
-            <div key={iv.id} className="client-portal-interview-item">
-              <div className="client-portal-interview-avatar">{iv.candidate[0]}</div>
-              <div className="client-portal-interview-info">
-                <div className="client-portal-interview-candidate">{iv.candidate}</div>
-                <div className="client-portal-interview-position">{iv.position}</div>
-                <div className="client-portal-interview-meta">
-                  <span>{iv.date} &middot; {iv.time}</span>
-                  <span className="client-portal-interview-type">{iv.type}</span>
+          {interviews.length === 0 ? (
+            <div style={{ padding: '14px 10px', fontSize: 12, color: 'var(--muted, #888)', textAlign: 'center' }}>
+              No upcoming interviews scheduled.
+            </div>
+          ) : (
+            interviews.map((iv) => (
+              <div key={iv.id} className="client-portal-interview-item">
+                <div className="client-portal-interview-avatar">{iv.candidate[0]}</div>
+                <div className="client-portal-interview-info">
+                  <div className="client-portal-interview-candidate">{iv.candidate}</div>
+                  <div className="client-portal-interview-position">{iv.position}</div>
+                  <div className="client-portal-interview-meta">
+                    <span>{iv.date} &middot; {iv.time}</span>
+                    <span className="client-portal-interview-type">{iv.type}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

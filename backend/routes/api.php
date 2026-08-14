@@ -45,6 +45,8 @@ Route::prefix('v1')->group(function () {
     Route::patch('/applicants/{regId}/category', [ApplicantController::class, 'updateCategory']);
     Route::patch('/applicants/{regId}/target-job', [ApplicantController::class, 'updateTargetJob']);
     Route::post('/applicants/{regId}/send-to-recruitment', [ApplicantController::class, 'sendToRecruitment']);
+    Route::post('/applicants/{regId}/return-to-profiling', [ApplicantController::class, 'returnToProfiling']);
+    Route::post('/applicants/bulk-return-to-profiling', [ApplicantController::class, 'bulkReturnToProfiling']);
     Route::get('/recruitment/applications', [ApplicantController::class, 'recruitmentApplications']);
     Route::patch('/applicants/{id}/recruitment-stage', [ApplicantController::class, 'updateRecruitmentStage']);
     Route::patch('/applicants/{id}/recruitment-screening', [ApplicantController::class, 'updateRecruitmentScreening']);

@@ -69,58 +69,30 @@ export function saveCachedApplications(apps) {
 }
 
 export async function fetchRecruitmentApplications() {
-  const storedStages = getStoredStages();
-  const cached = getCachedApplications() || [];
-  const cachedMap = new Map();
-  cached.forEach((c) => {
-    if (c.id) cachedMap.set(String(c.id), c);
-    if (c.regId) cachedMap.set(String(c.regId), c);
-    if (c.name) cachedMap.set(String(c.name), c);
-  });
-
   try {
     const res = await fetch('http://localhost:8000/api/v1/recruitment/applications');
     if (!res.ok) throw new Error('Failed to fetch recruitment applications');
     const data = await res.json();
 
-    const dbNames = new Set(data.map((a) => a.name));
-    const initialMocks = APPLICATIONS.map((raw, i) => {
-      const id = `app-${i + 1}`;
-      const existingCached = cachedMap.get(id) || cachedMap.get(raw.name) || {};
-      const cpStatus =
-        localStorage.getItem(`cp_endorsement_${raw.name}`) ||
-        localStorage.getItem(`cp_endorsement_${id}`) ||
-        existingCached.clientEndorsementStatus ||
-        'Pending Review';
-
-      const computedStage =
-        storedStages[id] ||
-        storedStages[raw.name] ||
-        (cpStatus === 'Passed Interview' || cpStatus === 'Passed Client Interview'
-          ? 'hr_requirements'
-          : cpStatus === 'Declined'
-          ? 're_pooling'
-          : raw.status);
-
+    const mappedDb = data.map((app) => {
       return {
-        ...raw,
-        id,
-        status: computedStage,
-        clientEndorsementStatus: cpStatus,
-        checklist: existingCached.checklist || raw.checklist || {
-          resumeVerified: true,
-          contactVerified: true,
-          locationFit: true,
-          skillsMatched: true,
+        ...app,
+        status: app.status || 'pooling',
+        clientEndorsementStatus: app.clientEndorsementStatus || 'Pending Review',
+        checklist: app.checklist || {
+          resumeVerified: false,
+          contactVerified: false,
+          locationFit: false,
+          skillsMatched: false,
           notesAdded: false,
         },
-        docStatus: existingCached.docStatus || raw.docStatus || {
+        docStatus: app.docStatus || {
           resume: false,
           id: false,
           nbi: false,
           med: false,
         },
-        preEmploymentChecklist: existingCached.preEmploymentChecklist || {
+        preEmploymentChecklist: app.preEmploymentChecklist || {
           medical_exam: false,
           nbi_clearance: false,
           sss_document: false,
@@ -129,24 +101,24 @@ export async function fetchRecruitmentApplications() {
           bir_tin: false,
           psa_birth_cert: false,
         },
-        medicalReferral: existingCached.medicalReferral || null,
-        statutoryNumbers: existingCached.statutoryNumbers || {
+        medicalReferral: app.medicalReferral || null,
+        statutoryNumbers: app.statutoryNumbers || {
           sss: '',
           philhealth: '',
           pagibig: '',
           tin: '',
         },
-        employmentContract: existingCached.employmentContract || null,
-        orientationModules: existingCached.orientationModules || {
+        employmentContract: app.employmentContract || null,
+        orientationModules: app.orientationModules || {
           module1: false,
           module2: false,
           module3: false,
           module4: false,
           module5: false,
         },
-        atmEndorsement: existingCached.atmEndorsement || null,
-        deploymentDetails: existingCached.deploymentDetails || null,
-        ppeIssuance: existingCached.ppeIssuance || {
+        atmEndorsement: app.atmEndorsement || null,
+        deploymentDetails: app.deploymentDetails || null,
+        ppeIssuance: app.ppeIssuance || {
           uniformShirt: false,
           shirtSize: 'L',
           safetyShoes: false,
@@ -155,88 +127,19 @@ export async function fetchRecruitmentApplications() {
           idBadge: false,
           whistleKit: false,
         },
-        recruiterRating: existingCached.recruiterRating || 0,
-        assignedManager: existingCached.assignedManager || 'Area Manager 1 (North NCR)',
-        interviewPlatform: existingCached.interviewPlatform || 'Zoom Meeting',
+        recruiterRating: app.recruiterRating || 0,
+        assignedManager: app.assignedManager || 'Area Manager 1 (North NCR)',
+        interviewPlatform: app.interviewPlatform || 'Zoom Meeting',
       };
     });
 
-    const mappedDb = data.map((app) => {
-      const existingCached = cachedMap.get(String(app.id)) || (app.regId && cachedMap.get(String(app.regId))) || cachedMap.get(app.name) || {};
-      const cpStatus =
-        (app.clientEndorsementStatus && app.clientEndorsementStatus !== 'Pending Review')
-          ? app.clientEndorsementStatus
-          : localStorage.getItem(`cp_endorsement_${app.name}`) ||
-            localStorage.getItem(`cp_endorsement_cand-${app.id}`) ||
-            (app.regId && localStorage.getItem(`cp_endorsement_cand-${app.regId}`)) ||
-            existingCached.clientEndorsementStatus ||
-            app.clientEndorsementStatus ||
-            'Pending Review';
-
-      const computedStage =
-        storedStages[String(app.id)] ||
-        (app.regId && storedStages[String(app.regId)]) ||
-        (app.name && storedStages[String(app.name)]) ||
-        (cpStatus === 'Passed Interview' || cpStatus === 'Passed Client Interview'
-          ? 'hr_requirements'
-          : cpStatus === 'Declined'
-          ? 're_pooling'
-          : app.status);
-
-      return {
-        ...app,
-        status: computedStage || 'pooling',
-        clientEndorsementStatus: cpStatus,
-        preEmploymentChecklist: app.preEmploymentChecklist || existingCached.preEmploymentChecklist || {
-          medical_exam: false,
-          nbi_clearance: false,
-          sss_document: false,
-          philhealth_mdr: false,
-          pagibig_mid: false,
-          bir_tin: false,
-          psa_birth_cert: false,
-        },
-        medicalReferral: app.medicalReferral || existingCached.medicalReferral || null,
-        statutoryNumbers: app.statutoryNumbers || existingCached.statutoryNumbers || {
-          sss: '',
-          philhealth: '',
-          pagibig: '',
-          tin: '',
-        },
-        employmentContract: app.employmentContract || existingCached.employmentContract || null,
-        orientationModules: app.orientationModules || existingCached.orientationModules || {
-          module1: false,
-          module2: false,
-          module3: false,
-          module4: false,
-          module5: false,
-        },
-        atmEndorsement: app.atmEndorsement || existingCached.atmEndorsement || null,
-        deploymentDetails: app.deploymentDetails || existingCached.deploymentDetails || null,
-        ppeIssuance: app.ppeIssuance || existingCached.ppeIssuance || {
-          uniformShirt: false,
-          shirtSize: 'L',
-          safetyShoes: false,
-          shoeSize: '42',
-          safetyVest: false,
-          idBadge: false,
-          whistleKit: false,
-        },
-      };
-    });
-
-    const combined = [...mappedDb, ...initialMocks];
-    saveCachedApplications(combined);
-    return combined;
+    saveCachedApplications(mappedDb);
+    return mappedDb;
   } catch (err) {
-    console.warn('Fetch from server failed, falling back to cache/mock:', err);
-    if (cached && cached.length > 0) {
-      return cached.map((app) => ({
-        ...app,
-        status: storedStages[String(app.id)] || (app.regId && storedStages[String(app.regId)]) || (app.name && storedStages[String(app.name)]) || app.status || 'pooling',
-      }));
-    }
-    throw err;
+    console.warn('Fetch from server failed, falling back to cached applications:', err);
+    const cached = getCachedApplications();
+    if (cached && cached.length > 0) return cached;
+    return [];
   }
 }
 

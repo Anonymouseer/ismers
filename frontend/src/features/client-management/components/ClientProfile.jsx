@@ -3,7 +3,7 @@ import JobOrderCard from './JobOrderCard';
 import JobDetailView from './JobDetailView';
 import {
   logoUrl, openPositionsFor, renewalStatus, STATUS_LABEL_MAP,
-  colorFor, softFor,
+  colorFor, softFor, getCompanyId,
 } from '../utils/clientDisplay';
 
 export default function ClientProfile({ client, clientIndex, onBack }) {
@@ -22,6 +22,7 @@ export default function ClientProfile({ client, clientIndex, onBack }) {
   const statusLabel = STATUS_LABEL_MAP[status] || 'Active Client';
   const renewalInfo = renewalStatus(c.renewal);
   const renewalWarn = renewalInfo.expired || (renewalInfo.days !== null && renewalInfo.days <= 30);
+  const companyId = getCompanyId(c, clientIndex);
 
   const accent = 'var(--primary)';
   const tintA = 'var(--secondary)';
@@ -44,6 +45,13 @@ export default function ClientProfile({ client, clientIndex, onBack }) {
               <div className="hero-title-wrap">
                 <div className="hero-name">{c.name}</div>
                 <div className="hero-badges">
+                  <span className="hero-pill company-id" title="PRIMEPOWER Corporate Client ID">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" style={{ width: 12, height: 12 }}>
+                      <rect x="3" y="4" width="18" height="16" rx="2" />
+                      <path d="M7 8h10M7 12h10M7 16h6" />
+                    </svg>
+                    {companyId}
+                  </span>
                   <span className={`hero-pill status-${status}`}><span className="dot"></span>{statusLabel}</span>
                   <span className="hero-pill tenure">Client for {c.tenure}</span>
                 </div>

@@ -41,7 +41,7 @@ const STAGE_PAGE_META = {
 };
 
 export default function ApplicantProfilingBoard() {
-  const { candidates, role, setRole, startProfiling, completeProfile, sendToRecruitment, updateStage } = useApplicantRegistration();
+  const { candidates, role, setRole, startProfiling, completeProfile, sendToRecruitment, bulkReturnToProfiling, updateStage } = useApplicantRegistration();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = searchParams.get('view') || 'all';
 
@@ -132,6 +132,17 @@ export default function ApplicantProfilingBoard() {
 
         <div className="title-row-actions">
           <RoleSwitcher role={role} onChange={setRole} />
+
+          {counts.sent > 0 && (
+            <button
+              className="stage-btn cancel"
+              onClick={() => bulkReturnToProfiling()}
+              style={{ whiteSpace: 'nowrap', border: '1px solid var(--border)' }}
+              title="Pull all applicants back into Profiling"
+            >
+              Pull All to Profiling ({counts.sent})
+            </button>
+          )}
 
           {viewMode !== 'register' && (
             <button

@@ -351,6 +351,23 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
               {/* CLIENT ACCOUNT REGISTRATION DETAILS */}
               <div className="form-grid-2col">
                 <div className="form-group-compact">
+                  <label style={{ fontSize: '11.5px', fontWeight: 700 }}>PRIMEPOWER Corporate Client ID</label>
+                  <input
+                    type="text"
+                    className="input-compact"
+                    value={session?.companyId || 'CLT-2026-0001'}
+                    disabled
+                    style={{
+                      fontFamily: 'ui-monospace, monospace',
+                      fontWeight: 700,
+                      color: 'var(--primary, #007dcc)',
+                      background: 'rgba(0, 125, 204, 0.06)',
+                      border: '1px solid rgba(0, 125, 204, 0.2)',
+                    }}
+                  />
+                </div>
+
+                <div className="form-group-compact">
                   <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Registered Corporate Name <span style={{ color: '#e53935' }}>*</span></label>
                   <input
                     type="text"

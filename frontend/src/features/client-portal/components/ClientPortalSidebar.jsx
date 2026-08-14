@@ -77,8 +77,19 @@ export default function ClientPortalSidebar({
             <div className="client-portal-sidebar-company-name">
               {session?.company || 'ABC Manufacturing Corp.'}
             </div>
-            <div className="client-portal-sidebar-company-sub">
-              {session?.industry || 'Client Account'}
+            <div className="client-portal-sidebar-company-sub" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{
+                fontFamily: 'ui-monospace, monospace',
+                fontSize: 10,
+                fontWeight: 700,
+                color: 'var(--primary, #007dcc)',
+                background: 'rgba(0, 125, 204, 0.1)',
+                padding: '1px 5px',
+                borderRadius: 4,
+              }}>
+                {session?.companyId || 'CLT-2026-0001'}
+              </span>
+              <span>{session?.industry || 'Client Account'}</span>
             </div>
           </div>
         )}

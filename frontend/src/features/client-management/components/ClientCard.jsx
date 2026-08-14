@@ -1,5 +1,5 @@
 import CardIcon from './CardIcon';
-import { colorFor, softFor, isExpiringSoon } from '../utils/clientDisplay';
+import { colorFor, softFor, isExpiringSoon, getCompanyId } from '../utils/clientDisplay';
 
 export default function ClientCard({ client, index, selected, onSelect }) {
   const c = client;
@@ -37,6 +37,7 @@ export default function ClientCard({ client, index, selected, onSelect }) {
         </div>
         <div className={`cc-status-dot ${c.status}`} title={statusLabel}></div>
       </div>
+      <div className="cc-id-tag">{getCompanyId(c, index)}</div>
       <div className="cc-name">{c.name}</div>
       <div className="cc-role">{c.industry}</div>
       <div className="cc-divider"></div>

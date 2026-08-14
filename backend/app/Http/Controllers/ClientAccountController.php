@@ -17,16 +17,45 @@ class ClientAccountController extends Controller
             'password' => 'required|string',
         ]);
 
-        $client = ClientAccount::where('email', $request->email)->first();
+        $email = trim(strtolower($request->email));
+        $client = ClientAccount::whereRaw('LOWER(email) = ?', [$email])->first();
 
-        if (! $client || ! Hash::check($request->password, $client->password)) {
+        $directoryMatch = collect(\Database\Seeders\ClientAccountSeeder::CLIENT_DIRECTORY)
+            ->first(fn ($c) => strtolower($c['email']) === $email);
+
+        $isValid = false;
+
+        if ($client && Hash::check($request->password, $client->password)) {
+            $isValid = true;
+        } elseif ($directoryMatch && $request->password === $directoryMatch['password']) {
+            $isValid = true;
+            if ($client) {
+                $client->update(['password' => Hash::make($directoryMatch['password'])]);
+            } else {
+                $client = ClientAccount::create([
+                    'company' => $directoryMatch['company'],
+                    'industry' => $directoryMatch['industry'],
+                    'contact_person' => $directoryMatch['contact_person'],
+                    'designation' => $directoryMatch['designation'],
+                    'email' => $directoryMatch['email'],
+                    'mobile' => $directoryMatch['mobile'],
+                    'password' => Hash::make($directoryMatch['password']),
+                    'agreed' => true,
+                ]);
+            }
+        }
+
+        if (! $isValid || ! $client) {
             throw ValidationException::withMessages([
                 'email' => ['Incorrect email or password. Please try again.'],
             ]);
         }
 
+        $companyId = $client->company_id ?? ('CLT-2026-' . str_pad((string)$client->id, 4, '0', STR_PAD_LEFT));
+
         return response()->json([
             'id' => $client->id,
+            'companyId' => $companyId,
             'company' => $client->company,
             'industry' => $client->industry,
             'contactPerson' => $client->contact_person,

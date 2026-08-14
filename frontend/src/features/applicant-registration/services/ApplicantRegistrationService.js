@@ -178,6 +178,16 @@ export async function sendToRecruitmentApi(regId) {
   return res.json();
 }
 
+export async function returnToProfilingApi(regId) {
+  const res = await fetch(`${API_BASE}/${regId}/return-to-profiling`, { method: 'POST' });
+  return res.json();
+}
+
+export async function bulkReturnToProfilingApi() {
+  const res = await fetch(`${API_BASE}/bulk-return-to-profiling`, { method: 'POST' });
+  return res.json();
+}
+
 // ── MATCH SCORING & STATIC CONSTANTS ──
 
 export const JOB_TARGETS = [
