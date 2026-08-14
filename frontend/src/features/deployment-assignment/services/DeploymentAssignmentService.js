@@ -1,5 +1,7 @@
 import { ISMERSBridge } from './ismersBridge';
 
+const API_BASE = 'http://localhost:8000/api/v1';
+
 // Reference date used throughout the mock data (matches the rest of the app's "today").
 export const TODAY = new Date(2026, 6, 24); // Jul 24, 2026
 
@@ -86,7 +88,7 @@ export const JOB_ORDER_OPTIONS = [
   { ref: 'JO-015', client: 'Seda Vertis North', title: 'Front Desk Associate', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim (Hotel GM)' },
 ];
 
-// ---- MOCK DATA (Primepower Client Deployments) ----
+// ---- MOCK DATA (Primepower Client Deployments Fallback) ----
 const MOCK_DEPLOYMENTS = [
   {
     id: 'DEP-001',
@@ -108,6 +110,18 @@ const MOCK_DEPLOYMENTS = [
       signedContract: true,
       ppeIssued: true,
       clientOrientation: true,
+    },
+    preEmployment: {
+      medicalClinic: 'HealthHub Diagnostics QC',
+      fitToWork: 'Class A - Fit for Duty',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '34-8901234-5',
+      philhealth: '12-050678901-2',
+      pagibig: '1210-9876-5432',
+      tin: '345-678-901-000',
+      contractSignedDate: 'Jul 02, 2026',
+      ppeGear: 'Uniform Shirt (M), ID Badge, Safety Shoes (38)',
+      bankEndorsement: 'BDO Payroll Endorsement Ref #BDO-2026-089',
     },
     applicantKey: ISMERSBridge.keyFor('Andrea Molina', 'JO-015'),
     history: [
@@ -137,6 +151,18 @@ const MOCK_DEPLOYMENTS = [
       ppeIssued: true,
       clientOrientation: true,
     },
+    preEmployment: {
+      medicalClinic: 'Hi-Precision Diagnostics Valenzuela',
+      fitToWork: 'Class A - Heavy Duty Cleared',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '09-1234567-8',
+      philhealth: '04-123456789-0',
+      pagibig: '1210-4455-6677',
+      tin: '234-567-890-000',
+      contractSignedDate: 'Jul 02, 2026',
+      ppeGear: 'High-Vis Vest, Steel Toe Shoes (43), Hard Hat',
+      bankEndorsement: 'BPI Payroll Endorsement Ref #BPI-2026-112',
+    },
     applicantKey: ISMERSBridge.keyFor('Jomar Villagracia', 'JO-001'),
     history: [
       { date: 'Jul 01, 2026', event: 'Assigned', note: 'Selected for ABC Logistics warehouse operations.' },
@@ -155,7 +181,6 @@ const MOCK_DEPLOYMENTS = [
     start: 'Jul 05, 2026',
     end: 'Oct 05, 2026',
     stage: 'on_site',
-    shift: 'Day Shift (08:00 - 17:00)',
     compliance: {
       medicalClearance: true,
       nbiClearance: true,
@@ -163,6 +188,18 @@ const MOCK_DEPLOYMENTS = [
       signedContract: true,
       ppeIssued: true,
       clientOrientation: true,
+    },
+    preEmployment: {
+      medicalClinic: 'HealthHub Diagnostics QC',
+      fitToWork: 'Class A - Heavy Equipment Cleared',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '03-9876543-2',
+      philhealth: '08-765432109-8',
+      pagibig: '1210-9988-7766',
+      tin: '123-456-789-000',
+      contractSignedDate: 'Jul 04, 2026',
+      ppeGear: 'High-Vis Vest, Safety Shoes (42), Gloves, Ear Protection',
+      bankEndorsement: 'BDO Payroll Endorsement Ref #BDO-2026-104',
     },
     applicantKey: ISMERSBridge.keyFor('Danilo Ferrer', 'JO-002'),
     history: [
@@ -182,7 +219,6 @@ const MOCK_DEPLOYMENTS = [
     start: 'Jul 10, 2026',
     end: 'Oct 10, 2026',
     stage: 'on_site',
-    shift: 'Mid Shift (11:00 - 20:00)',
     compliance: {
       medicalClearance: true,
       nbiClearance: true,
@@ -190,6 +226,18 @@ const MOCK_DEPLOYMENTS = [
       signedContract: true,
       ppeIssued: true,
       clientOrientation: true,
+    },
+    preEmployment: {
+      medicalClinic: 'St. Martin Clinic Pasay',
+      fitToWork: 'Food Handler Clearance & Fit to Work',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '04-5566778-9',
+      philhealth: '11-334455667-8',
+      pagibig: '1210-3322-1100',
+      tin: '456-789-012-000',
+      contractSignedDate: 'Jul 09, 2026',
+      ppeGear: 'Chef Apron, Hair Net, Non-Slip Kitchen Shoes (37)',
+      bankEndorsement: 'UnionBank Payroll Ref #UB-2026-045',
     },
     applicantKey: ISMERSBridge.keyFor('Patricia Gomez', 'JO-003'),
     history: [
@@ -209,7 +257,6 @@ const MOCK_DEPLOYMENTS = [
     start: 'Jul 26, 2026',
     end: 'Jan 26, 2027',
     stage: 'dispatched',
-    shift: 'Regular Shift (07:00 - 16:00)',
     compliance: {
       medicalClearance: true,
       nbiClearance: true,
@@ -217,6 +264,18 @@ const MOCK_DEPLOYMENTS = [
       signedContract: true,
       ppeIssued: true,
       clientOrientation: true,
+    },
+    preEmployment: {
+      medicalClinic: 'Makati Medical Center OPD',
+      fitToWork: 'Class A - Fit for Duty',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '07-3344112-3',
+      philhealth: '09-223344556-7',
+      pagibig: '1210-5544-3322',
+      tin: '567-890-123-000',
+      contractSignedDate: 'Jul 22, 2026',
+      ppeGear: 'Housekeeping Uniform, Rubber Gloves, Service Shoes (38)',
+      bankEndorsement: 'BDO Payroll Endorsement Ref #BDO-2026-198',
     },
     applicantKey: ISMERSBridge.keyFor('Joyce Manalastas', 'JO-004'),
     history: [
@@ -236,7 +295,6 @@ const MOCK_DEPLOYMENTS = [
     start: 'Jul 28, 2026',
     end: 'Oct 28, 2026',
     stage: 'pre_deployment',
-    shift: 'Rotating Shift',
     compliance: {
       medicalClearance: true,
       nbiClearance: true,
@@ -244,6 +302,18 @@ const MOCK_DEPLOYMENTS = [
       signedContract: true,
       ppeIssued: false,
       clientOrientation: false,
+    },
+    preEmployment: {
+      medicalClinic: 'HealthHub Diagnostics QC',
+      fitToWork: 'Class A - Fit for Duty',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '05-9988776-5',
+      philhealth: '10-998877665-4',
+      pagibig: '1210-7788-9900',
+      tin: '678-901-234-000',
+      contractSignedDate: 'Jul 24, 2026',
+      ppeGear: 'Uniform Blazer (Pending Size S fitting)',
+      bankEndorsement: 'BDO Payroll Endorsement Ref #BDO-2026-211',
     },
     applicantKey: ISMERSBridge.keyFor('Nikki Fernandez', 'JO-015'),
     history: [
@@ -263,7 +333,6 @@ const MOCK_DEPLOYMENTS = [
     start: 'Jul 30, 2026',
     end: 'Jul 30, 2027',
     stage: 'assigned',
-    shift: 'Evening Shift (15:00 - 00:00)',
     compliance: {
       medicalClearance: false,
       nbiClearance: true,
@@ -271,6 +340,18 @@ const MOCK_DEPLOYMENTS = [
       signedContract: false,
       ppeIssued: false,
       clientOrientation: false,
+    },
+    preEmployment: {
+      medicalClinic: 'Pending Clinic Appointment',
+      fitToWork: 'Pending Medical Result',
+      drugTestResult: 'Pending Drug Test',
+      sss: '02-1122334-4',
+      philhealth: '03-556677889-0',
+      pagibig: '1210-1122-3344',
+      tin: '789-012-345-000',
+      contractSignedDate: 'Pending Execution',
+      ppeGear: 'Not yet issued',
+      bankEndorsement: 'Pending Account Opening',
     },
     history: [
       { date: 'Jul 24, 2026', event: 'Assigned from Pool', note: 'Pending pre-employment medical and fit-to-work clearance.' },
@@ -288,7 +369,6 @@ const MOCK_DEPLOYMENTS = [
     start: 'Jun 22, 2026',
     end: 'Jul 22, 2026',
     stage: 'completed',
-    shift: 'Morning Shift (06:00 - 15:00)',
     compliance: {
       medicalClearance: true,
       nbiClearance: true,
@@ -297,6 +377,18 @@ const MOCK_DEPLOYMENTS = [
       ppeIssued: true,
       clientOrientation: true,
     },
+    preEmployment: {
+      medicalClinic: 'Makati Medical Center OPD',
+      fitToWork: 'Class A - Maintenance & Technical Fit',
+      drugTestResult: 'Negative (10-Panel)',
+      sss: '01-4455667-8',
+      philhealth: '06-990011223-4',
+      pagibig: '1210-6677-8899',
+      tin: '890-123-456-000',
+      contractSignedDate: 'Jun 20, 2026',
+      ppeGear: 'Safety Boots (44), Tool Vest, Hard Hat, Insulated Gloves',
+      bankEndorsement: 'BDO Payroll Endorsement Ref #BDO-2026-077',
+    },
     history: [
       { date: 'Jun 22, 2026', event: 'Deployed On-Site', note: 'Maintenance contract started.' },
       { date: 'Jul 22, 2026', event: 'Deployment Concluded', note: 'Completed 1-month deployment period smoothly.' },
@@ -304,10 +396,80 @@ const MOCK_DEPLOYMENTS = [
   },
 ];
 
+// ---- ASYNC REST API METHODS (Connected to Laravel Backend) ----
+
+export async function fetchDeploymentsApi() {
+  try {
+    const res = await fetch(`${API_BASE}/deployments`);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Backend API offline or loading; using local fallback dataset.', err);
+    return getDeployments();
+  }
+}
+
+export async function fetchPendingHiresApi() {
+  try {
+    const res = await fetch(`${API_BASE}/deployments/pending-hires`);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Backend API offline; using bridge pending hires.', err);
+    return ISMERSBridge.getPendingHires();
+  }
+}
+
+export async function createDeploymentApi(payload) {
+  try {
+    const res = await fetch(`${API_BASE}/deployments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Backend API offline; storing locally.', err);
+    return null;
+  }
+}
+
+export async function updateDeploymentStageApi(id, stage) {
+  try {
+    const res = await fetch(`${API_BASE}/deployments/${id}/stage`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ stage }),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Backend API offline; updating locally.', err);
+    return null;
+  }
+}
+
+export async function toggleDeploymentComplianceApi(id, reqKey) {
+  try {
+    const res = await fetch(`${API_BASE}/deployments/${id}/compliance`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ key: reqKey }),
+    });
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('Backend API offline; updating locally.', err);
+    return null;
+  }
+}
+
 export function getDeployments() {
   return MOCK_DEPLOYMENTS.map((d) => ({
     ...d,
     compliance: { ...d.compliance },
+    preEmployment: { ...(d.preEmployment || {}) },
     history: d.history.map((h) => ({ ...h })),
   }));
 }

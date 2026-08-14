@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { JOB_ORDER_OPTIONS } from '../services/DeploymentAssignmentService';
+import { JOB_ORDER_OPTIONS, fetchPendingHiresApi } from '../services/DeploymentAssignmentService';
 import { ISMERSBridge } from '../services/ismersBridge';
 
 const emptyForm = {
   hireKey: '',
+  applicantId: null,
   employee: '',
   client: '',
   jobOrderRef: '',
@@ -31,8 +32,25 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
       supervisor: defaultJO ? defaultJO.supervisor : 'Operations Supervisor',
       site: defaultJO?.site || '',
     });
-    setPendingHires(ISMERSBridge.getPendingHires());
-    const unsubscribe = ISMERSBridge.onChange(() => setPendingHires(ISMERSBridge.getPendingHires()));
+
+    // Load from live API + bridge
+    async function loadPending() {
+      try {
+        const liveHires = await fetchPendingHiresApi();
+        if (Array.isArray(liveHires) && liveHires.length > 0) {
+          setPendingHires(liveHires);
+        } else {
+          setPendingHires(ISMERSBridge.getPendingHires());
+        }
+      } catch {
+        setPendingHires(ISMERSBridge.getPendingHires());
+      }
+    }
+    loadPending();
+
+    const unsubscribe = ISMERSBridge.onChange(() => {
+      loadPending();
+    });
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialJobOrder]);
@@ -53,6 +71,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
       client: clientName,
       jobOrderRef: matchedJO ? matchedJO.ref : '',
       supervisor: matchedJO ? matchedJO.supervisor : f.supervisor,
+      site: matchedJO?.site || f.site,
     }));
   }
 
@@ -62,23 +81,45 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
       ...f,
       jobOrderRef: joRef,
       supervisor: matchedJO && matchedJO.supervisor ? matchedJO.supervisor : f.supervisor,
+      site: matchedJO?.site || f.site,
     }));
   }
 
-  function handleHireSelect(key) {
-    if (!key) {
+  function handleHireSelect(value) {
+    if (!value) {
       update('hireKey', '');
+      update('applicantId', null);
       return;
     }
-    const hire = ISMERSBridge.getHire(key);
+
+    // Check if it matches a pending hire from live API
+    const liveMatch = pendingHires.find((h) => String(h.applicantId || h.id || h.key) === String(value));
+    if (liveMatch) {
+      const matchedJO = liveMatch.jobOrderRef ? JOB_ORDER_OPTIONS.find((j) => j.ref === liveMatch.jobOrderRef) : null;
+      setForm((f) => ({
+        ...f,
+        hireKey: liveMatch.key || `cand-${liveMatch.applicantId}`,
+        applicantId: liveMatch.applicantId || null,
+        employee: liveMatch.name,
+        client: liveMatch.client || f.client,
+        jobOrderRef: liveMatch.jobOrderRef || f.jobOrderRef,
+        position: liveMatch.jobTitle || f.position,
+        site: liveMatch.site || matchedJO?.site || f.site,
+        supervisor: liveMatch.supervisor || matchedJO?.supervisor || f.supervisor,
+      }));
+      return;
+    }
+
+    const hire = ISMERSBridge.getHire(value);
     const matchedJO = hire && hire.jobOrderRef ? JOB_ORDER_OPTIONS.find((j) => j.ref === hire.jobOrderRef) : null;
     setForm((f) => ({
       ...f,
-      hireKey: key,
+      hireKey: value,
       employee: hire ? hire.name : f.employee,
       client: hire ? hire.client : f.client,
       jobOrderRef: hire && hire.jobOrderRef ? hire.jobOrderRef : f.jobOrderRef,
       supervisor: matchedJO ? matchedJO.supervisor : f.supervisor,
+      site: matchedJO?.site || f.site,
     }));
   }
 
@@ -107,6 +148,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
       start: formatDateDisplay(form.start.trim()),
       end: formatDateDisplay(form.end.trim()),
       applicantKey: form.hireKey || null,
+      applicantId: form.applicantId || null,
     });
   }
 
@@ -163,15 +205,18 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
               <select
                 className="input"
                 style={{ width: '100%', padding: '7px 10px', fontSize: 12 }}
-                value={form.hireKey}
+                value={form.applicantId || form.hireKey}
                 onChange={(e) => handleHireSelect(e.target.value)}
               >
                 <option value="">-- Or enter custom employee details manually --</option>
-                {pendingHires.map((h) => (
-                  <option key={h.key} value={h.key}>
-                    {h.name} — {h.jobTitle} ({h.client})
-                  </option>
-                ))}
+                {pendingHires.map((h) => {
+                  const val = h.applicantId || h.id || h.key;
+                  return (
+                    <option key={val} value={val}>
+                      {h.name} — {h.jobTitle || 'Role'} ({h.client || 'Client'})
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}
@@ -313,7 +358,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
 
             <div>
               <label style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--text)', display: 'block', marginBottom: 4 }}>
-                Contract End Date *
+                Deployment End Date *
               </label>
               <input
                 type="date"

@@ -50,6 +50,7 @@ export default function RecordDetailsModal({
   const { note, action } = renderStageActionsText(deployment);
   const checklist = deployment.compliance || {};
   const history = deployment.history || [];
+  const pre = deployment.preEmployment || {};
 
   return (
     <div
@@ -72,8 +73,8 @@ export default function RecordDetailsModal({
           border: '1px solid var(--border)',
           borderRadius: 18,
           width: '100%',
-          maxWidth: 820,
-          maxHeight: '90vh',
+          maxWidth: 860,
+          maxHeight: '92vh',
           boxShadow: 'var(--shadow-lg)',
           overflow: 'hidden',
           display: 'flex',
@@ -84,7 +85,7 @@ export default function RecordDetailsModal({
         {/* HEADER */}
         <div style={{ padding: '18px 24px', background: 'var(--bg)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {deployment.employee.charAt(0)}
             </div>
             <div>
@@ -107,7 +108,7 @@ export default function RecordDetailsModal({
 
         {/* BODY SCROLL */}
         <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* DEPLOYMENT LIFECYCLE TRACKER */}
+          {/* DEPLOYMENT STAGE TRACKER */}
           <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
             <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 8 }}>
               Deployment Stage &amp; Workflow:
@@ -128,54 +129,47 @@ export default function RecordDetailsModal({
             </div>
           </div>
 
-          {/* TWO-COLUMN DETAILS */}
+          {/* TWO-COLUMN: ASSIGNMENT DETAILS & HR PRE-EMPLOYMENT DOSSIER */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            {/* ASSIGNMENT & SUPERVISOR INFO */}
+            {/* SITE FACILITY & SUPERVISOR */}
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 10 }}>
-                Assigned Site &amp; Deployment Facility:
+                🏢 Assigned Site &amp; Deployment Facility:
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Client Company:</span> <b>{deployment.client}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Job Order Ref:</span> <b>{deployment.jobOrderRef}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Assigned Position:</span> <b>{deployment.position}</b></div>
-                <div><span style={{ color: 'var(--muted-fg)' }}>Site Facility:</span> <b>{deployment.site}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Deployment Facility:</span> <b>{deployment.site}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Assigned Shift:</span> <b>{deployment.shift || 'Regular Day Shift'}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Site Supervisor:</span> <b>{deployment.supervisor}</b> ({deployment.supervisorContact})</div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Deployment Term:</span> <b>{deployment.start} → {deployment.end}</b></div>
               </div>
             </div>
 
-            {/* DEPLOYMENT PERIOD DURATION */}
+            {/* HR PRE-EMPLOYMENT & STATUTORY DOSSIER (FROM RECRUITMENT) */}
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 10 }}>
-                Deployment Period Duration:
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', marginBottom: 10 }}>
+                📋 HR Pre-Employment Dossier (From Recruitment):
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-                <div><span style={{ color: 'var(--muted-fg)' }}>Deployment Start:</span> <b>{deployment.start}</b></div>
-                <div><span style={{ color: 'var(--muted-fg)' }}>Deployment End:</span> <b>{deployment.end}</b></div>
-                <div><span style={{ color: 'var(--muted-fg)' }}>Current Status:</span> <b style={{ color: meta.color }}>{meta.label}</b></div>
-                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border-soft)' }}>
-                  <button
-                    type="button"
-                    className="btn"
-                    style={{ width: '100%', fontSize: 11.5, fontWeight: 700 }}
-                    onClick={() => {
-                      onClose();
-                      onOpenSlip(deployment.id);
-                    }}
-                  >
-                    View Official Endorsement Pass
-                  </button>
-                </div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Medical Diagnostic:</span> <b>{pre.medicalClinic || 'HealthHub Diagnostics'}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Fit-to-Work Clearance:</span> <b style={{ color: 'var(--green)' }}>✓ {pre.fitToWork || 'Class A - Fit for Duty'}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>10-Panel Drug Test:</span> <b style={{ color: 'var(--green)' }}>✓ {pre.drugTestResult || 'Negative'}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Mandated Statutory IDs:</span> <b>SSS: {pre.sss || '—'} · TIN: {pre.tin || '—'}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>PhilHealth / HDMF:</span> <b>PH: {pre.philhealth || '—'} · Pag-IBIG: {pre.pagibig || '—'}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Contract Execution:</span> <b>Signed on {pre.contractSignedDate || deployment.start}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>PPE Gear Issued:</span> <b>{pre.ppeGear || 'Standard Client PPE Uniform'}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>ATM Payroll Endorsement:</span> <b>{pre.bankEndorsement || 'BDO Endorsement Ref'}</b></div>
               </div>
             </div>
           </div>
 
-          {/* COMPLIANCE CHECKLIST SUMMARY */}
+          {/* 6-POINT MANDATORY COMPLIANCE CHECKLIST */}
           <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>
-                Pre-Deployment Verification (DOLE DO 174):
+                6-Point Pre-Deployment Verification (DOLE DO 174):
               </div>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: read.isReady ? 'var(--green)' : 'var(--purple)' }}>
                 {read.count}/6 Items Verified ({read.percent}%)
@@ -208,13 +202,24 @@ export default function RecordDetailsModal({
               >
                 Edit Compliance Checklist
               </button>
+              <button
+                type="button"
+                className="btn"
+                style={{ fontSize: 11, fontWeight: 700 }}
+                onClick={() => {
+                  onClose();
+                  onOpenSlip(deployment.id);
+                }}
+              >
+                View Official Deployment Slip &amp; Pass
+              </button>
             </div>
           </div>
 
-          {/* AUDIT TIMELINE */}
+          {/* AUDIT LOG */}
           <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 8 }}>
-              Deployment Milestone Log:
+              Deployment Milestone Audit Log:
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 11.5 }}>
               {history.map((h, i) => (

@@ -1,6 +1,10 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   getDeployments,
+  fetchDeploymentsApi,
+  createDeploymentApi,
+  updateDeploymentStageApi,
+  toggleDeploymentComplianceApi,
   stageToStatus,
   complianceReadiness,
   nextDepId,
@@ -8,7 +12,7 @@ import {
 } from '../services/DeploymentAssignmentService';
 import { ISMERSBridge } from '../services/ismersBridge';
 
-const STORAGE_KEY = 'ismers.deployments.v6';
+const STORAGE_KEY = 'ismers.deployments.v7';
 
 function loadInitialDeployments() {
   try {
@@ -33,6 +37,27 @@ export function useDeploymentAssignmentStore() {
   const [selectedId, setSelectedId] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch live from Laravel Backend on mount
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      setLoading(true);
+      try {
+        const liveDeployments = await fetchDeploymentsApi();
+        if (isMounted && Array.isArray(liveDeployments) && liveDeployments.length > 0) {
+          setDeployments(liveDeployments);
+        }
+      } catch (e) {
+        console.warn('Using local cached deployments:', e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    loadData();
+    return () => { isMounted = false; };
+  }, []);
 
   useEffect(() => {
     try {
@@ -143,7 +168,7 @@ export function useDeploymentAssignmentStore() {
   }, []);
 
   const setStage = useCallback(
-    (id, stage) => {
+    async (id, stage) => {
       const todayFormatted = TODAY.toLocaleDateString('en-US', {
         month: 'short',
         day: '2-digit',
@@ -178,12 +203,15 @@ export function useDeploymentAssignmentStore() {
           return next;
         })
       );
+
+      // Async sync to Laravel Backend
+      await updateDeploymentStageApi(id, stage);
     },
     [syncStageToBridge]
   );
 
   const toggleRequirement = useCallback(
-    (id, reqKey) => {
+    async (id, reqKey) => {
       setDeployments((prev) =>
         prev.map((d) => {
           if (d.id !== id) return d;
@@ -200,12 +228,15 @@ export function useDeploymentAssignmentStore() {
           return next;
         })
       );
+
+      // Async sync to Laravel Backend
+      await toggleDeploymentComplianceApi(id, reqKey);
     },
     [syncStageToBridge]
   );
 
   const addDeployment = useCallback(
-    ({ employee, client, jobOrderRef, position, site, supervisor, supervisorContact, shift, start, end, applicantKey }) => {
+    async ({ employee, client, jobOrderRef, position, site, supervisor, supervisorContact, shift, start, end, applicantKey, applicantId }) => {
       const id = nextDepId(deployments);
       const todayFormatted = TODAY.toLocaleDateString('en-US', {
         month: 'short',
@@ -214,6 +245,7 @@ export function useDeploymentAssignmentStore() {
       });
       const newDep = {
         id,
+        applicantId: applicantId || null,
         employee,
         client,
         jobOrderRef,
@@ -233,6 +265,18 @@ export function useDeploymentAssignmentStore() {
           ppeIssued: false,
           clientOrientation: false,
         },
+        preEmployment: {
+          medicalClinic: 'HealthHub Diagnostics',
+          fitToWork: 'Class A - Fit for Duty',
+          drugTestResult: 'Negative (10-Panel)',
+          sss: '—',
+          philhealth: '—',
+          pagibig: '—',
+          tin: '—',
+          contractSignedDate: start,
+          ppeGear: 'Standard Safety Gear',
+          bankEndorsement: 'BDO Payroll Endorsement',
+        },
         history: [
           {
             date: todayFormatted,
@@ -242,11 +286,28 @@ export function useDeploymentAssignmentStore() {
         ],
         applicantKey: applicantKey || null,
       };
+
       setDeployments((prev) => [...prev, newDep]);
       if (applicantKey) {
         ISMERSBridge.linkDeployment(applicantKey, newDep.id, newDep.stage);
       }
       openDetail(id);
+
+      // Sync to Laravel Backend API
+      await createDeploymentApi({
+        employee,
+        client,
+        jobOrderRef,
+        position,
+        site,
+        supervisor,
+        supervisorContact,
+        shift,
+        start,
+        end,
+        applicantId,
+      });
+
       return id;
     },
     [deployments, openDetail]
@@ -267,6 +328,7 @@ export function useDeploymentAssignmentStore() {
     drawerOpen,
     modalOpen,
     setModalOpen,
+    loading,
     openDetail,
     closeDetail,
     setStage,

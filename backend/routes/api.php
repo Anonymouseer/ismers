@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\ClientAccountController;
+use App\Http\Controllers\DeploymentController;
 use App\Http\Controllers\JobOrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -64,4 +65,12 @@ Route::prefix('v1')->group(function () {
     Route::get('/job-orders/{ref}',     [JobOrderController::class, 'show']);
     Route::put('/job-orders/{ref}',     [JobOrderController::class, 'update']);
     Route::delete('/job-orders/{ref}',  [JobOrderController::class, 'destroy']);
+
+    // ── Deployments & Assignment ──
+    Route::get('/deployments',                    [DeploymentController::class, 'index']);
+    Route::post('/deployments',                   [DeploymentController::class, 'store']);
+    Route::get('/deployments/pending-hires',       [DeploymentController::class, 'pendingHires']);
+    Route::get('/deployments/{id}',               [DeploymentController::class, 'show']);
+    Route::patch('/deployments/{id}/stage',        [DeploymentController::class, 'updateStage']);
+    Route::patch('/deployments/{id}/compliance',   [DeploymentController::class, 'updateCompliance']);
 });
