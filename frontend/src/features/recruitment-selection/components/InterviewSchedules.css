@@ -1,33 +1,38 @@
-/* ===== INTERVIEW SCHEDULES ===== */
-.interview-schedules {
+/* ═══════════════════════════════════════════════════════════
+   INTERVIEW SCHEDULES  ·  InterviewSchedules.css
+   Scoped under  .is-*  prefix — no leakage into parent scope
+═══════════════════════════════════════════════════════════ */
+
+/* ── Root shell ─────────────────────────────────────────── */
+.is-root {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 18px;
   flex: 1;
   min-height: 0;
 }
 
-/* CONTROLS BAR */
-.schedule-controls {
+/* ── Controls bar ───────────────────────────────────────── */
+.is-controls {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 0 2px 14px 2px;
+  gap: 10px;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 
-.schedule-tabs {
+/* Segmented tab strip */
+.is-tabs {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 4px;
 }
 
-.schedule-tabs .tab {
+.is-tab {
   padding: 7px 16px;
   border: none;
   background: transparent;
@@ -36,28 +41,21 @@
   font-weight: 600;
   cursor: pointer;
   border-radius: 7px;
-  transition: all 0.18s ease;
+  transition: background 0.16s, color 0.16s;
   white-space: nowrap;
+  font-family: inherit;
 }
 
-.schedule-tabs .tab:hover {
-  color: var(--text);
-  background: var(--panel);
-}
+.is-tab:hover { color: var(--text); background: var(--panel); }
 
-.schedule-tabs .tab.active {
+.is-tab--active {
   background: var(--green);
   color: #fff;
-  box-shadow: 0 3px 8px rgba(20, 158, 110, 0.25);
+  box-shadow: 0 2px 8px rgba(20,158,110,.28);
 }
 
-.schedule-filters {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.filter-select {
+/* Recruiter filter */
+.is-filter-select {
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 9px;
@@ -65,23 +63,17 @@
   color: var(--text);
   font-size: 12px;
   font-weight: 600;
+  font-family: inherit;
   outline: none;
   cursor: pointer;
-  font-family: inherit;
-  transition: border-color 0.14s, box-shadow 0.14s;
+  transition: border-color 0.14s;
 }
+.is-filter-select:hover,
+.is-filter-select:focus { border-color: var(--green); }
+.is-filter-select:focus { box-shadow: 0 0 0 3px rgba(20,158,110,.12); }
 
-.filter-select:hover {
-  border-color: var(--green);
-}
-
-.filter-select:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(20, 158, 110, 0.12);
-}
-
-/* NAVIGATION BUTTONS */
-.nav-btn {
+/* ── Nav buttons (day / week) ───────────────────────────── */
+.is-nav-btn {
   padding: 8px 16px;
   border: 1px solid var(--border);
   border-radius: 9px;
@@ -90,36 +82,247 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.18s ease;
   white-space: nowrap;
+  font-family: inherit;
+  transition: border-color 0.16s, color 0.16s, background 0.16s;
 }
-
-.nav-btn:hover {
+.is-nav-btn:hover {
   border-color: var(--green);
   color: var(--green);
   background: var(--green-soft);
 }
 
-/* EMPTY STATE */
-.empty-schedule {
+/* ── Shared view wrapper ───────────────────────────────── */
+.is-view { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Empty state ───────────────────────────────────────── */
+.is-empty {
   padding: 52px 20px;
   text-align: center;
   color: var(--muted);
   font-size: 13px;
+  font-weight: 500;
   border: 1.5px dashed var(--border);
   border-radius: 14px;
   background: var(--bg);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UNIFIED INTERVIEW CARD  (.is-card)
+   Shared by Day, Week, and Recruiter views.
+   compact variant  (.is-card--compact) used in Week + Recruiter.
+═══════════════════════════════════════════════════════════ */
+.is-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 13px 15px;
+  border-left: 4px solid var(--green);
+  background: var(--panel);
+  border-radius: 0 12px 12px 0;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green);
+  transition: box-shadow 0.15s, transform 0.15s;
+  flex: 1;
+  min-width: 0;
+}
+
+.is-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  transform: translateX(2px);
+}
+
+/* Done state */
+.is-card--done {
+  background: var(--green-soft);
+  border-left-color: var(--green);
+  opacity: 0.88;
+}
+
+/* Compact (week + recruiter) */
+.is-card--compact { padding: 10px 12px; border-radius: 0 10px 10px 0; }
+.is-card--compact:hover { transform: none; }
+
+/* Card regions */
+.is-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+
+.is-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.is-card-time {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.is-card-time-sm {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-right: 4px;
+}
+
+.is-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.is-card-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.is-card-job {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.is-card-client { color: var(--muted); }
+
+.is-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.is-card-type {
+  font-size: 10.5px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.is-card-recruiter {
+  font-size: 10.5px;
+  color: var(--muted);
   font-weight: 500;
 }
 
-/* ===== DAY VIEW ===== */
-.schedule-day-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* ── Done chip ─────────────────────────────────────────── */
+.is-done-chip,
+.is-done-chip-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 700;
+  color: var(--green);
+  background: rgba(20,158,110,.14);
+  white-space: nowrap;
+  line-height: 1;
 }
 
-.day-nav {
+.is-done-chip { font-size: 10.5px; }
+.is-done-chip-sm { font-size: 10px; }
+
+.is-done-chip svg,
+.is-done-chip-sm svg { width: 12px; height: 12px; color: var(--green); flex-shrink: 0; }
+
+/* ── Stage-advancement notice ──────────────────────────── */
+.is-advance-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(61,125,214,.1);
+  border: 1px solid rgba(61,125,214,.22);
+  color: #3D7DD6;
+  font-size: 11px;
+  font-weight: 600;
+  max-width: 100%;
+  flex-wrap: wrap;
+  animation: is-slide-in 0.3s ease both;
+}
+
+.is-advance-notice svg { width: 14px; height: 14px; flex-shrink: 0; }
+.is-advance-notice strong { font-weight: 800; }
+.is-advance-date { opacity: 0.7; font-weight: 500; }
+
+@keyframes is-slide-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Action buttons (3 semantic variants, 1 definition each) ── */
+.is-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.is-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.is-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* Done state — non-interactive indicator */
+.is-btn--done {
+  background: var(--green-soft);
+  border-color: rgba(20,158,110,.3);
+  color: var(--green);
+  cursor: default;
+}
+
+/* Reschedule */
+.is-btn--reschedule {
+  background: var(--bg);
+  border-color: var(--border);
+  color: var(--text);
+}
+.is-btn--reschedule:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+/* Mark Done — primary action */
+.is-btn--mark-done {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(20,158,110,.22);
+}
+.is-btn--mark-done:hover {
+  background: #118A60;
+  border-color: #118A60;
+  box-shadow: 0 4px 12px rgba(20,158,110,.35);
+}
+.is-btn--mark-done:active { transform: scale(0.97); }
+
+/* ═══════════════════════════════════════════════════════════
+   DAY VIEW
+═══════════════════════════════════════════════════════════ */
+.is-day-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -127,15 +330,15 @@
   flex-wrap: wrap;
 }
 
-.day-display {
+.is-day-center {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
-.day-display input[type='date'] {
-  padding: 7px 11px;
+.is-date-input {
+  padding: 7px 10px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--panel);
@@ -145,195 +348,43 @@
   outline: none;
   transition: border-color 0.14s;
 }
+.is-date-input:focus { border-color: var(--green); }
 
-.day-display input[type='date']:focus {
-  border-color: var(--green);
-}
-
-.day-label {
+.is-day-label {
   font-size: 15px;
   font-weight: 800;
   color: var(--text);
-  font-family: var(--font-display, inherit);
 }
 
-.day-schedule {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+/* Timeline slots */
+.is-timeline { display: flex; flex-direction: column; gap: 6px; }
 
-.time-slot {
+.is-slot {
   display: grid;
-  grid-template-columns: 76px 1fr;
-  gap: 14px;
+  grid-template-columns: 72px 1fr;
+  gap: 12px;
   align-items: start;
 }
 
-.time-label {
-  font-size: 12px;
+.is-slot-time {
+  font-size: 11.5px;
   font-weight: 700;
   color: var(--muted);
   text-align: right;
-  padding-top: 12px;
+  padding-top: 14px;
   letter-spacing: -0.2px;
 }
 
-.time-interviews {
+.is-slot-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 44px;
+  gap: 7px;
 }
 
-/* Day view interview card */
-.interview-item {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  gap: 14px;
-  align-items: center;
-  padding: 13px 15px;
-  border-left: 4px solid var(--green);
-  background: var(--panel);
-  border-radius: 0 12px 12px 0;
-  border-top: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
-
-.interview-item:hover {
-  box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.08));
-  transform: translateX(2px);
-}
-
-.interview-item.completed {
-  background: var(--green-soft);
-  border-left-color: var(--green);
-  opacity: 0.82;
-}
-
-.completed-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--green);
-  background: rgba(20, 158, 110, 0.15);
-  padding: 3px 8px;
-  border-radius: 20px;
-  min-width: 48px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.interview-left {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.interview-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.interview-job {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.interview-type {
-  font-size: 10.5px;
-  color: var(--green);
-  font-weight: 600;
-  margin-top: 1px;
-}
-
-.interview-recruiter {
-  font-size: 11px;
-  color: var(--muted);
-  text-align: center;
-  min-width: 130px;
-  font-weight: 500;
-}
-
-.interview-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.slot-empty {
-  font-size: 12px;
-  color: var(--border);
-  padding: 10px 0;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px dashed var(--border);
-}
-
-/* Day view buttons */
-.btn-reschedule {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.16s ease;
-  white-space: nowrap;
-}
-
-.btn-reschedule:hover {
-  border-color: var(--blue);
-  color: var(--blue);
-  background: var(--blue-soft);
-}
-
-.btn-mark-done {
-  padding: 6px 12px;
-  border: 1px solid var(--green);
-  border-radius: 7px;
-  background: var(--green);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.16s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(20, 158, 110, 0.2);
-}
-
-.btn-mark-done:hover {
-  background: #118A60;
-  border-color: #118A60;
-  box-shadow: 0 4px 12px rgba(20, 158, 110, 0.32);
-}
-
-.btn-done {
-  padding: 6px 12px;
-  border: 1px solid var(--green);
-  border-radius: 7px;
-  background: var(--green-soft);
-  color: var(--green);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: default;
-  white-space: nowrap;
-}
-
-/* ===== WEEK VIEW ===== */
-.schedule-week-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.week-nav {
+/* ═══════════════════════════════════════════════════════════
+   WEEK VIEW
+═══════════════════════════════════════════════════════════ */
+.is-week-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -341,205 +392,79 @@
   flex-wrap: wrap;
 }
 
-.week-label {
+.is-week-label {
   font-size: 15px;
   font-weight: 800;
   color: var(--text);
-  font-family: var(--font-display, inherit);
 }
 
-.week-grid {
+.is-week-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
-.week-day {
+.is-week-col {
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 13px;
   background: var(--panel);
   overflow: hidden;
-  box-shadow: var(--shadow-xs, 0 1px 4px rgba(0,0,0,0.05));
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
   transition: box-shadow 0.15s;
 }
+.is-week-col:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
 
-.week-day:hover {
-  box-shadow: var(--shadow-md, 0 4px 16px rgba(0,0,0,0.08));
-}
-
-.week-day-label {
-  padding: 10px 14px;
+.is-week-col-head {
+  padding: 9px 13px;
   background: var(--green-soft);
   color: var(--green);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid var(--border);
 }
 
-.week-day-interviews {
+.is-week-col-body {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 10px;
   gap: 8px;
+  padding: 10px;
 }
 
-.week-interview-card {
-  padding: 11px 12px;
-  border-left: 3px solid var(--green);
-  background: var(--bg);
-  border-radius: 0 10px 10px 0;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--green);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-  transition: box-shadow 0.14s ease;
-}
-
-.week-interview-card:hover {
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06));
-}
-
-.week-interview-card.completed {
-  background: var(--green-soft);
-  border-left-color: var(--green);
-  opacity: 0.82;
-}
-
-.completed-badge-small {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--green);
-}
-
-.week-interview-time {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.2px;
-}
-
-.week-interview-candidate {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.week-interview-position {
-  font-size: 10.5px;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.week-interview-recruiter {
-  font-size: 10px;
-  color: var(--green);
-  font-weight: 600;
-}
-
-.week-interview-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
-.btn-small {
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--panel);
-  color: var(--text);
-  font-size: 10.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-small:hover {
-  border-color: var(--blue);
-  color: var(--blue);
-  background: var(--blue-soft);
-}
-
-.btn-small-mark {
-  padding: 5px 10px;
-  border: 1px solid var(--green);
-  border-radius: 7px;
-  background: var(--green);
-  color: #fff;
-  font-size: 10.5px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-small-mark:hover {
-  background: #118A60;
-  border-color: #118A60;
-}
-
-.btn-small-done {
-  padding: 5px 10px;
-  border: 1px solid var(--green);
-  border-radius: 7px;
-  background: var(--green-soft);
-  color: var(--green);
-  font-size: 10.5px;
-  font-weight: 700;
-  cursor: default;
-}
-
-/* ===== RECRUITER VIEW ===== */
-.schedule-recruiter-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.recruiter-list {
+/* ═══════════════════════════════════════════════════════════
+   RECRUITER VIEW
+═══════════════════════════════════════════════════════════ */
+.is-recruiter-list {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-.recruiter-group {
+.is-recruiter-group {
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 13px;
   overflow: hidden;
   background: var(--panel);
-  box-shadow: var(--shadow-xs, 0 1px 4px rgba(0,0,0,0.05));
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
 }
 
-.recruiter-header {
+.is-recruiter-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 13px 18px;
+  padding: 12px 18px;
   background: var(--green-soft);
   border-bottom: 1px solid var(--border);
 }
 
-.recruiter-name {
+.is-recruiter-name {
   font-size: 13px;
   font-weight: 800;
   color: var(--green);
-  font-family: var(--font-display, inherit);
 }
 
-.recruiter-count {
+.is-recruiter-count {
   font-size: 11px;
   color: var(--muted);
   font-weight: 600;
@@ -549,143 +474,53 @@
   border: 1px solid var(--border);
 }
 
-.recruiter-interviews {
+.is-recruiter-body {
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
-.recruiter-interview-row {
-  display: grid;
-  grid-template-columns: 130px 1fr auto auto;
-  gap: 16px;
-  align-items: center;
+.is-recruiter-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
   padding: 12px 18px;
   border-bottom: 1px solid var(--border-soft, var(--border));
-  background: var(--panel);
-  transition: background 0.14s ease;
+  transition: background 0.12s;
 }
+.is-recruiter-row:last-child { border-bottom: none; }
+.is-recruiter-row:hover { background: var(--bg); }
 
-.recruiter-interview-row:last-child {
-  border-bottom: none;
-}
-
-.recruiter-interview-row:hover {
-  background: var(--bg);
-}
-
-.recruiter-interview-row.completed {
-  background: var(--green-soft);
-  opacity: 0.82;
-}
-
-.recruiter-interview-row.completed:hover {
-  background: var(--green-soft);
-}
-
-.row-date-time {
+.is-recruiter-row-date {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 90px;
+  flex-shrink: 0;
 }
 
-.row-date {
+.is-recruiter-row-d {
   font-size: 10.5px;
   color: var(--muted);
   font-weight: 600;
 }
 
-.row-time {
+.is-recruiter-row-t {
   font-size: 13px;
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.3px;
 }
 
-.row-completed-badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--green);
-  margin-top: 3px;
+/* ═══════════════════════════════════════════════════════════
+   DARK-MODE ADJUSTMENTS
+═══════════════════════════════════════════════════════════ */
+[data-theme="dark"] .is-advance-notice {
+  background: rgba(61,125,214,.15);
+  border-color: rgba(61,125,214,.3);
 }
 
-.row-candidate {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.row-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.row-job {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.row-interview-type {
-  font-size: 11px;
-  color: var(--green);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.row-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.btn-reschedule-small {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-reschedule-small:hover {
-  border-color: var(--blue);
-  color: var(--blue);
-  background: var(--blue-soft);
-}
-
-.btn-reschedule-small-mark {
-  padding: 6px 12px;
-  border: 1px solid var(--green);
-  border-radius: 7px;
-  background: var(--green);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(20, 158, 110, 0.18);
-}
-
-.btn-reschedule-small-mark:hover {
-  background: #118A60;
-  border-color: #118A60;
-}
-
-.btn-reschedule-small-done {
-  padding: 6px 12px;
-  border: 1px solid var(--green);
-  border-radius: 7px;
-  background: var(--green-soft);
-  color: var(--green);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: default;
-  white-space: nowrap;
+[data-theme="dark"] .is-done-chip,
+[data-theme="dark"] .is-done-chip-sm {
+  background: rgba(20,158,110,.2);
 }

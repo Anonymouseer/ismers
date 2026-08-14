@@ -91,18 +91,35 @@ export default function RecruitmentSelectionPage() {
 
   const handleMarkDone = (app) => {
     updateApplication(app.id, (a) => {
-      const updatedApp = {
+      const completedAt = new Date().toLocaleDateString('en-US', {
+        month: 'short', day: '2-digit', year: 'numeric',
+      });
+
+      // Determine whether this interview advances the pipeline stage
+      const advancesToClientInterview = a.status === 'area_manager';
+
+      const newNotes = [
+        {
+          text: `${a.interview.title} completed with ${a.interview.recruiter}. Interview result: Passed.`,
+          meta: `System · ${completedAt}`,
+        },
+        ...(advancesToClientInterview
+          ? [{
+              text: 'Area Manager 2nd Interview passed. Applicant automatically advanced to Client Final Interview.',
+              meta: `System · ${completedAt}`,
+            }]
+          : []),
+        ...a.notes,
+      ];
+
+      return {
         ...a,
-        interview: { ...a.interview, completed: true, completedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) },
-        notes: [
-          {
-            text: `${a.interview.title} completed with ${a.interview.recruiter}. Interview result: Passed.`,
-            meta: `System · ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`,
-          },
-          ...a.notes,
-        ],
+        // Mark the interview as completed
+        interview: { ...a.interview, completed: true, completedAt },
+        // Advance the pipeline stage when applicable
+        status: advancesToClientInterview ? 'client_interview' : a.status,
+        notes: newNotes,
       };
-      return updatedApp;
     });
   };
 

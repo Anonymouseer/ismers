@@ -3,205 +3,221 @@ import { JOB_ORDERS, SLOT_TIMES, TODAY } from '../data/mockApplications';
 import { formatDate, addDays } from '../utils/recruitmentUtils';
 import './InterviewSchedules.css';
 
+const STAGE_LABELS = {
+  area_manager: 'Area Manager 2nd Interview',
+  client_interview: 'Client Final Interview',
+  pooling: 'Initial Screening',
+};
+
+function CompletedBadge({ small = false }) {
+  return (
+    <span className={small ? 'is-done-chip-sm' : 'is-done-chip'}>
+      <svg viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <circle cx="6" cy="6" r="6" fill="currentColor" opacity="0.18" />
+        <path d="M3.5 6l1.8 1.8 3.2-3.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {small ? 'Done' : 'Interview Done'}
+    </span>
+  );
+}
+
+function StageBadge({ completedAt }) {
+  return (
+    <div className="is-advance-notice" role="status" aria-live="polite">
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Advanced to <strong>Client Final Interview</strong>
+      {completedAt && <span className="is-advance-date"> · {completedAt}</span>}
+    </div>
+  );
+}
+
 export default function InterviewSchedules({ applications, onReschedule, onMarkDone }) {
-  const [viewMode, setViewMode] = useState('day'); // 'day', 'week', 'recruiter'
+  const [viewMode, setViewMode] = useState('day'); // 'day' | 'week' | 'recruiter'
   const [selectedDate, setSelectedDate] = useState(new Date(TODAY));
   const [recruiterFilter, setRecruiterFilter] = useState('all');
 
   const jobById = (id) => JOB_ORDERS.find((j) => j.id === id);
 
-  // Get all scheduled interviews
   const scheduledInterviews = useMemo(
     () => applications.filter((app) => app.interview),
     [applications]
   );
 
-  // Extract unique recruiters
   const allRecruiters = useMemo(() => {
-    const recruiters = new Set();
-    scheduledInterviews.forEach((app) => {
-      recruiters.add(app.interview.recruiter);
-    });
-    return Array.from(recruiters).sort();
+    const set = new Set();
+    scheduledInterviews.forEach((app) => set.add(app.interview.recruiter));
+    return Array.from(set).sort();
   }, [scheduledInterviews]);
 
-  // Day view: interviews for selected date
   const selectedDateLabel = formatDate(selectedDate);
+  const dayBefore = addDays(selectedDate, -1);
+  const dayAfter = addDays(selectedDate, 1);
+
+  const applyRecruiterFilter = (list) =>
+    recruiterFilter === 'all' ? list : list.filter((a) => a.interview.recruiter === recruiterFilter);
+
   const dayInterviews = useMemo(
-    () => {
-      const filtered = scheduledInterviews.filter((app) => app.interview.date === selectedDateLabel);
-      return recruiterFilter === 'all' ? filtered : filtered.filter((app) => app.interview.recruiter === recruiterFilter);
-    },
+    () => applyRecruiterFilter(scheduledInterviews.filter((a) => a.interview.date === selectedDateLabel)),
     [scheduledInterviews, selectedDateLabel, recruiterFilter]
   );
 
-  // Week view: next 7 days
   const weekInterviews = useMemo(() => {
     const result = [];
     for (let i = 0; i < 7; i++) {
       const day = addDays(selectedDate, i);
       if (day.getDay() === 0) continue;
-      const dayLabel = formatDate(day);
-      const dayApps = scheduledInterviews.filter((app) => app.interview.date === dayLabel);
-      const filtered = recruiterFilter === 'all' ? dayApps : dayApps.filter((app) => app.interview.recruiter === recruiterFilter);
-      if (filtered.length > 0) {
-        result.push({ date: dayLabel, apps: filtered });
-      }
+      const label = formatDate(day);
+      const apps = applyRecruiterFilter(scheduledInterviews.filter((a) => a.interview.date === label));
+      if (apps.length) result.push({ date: label, apps });
     }
     return result;
   }, [scheduledInterviews, selectedDate, recruiterFilter]);
 
-  // Recruiter view
   const recruiterSchedules = useMemo(() => {
-    if (recruiterFilter === 'all') {
-      return allRecruiters.map((recruiter) => ({
-        recruiter,
-        interviews: scheduledInterviews.filter((app) => app.interview.recruiter === recruiter),
-      }));
-    }
-    return [
-      {
-        recruiter: recruiterFilter,
-        interviews: scheduledInterviews.filter((app) => app.interview.recruiter === recruiterFilter),
-      },
-    ];
+    const recruiters = recruiterFilter === 'all' ? allRecruiters : [recruiterFilter];
+    return recruiters.map((r) => ({
+      recruiter: r,
+      interviews: scheduledInterviews.filter((a) => a.interview.recruiter === r),
+    }));
   }, [scheduledInterviews, recruiterFilter, allRecruiters]);
 
-  const dayBefore = addDays(selectedDate, -1);
-  const dayAfter = addDays(selectedDate, 1);
+  // ── Shared interview card (used in all three views) ──────────────────────
+  function InterviewCard({ app, compact = false }) {
+    const job = jobById(app.jobId);
+    const done = app.interview?.completed;
+    const advanced = done && app.status === 'client_interview';
 
-  return (
-    <div className="interview-schedules">
-      <div className="schedule-controls">
-        <div className="schedule-tabs">
-          <button className={`tab ${viewMode === 'day' ? 'active' : ''}`} onClick={() => setViewMode('day')}>
-            Day View
-          </button>
-          <button className={`tab ${viewMode === 'week' ? 'active' : ''}`} onClick={() => setViewMode('week')}>
-            Week View
-          </button>
-          <button className={`tab ${viewMode === 'recruiter' ? 'active' : ''}`} onClick={() => setViewMode('recruiter')}>
-            By Recruiter
-          </button>
+    return (
+      <div className={`is-card${done ? ' is-card--done' : ''}${compact ? ' is-card--compact' : ''}`}>
+        {/* Left accent + info */}
+        <div className="is-card-main">
+          <div className="is-card-top">
+            {!compact && <span className="is-card-time">{app.interview.time}</span>}
+            <span className="is-card-name">{app.name}</span>
+            {done && <CompletedBadge small={compact} />}
+          </div>
+
+          <div className="is-card-meta">
+            {compact && <span className="is-card-time-sm">{app.interview.time}</span>}
+            <span className="is-card-job">{job?.title}{job?.client && <> &middot; <span className="is-card-client">{job.client}</span></>}</span>
+          </div>
+
+          <div className="is-card-footer">
+            <span className="is-card-type">{app.interview.title}</span>
+            <span className="is-card-recruiter">{app.interview.recruiter}</span>
+          </div>
+
+          {advanced && <StageBadge completedAt={app.interview.completedAt} />}
         </div>
 
-        <div className="schedule-filters">
-          <select value={recruiterFilter} onChange={(e) => setRecruiterFilter(e.target.value)} className="filter-select">
-            <option value="all">All Interviewers</option>
-            {allRecruiters.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+        {/* Actions */}
+        <div className="is-card-actions">
+          {done ? (
+            <span className="is-btn is-btn--done" aria-label="Interview completed">
+              <svg viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2.5 7l3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Done
+            </span>
+          ) : (
+            <>
+              <button className="is-btn is-btn--reschedule" onClick={() => onReschedule?.(app)}>
+                Reschedule
+              </button>
+              <button className="is-btn is-btn--mark-done" onClick={() => onMarkDone?.(app)}>
+                Mark Done
+              </button>
+            </>
+          )}
         </div>
       </div>
+    );
+  }
 
-      {/* DAY VIEW */}
-      {viewMode === 'day' && (
-        <div className="schedule-day-view">
-          <div className="day-nav">
-            <button onClick={() => setSelectedDate(dayBefore)} className="nav-btn">
-              &larr; Previous
+  // ── Render ───────────────────────────────────────────────────────────────
+  return (
+    <div className="is-root">
+
+      {/* ── Controls bar ── */}
+      <div className="is-controls">
+        <div className="is-tabs" role="tablist">
+          {[['day', 'Day View'], ['week', 'Week View'], ['recruiter', 'By Recruiter']].map(([key, label]) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={viewMode === key}
+              className={`is-tab${viewMode === key ? ' is-tab--active' : ''}`}
+              onClick={() => setViewMode(key)}
+            >
+              {label}
             </button>
-            <div className="day-display">
+          ))}
+        </div>
+
+        <select value={recruiterFilter} onChange={(e) => setRecruiterFilter(e.target.value)} className="is-filter-select">
+          <option value="all">All Interviewers</option>
+          {allRecruiters.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </div>
+
+      {/* ── DAY VIEW ── */}
+      {viewMode === 'day' && (
+        <div className="is-view">
+          <div className="is-day-nav">
+            <button className="is-nav-btn" onClick={() => setSelectedDate(dayBefore)}>&#8592; Previous</button>
+            <div className="is-day-center">
               <input
                 type="date"
+                className="is-date-input"
                 value={selectedDate.toISOString().split('T')[0]}
                 onChange={(e) => setSelectedDate(new Date(e.target.value + 'T00:00:00'))}
               />
-              <div className="day-label">{selectedDateLabel}</div>
+              <div className="is-day-label">{selectedDateLabel}</div>
             </div>
-            <button onClick={() => setSelectedDate(dayAfter)} className="nav-btn">
-              Next &rarr;
-            </button>
+            <button className="is-nav-btn" onClick={() => setSelectedDate(dayAfter)}>Next &#8594;</button>
           </div>
 
-          <div className="day-schedule">
-            {dayInterviews.length === 0 ? (
-              <div className="empty-schedule">No interviews scheduled for {selectedDateLabel}</div>
-            ) : (
-              <div className="interview-list">
-                {SLOT_TIMES.map((time) => {
-                  const atTime = dayInterviews.filter((app) => app.interview.time === time);
-                  if (atTime.length === 0) return null;
-                  return (
-                    <div key={time} className="time-slot">
-                      <div className="time-label">{time}</div>
-                      <div className="time-interviews">
-                        {atTime.map((app) => (
-                          <div key={app.id} className={`interview-item ${app.interview?.completed ? 'completed' : ''}`}>
-                            {app.interview?.completed && <div className="completed-badge">Completed</div>}
-                            <div className="interview-left">
-                              <div className="interview-name">{app.name}</div>
-                              <div className="interview-job">{jobById(app.jobId)?.title} &middot; {jobById(app.jobId)?.client}</div>
-                              <div className="interview-type">{app.interview.title}</div>
-                            </div>
-                            <div className="interview-recruiter">{app.interview.recruiter}</div>
-                            <div className="interview-actions">
-                              {app.interview?.completed ? (
-                                <button className="btn-done">Done</button>
-                              ) : (
-                                <>
-                                  <button className="btn-reschedule" onClick={() => onReschedule?.(app)}>Reschedule</button>
-                                  <button className="btn-mark-done" onClick={() => onMarkDone?.(app)}>Mark Done</button>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+          {dayInterviews.length === 0 ? (
+            <div className="is-empty">No interviews scheduled for {selectedDateLabel}</div>
+          ) : (
+            <div className="is-timeline">
+              {SLOT_TIMES.map((time) => {
+                const atTime = dayInterviews.filter((a) => a.interview.time === time);
+                if (!atTime.length) return null;
+                return (
+                  <div key={time} className="is-slot">
+                    <div className="is-slot-time">{time}</div>
+                    <div className="is-slot-items">
+                      {atTime.map((app) => <InterviewCard key={app.id} app={app} />)}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* WEEK VIEW */}
+      {/* ── WEEK VIEW ── */}
       {viewMode === 'week' && (
-        <div className="schedule-week-view">
-          <div className="week-nav">
-            <button onClick={() => setSelectedDate(addDays(selectedDate, -7))} className="nav-btn">
-              ← Previous Week
-            </button>
-            <div className="week-label">Week of {formatDate(selectedDate)}</div>
-            <button onClick={() => setSelectedDate(addDays(selectedDate, 7))} className="nav-btn">
-              Next Week →
-            </button>
+        <div className="is-view">
+          <div className="is-week-nav">
+            <button className="is-nav-btn" onClick={() => setSelectedDate(addDays(selectedDate, -7))}>&#8592; Previous Week</button>
+            <div className="is-week-label">Week of {formatDate(selectedDate)}</div>
+            <button className="is-nav-btn" onClick={() => setSelectedDate(addDays(selectedDate, 7))}>Next Week &#8594;</button>
           </div>
 
           {weekInterviews.length === 0 ? (
-            <div className="empty-schedule">No interviews scheduled for this week</div>
+            <div className="is-empty">No interviews scheduled this week</div>
           ) : (
-            <div className="week-grid">
-              {weekInterviews.map((dayGroup) => (
-                <div key={dayGroup.date} className="week-day">
-                  <div className="week-day-label">{dayGroup.date}</div>
-                  <div className="week-day-interviews">
-                    {dayGroup.apps.map((app) => (
-                      <div key={app.id} className={`week-interview-card ${app.interview?.completed ? 'completed' : ''}`}>
-                        {app.interview?.completed && <div className="completed-badge-small">✓</div>}
-                        <div className="week-interview-time">{app.interview.time}</div>
-                        <div className="week-interview-candidate">{app.name}</div>
-                        <div className="week-interview-position" title={jobById(app.jobId)?.title}>
-                          {jobById(app.jobId)?.title}
-                        </div>
-                        <div className="week-interview-recruiter">{app.interview.recruiter}</div>
-                        <div className="week-interview-actions">
-                          {app.interview?.completed ? (
-                            <button className="btn-small-done" title="Interview completed">Done</button>
-                          ) : (
-                            <>
-                              <button className="btn-small" onClick={() => onReschedule?.(app)}>Reschedule</button>
-                              <button className="btn-small-mark" onClick={() => onMarkDone?.(app)}>Done</button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+            <div className="is-week-grid">
+              {weekInterviews.map((group) => (
+                <div key={group.date} className="is-week-col">
+                  <div className="is-week-col-head">{group.date}</div>
+                  <div className="is-week-col-body">
+                    {group.apps.map((app) => <InterviewCard key={app.id} app={app} compact />)}
                   </div>
                 </div>
               ))}
@@ -210,50 +226,35 @@ export default function InterviewSchedules({ applications, onReschedule, onMarkD
         </div>
       )}
 
-      {/* RECRUITER VIEW */}
+      {/* ── RECRUITER VIEW ── */}
       {viewMode === 'recruiter' && (
-        <div className="schedule-recruiter-view">
+        <div className="is-view">
           {recruiterSchedules.length === 0 ? (
-            <div className="empty-schedule">No interviews scheduled</div>
+            <div className="is-empty">No interviews scheduled</div>
           ) : (
-            <div className="recruiter-list">
+            <div className="is-recruiter-list">
               {recruiterSchedules.map((group) => (
-                <div key={group.recruiter} className="recruiter-group">
-                  <div className="recruiter-header">
-                    <div className="recruiter-name">{group.recruiter}</div>
-                    <div className="recruiter-count">
+                <div key={group.recruiter} className="is-recruiter-group">
+                  <div className="is-recruiter-head">
+                    <span className="is-recruiter-name">{group.recruiter}</span>
+                    <span className="is-recruiter-count">
                       {group.interviews.length} interview{group.interviews.length !== 1 ? 's' : ''}
-                    </div>
+                    </span>
                   </div>
-                  <div className="recruiter-interviews">
+                  <div className="is-recruiter-body">
                     {group.interviews
-                      .sort(
-                        (a, b) =>
-                          new Date(`${a.interview.date} ${a.interview.time}`) -
-                          new Date(`${b.interview.date} ${b.interview.time}`)
+                      .slice()
+                      .sort((a, b) =>
+                        new Date(`${a.interview.date} ${a.interview.time}`) -
+                        new Date(`${b.interview.date} ${b.interview.time}`)
                       )
                       .map((app) => (
-                        <div key={app.id} className={`recruiter-interview-row ${app.interview?.completed ? 'completed' : ''}`}>
-                          <div className="row-date-time">
-                            <div className="row-date">{app.interview.date}</div>
-                            <div className="row-time">{app.interview.time}</div>
-                            {app.interview?.completed && <div className="row-completed-badge">✓ Done</div>}
+                        <div key={app.id} className="is-recruiter-row">
+                          <div className="is-recruiter-row-date">
+                            <div className="is-recruiter-row-d">{app.interview.date}</div>
+                            <div className="is-recruiter-row-t">{app.interview.time}</div>
                           </div>
-                          <div className="row-candidate">
-                            <div className="row-name">{app.name}</div>
-                            <div className="row-job">{jobById(app.jobId)?.title}</div>
-                          </div>
-                          <div className="row-interview-type">{app.interview.title}</div>
-                          <div className="row-actions">
-                            {app.interview?.completed ? (
-                              <button className="btn-reschedule-small-done" title="Interview completed">Done</button>
-                            ) : (
-                              <>
-                                <button className="btn-reschedule-small" onClick={() => onReschedule?.(app)}>Reschedule</button>
-                                <button className="btn-reschedule-small-mark" onClick={() => onMarkDone?.(app)}>Done</button>
-                              </>
-                            )}
-                          </div>
+                          <InterviewCard app={app} compact />
                         </div>
                       ))}
                   </div>
