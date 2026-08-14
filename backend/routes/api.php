@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\ClientAccountController;
+use App\Http\Controllers\JobOrderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -52,4 +53,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [ClientAccountController::class, 'login']);
         Route::post('/register', [ClientAccountController::class, 'register']);
     });
+
+    // ── Job Orders ──
+    Route::get('/job-orders',           [JobOrderController::class, 'index']);
+    Route::post('/job-orders',          [JobOrderController::class, 'store']);
+    Route::get('/job-orders/{ref}',     [JobOrderController::class, 'show']);
+    Route::put('/job-orders/{ref}',     [JobOrderController::class, 'update']);
+    Route::delete('/job-orders/{ref}',  [JobOrderController::class, 'destroy']);
 });
