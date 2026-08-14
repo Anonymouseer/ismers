@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             JobOrderSeeder::class,
             ApplicantSeeder::class,
             ClientAccountSeeder::class,
+            DeploymentSeeder::class,
         ]);
     }
 }
