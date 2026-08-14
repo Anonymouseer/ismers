@@ -38,7 +38,6 @@ export default function RecordDetailsModal({
   deployment,
   open,
   onClose,
-  onOpenCompliance,
   onOpenSlip,
   onAdvanceStage,
 }) {
@@ -147,10 +146,15 @@ export default function RecordDetailsModal({
               </div>
             </div>
 
-            {/* HR PRE-EMPLOYMENT & STATUTORY DOSSIER (FROM RECRUITMENT) */}
+            {/* HR PRE-EMPLOYMENT & STATUTORY DOSSIER (PASSED FROM RECRUITMENT - READ ONLY) */}
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase', marginBottom: 10 }}>
-                📋 HR Pre-Employment Dossier (From Recruitment):
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>
+                  📋 Verified HR Dossier (From Recruitment):
+                </div>
+                <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '2px 7px', borderRadius: 8 }}>
+                  ✓ Read-Only Verified
+                </span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Medical Diagnostic:</span> <b>{pre.medicalClinic || 'HealthHub Diagnostics'}</b></div>
@@ -165,11 +169,11 @@ export default function RecordDetailsModal({
             </div>
           </div>
 
-          {/* 6-POINT MANDATORY COMPLIANCE CHECKLIST */}
+          {/* READ-ONLY 6-POINT MANDATORY COMPLIANCE VERIFICATION SUMMARY */}
           <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>
-                6-Point Pre-Deployment Verification (DOLE DO 174):
+                6-Point Pre-Deployment Verification Summary (DOLE DO 174):
               </div>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: read.isReady ? 'var(--green)' : 'var(--purple)' }}>
                 {read.count}/6 Items Verified ({read.percent}%)
@@ -190,28 +194,17 @@ export default function RecordDetailsModal({
               })}
             </div>
 
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border-soft)', display: 'flex', gap: 8 }}>
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border-soft)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button
                 type="button"
-                className="btn"
-                style={{ fontSize: 11, fontWeight: 700 }}
-                onClick={() => {
-                  onClose();
-                  onOpenCompliance(deployment.id);
-                }}
-              >
-                Edit Compliance Checklist
-              </button>
-              <button
-                type="button"
-                className="btn"
-                style={{ fontSize: 11, fontWeight: 700 }}
+                className="btn primary"
+                style={{ fontSize: 11.5, fontWeight: 800, background: 'var(--blue)', borderColor: 'var(--blue)' }}
                 onClick={() => {
                   onClose();
                   onOpenSlip(deployment.id);
                 }}
               >
-                View Official Deployment Slip &amp; Pass
+                🖨️ View Official Deployment Slip &amp; Pass →
               </button>
             </div>
           </div>

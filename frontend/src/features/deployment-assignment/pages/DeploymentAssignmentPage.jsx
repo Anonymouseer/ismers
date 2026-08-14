@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ClientsDeploymentTable from '../components/ClientsDeploymentTable';
 import ClientDeploymentProfile from '../components/ClientDeploymentProfile';
-import ComplianceModal from '../components/ComplianceModal';
 import DeploymentSlipModal from '../components/DeploymentSlipModal';
 import RecordDetailsModal from '../components/RecordDetailsModal';
 import NewDeploymentModal from '../components/NewDeploymentModal';
@@ -19,7 +18,7 @@ export default function DeploymentAssignmentPage() {
   const [clientSearch, setClientSearch] = useState('');
   const [clientStatusFilter, setClientStatusFilter] = useState('all');
 
-  // Active focused modal: null | 'compliance' | 'slip' | 'details'
+  // Active focused modal: null | 'slip' | 'details'
   const [activeModal, setActiveModal] = useState(null);
   const [activeRecordId, setActiveRecordId] = useState(null);
 
@@ -29,7 +28,6 @@ export default function DeploymentAssignmentPage() {
     modalOpen,
     setModalOpen,
     setStage,
-    toggleRequirement,
     addDeployment,
   } = useDeploymentAssignmentStore();
 
@@ -87,11 +85,6 @@ export default function DeploymentAssignmentPage() {
 
   // Active record for modals
   const activeRecord = deployments.find((d) => d.id === activeRecordId) || null;
-
-  function handleOpenCompliance(id) {
-    setActiveRecordId(id);
-    setActiveModal('compliance');
-  }
 
   function handleOpenSlip(id) {
     setActiveRecordId(id);
@@ -223,7 +216,6 @@ export default function DeploymentAssignmentPage() {
               clientData={selectedClientData}
               deployments={deployments}
               onBack={() => setSelectedClientName(null)}
-              onOpenCompliance={handleOpenCompliance}
               onOpenSlip={handleOpenSlip}
               onOpenRecord={handleOpenDetails}
               onNewDeployment={() => setModalOpen(true)}
@@ -232,16 +224,7 @@ export default function DeploymentAssignmentPage() {
         </div>
       </div>
 
-      {/* MODAL 1: PRE-DEPLOYMENT COMPLIANCE CHECKLIST */}
-      <ComplianceModal
-        deployment={activeRecord}
-        open={activeModal === 'compliance'}
-        onClose={handleCloseModal}
-        onToggleRequirement={toggleRequirement}
-        onAdvanceStage={setStage}
-      />
-
-      {/* MODAL 2: OFFICIAL DEPLOYMENT SLIP & ENDORSEMENT PASS */}
+      {/* MODAL 1: OFFICIAL DEPLOYMENT SLIP & ENDORSEMENT PASS */}
       <DeploymentSlipModal
         deployment={activeRecord}
         open={activeModal === 'slip'}
@@ -249,17 +232,16 @@ export default function DeploymentAssignmentPage() {
         onAdvanceStage={setStage}
       />
 
-      {/* MODAL 3: COMPLETE DEPLOYMENT AUDIT DETAILS */}
+      {/* MODAL 2: COMPLETE DEPLOYMENT AUDIT DETAILS (READ-ONLY DOSSIER) */}
       <RecordDetailsModal
         deployment={activeRecord}
         open={activeModal === 'details'}
         onClose={handleCloseModal}
-        onOpenCompliance={handleOpenCompliance}
         onOpenSlip={handleOpenSlip}
         onAdvanceStage={setStage}
       />
 
-      {/* MODAL 4: NEW DEPLOYMENT SCHEDULE INTAKE */}
+      {/* MODAL 3: NEW DEPLOYMENT SCHEDULE INTAKE */}
       <NewDeploymentModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

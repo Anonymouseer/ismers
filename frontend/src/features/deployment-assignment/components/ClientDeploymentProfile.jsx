@@ -30,7 +30,6 @@ export default function ClientDeploymentProfile({
   clientData,
   deployments = [],
   onBack,
-  onOpenCompliance,
   onOpenSlip,
   onOpenRecord,
   onNewDeployment,
@@ -195,7 +194,7 @@ export default function ClientDeploymentProfile({
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--green)', marginTop: 2 }}>{clientStats.active}</div>
         </div>
         <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>Pending Clearance</div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>Pending Dispatch</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--purple)', marginTop: 2 }}>{clientStats.pending}</div>
         </div>
         <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px' }}>
@@ -290,7 +289,7 @@ export default function ClientDeploymentProfile({
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="all">All Deployment Statuses</option>
-              <option value="pending_clearance">Pending Clearance</option>
+              <option value="pending_clearance">Pending Dispatch</option>
               <option value="active_onsite">Active On-Site</option>
               <option value="completed">Concluded</option>
             </select>
@@ -369,12 +368,12 @@ export default function ClientDeploymentProfile({
                         </div>
                       </td>
 
-                      {/* COMPLIANCE */}
+                      {/* READ-ONLY COMPLIANCE STATUS */}
                       <td style={{ padding: '13px 18px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 120 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 700 }}>
                             <span style={{ color: read.isReady ? 'var(--green)' : 'var(--purple)' }}>
-                              {read.isReady ? 'Ready for Dispatch' : `${read.count}/6 Completed`}
+                              {read.isReady ? '✓ Verified in Recruitment' : `${read.count}/6 Pre-Cleared`}
                             </span>
                             <span style={{ color: 'var(--muted-fg)' }}>{read.percent}%</span>
                           </div>
@@ -413,17 +412,7 @@ export default function ClientDeploymentProfile({
                       {/* WORKFLOW ACTION */}
                       <td style={{ padding: '13px 18px', textAlign: 'right' }}>
                         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
-                          {(d.stage === 'assigned' || d.stage === 'pre_deployment') && (
-                            <button
-                              className="btn primary"
-                              style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, background: 'var(--purple)', borderColor: 'var(--purple)' }}
-                              onClick={() => onOpenCompliance(d.id)}
-                            >
-                              Verify Checklist →
-                            </button>
-                          )}
-
-                          {(d.stage === 'scheduled' || d.stage === 'dispatched') && (
+                          {(d.stage === 'assigned' || d.stage === 'pre_deployment' || d.stage === 'scheduled' || d.stage === 'dispatched') && (
                             <button
                               className="btn primary"
                               style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, background: 'var(--blue)', borderColor: 'var(--blue)' }}
@@ -433,15 +422,13 @@ export default function ClientDeploymentProfile({
                             </button>
                           )}
 
-                          {d.stage === 'on_site' && (
-                            <button
-                              className="btn"
-                              style={{ padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
-                              onClick={() => onOpenRecord(d.id)}
-                            >
-                              View Deployment Details
-                            </button>
-                          )}
+                          <button
+                            className="btn"
+                            style={{ padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
+                            onClick={() => onOpenRecord(d.id)}
+                          >
+                            View Details
+                          </button>
                         </div>
                       </td>
                     </tr>
