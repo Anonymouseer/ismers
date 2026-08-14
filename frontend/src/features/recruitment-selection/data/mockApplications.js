@@ -1,3 +1,5 @@
+import { JOB_TARGETS } from '../../applicant-registration/services/ApplicantRegistrationService';
+
 // Mock data for PRIMEPOWER MANPOWER Recruitment & Selection subsystem.
 // Exactly aligns with Primepower's official 8-Step Hiring & Endorsement Procedure:
 // Pooling -> Area Manager 2nd Interview -> Client Final Interview -> HR Pre-Employment -> Contract Signing -> For Deployment
@@ -14,7 +16,12 @@ export const JOB_ORDERS = [
 ];
 
 export function jobById(id) {
-  return JOB_ORDERS.find((j) => j.id === id);
+  if (!id) return null;
+  return (
+    JOB_ORDERS.find((j) => j.id === id) ||
+    JOB_TARGETS.find((j) => j.id === id) ||
+    null
+  );
 }
 
 export const STAGES = [

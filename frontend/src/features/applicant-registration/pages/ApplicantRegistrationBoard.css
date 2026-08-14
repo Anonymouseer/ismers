@@ -1429,3 +1429,26 @@ select.chip:hover {
   cursor: pointer;
   padding: 0 4px;
 }
+
+/* Score Badges matching Recruitment & Selection */
+.score-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 20px;
+  display: inline-block;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.score-badge.high {
+  background: var(--green-soft, #e8f5e9);
+  color: var(--green, #149E6E);
+}
+.score-badge.mid {
+  background: var(--amber-soft, #fef3c7);
+  color: var(--amber, #D98A2B);
+}
+.score-badge.low {
+  background: var(--border-soft, #e2e8f0);
+  color: var(--muted-fg, #64748b);
+}

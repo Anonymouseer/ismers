@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 
 export default function ClientPortalSidebar({
@@ -6,13 +7,31 @@ export default function ClientPortalSidebar({
   setSidebarCollapsed,
   activeTab,
   setActiveTab,
-  jobRequests,
-  endorsedCandidates,
-  deployedRoster,
+  endorsementFilter = 'ALL',
+  setEndorsementFilter = () => {},
+  jobRequests = [],
+  endorsedCandidates = [],
+  deployedRoster = [],
   accountManager,
   onLogout,
 }) {
-  const pendingEndorsementsCount = endorsedCandidates.filter((c) => c.status === 'Pending Review').length;
+  const [endorsementsOpen, setEndorsementsOpen] = useState(true);
+
+  const pendingCount = endorsedCandidates.filter((c) => c.status === 'Pending Review').length;
+  const acceptedCount = endorsedCandidates.filter((c) => c.status === 'Accepted for Interview').length;
+  const passedCount = endorsedCandidates.filter((c) => c.status === 'Passed Interview' || c.status === 'Passed Client Interview' || c.status === 'Hired').length;
+  const declinedCount = endorsedCandidates.filter((c) => c.status === 'Declined').length;
+  const totalCount = endorsedCandidates.length;
+
+  const handleEndorsementsClick = () => {
+    setActiveTab('endorsements');
+    setEndorsementsOpen((prev) => !prev);
+  };
+
+  const handleSubStageClick = (stageKey) => {
+    setActiveTab('endorsements');
+    setEndorsementFilter(stageKey);
+  };
 
   return (
     <aside className={`client-portal-sidebar-nav ${sidebarCollapsed ? 'collapsed' : ''}`}>
@@ -102,23 +121,84 @@ export default function ClientPortalSidebar({
             <span className="client-portal-nav-count">{jobRequests.length}</span>
           </button>
 
-          <button
-            type="button"
-            id="nav-endorsements"
-            className={`client-portal-nav-item ${activeTab === 'endorsements' ? 'active' : ''}`}
-            onClick={() => setActiveTab('endorsements')}
-            title={sidebarCollapsed ? `Endorsements (${pendingEndorsementsCount})` : undefined}
-          >
-            <svg className="icon" viewBox="0 0 24 24">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="8.5" cy="7" r="4" />
-              <polyline points="17 11 19 13 23 9" />
-            </svg>
-            <span>Endorsements</span>
-            <span className="client-portal-nav-count client-portal-nav-count--amber">
-              {pendingEndorsementsCount}
-            </span>
-          </button>
+          {/* ENDORSEMENTS WITH SUBMENU ACCORDION */}
+          <div className="client-portal-nav-group">
+            <button
+              type="button"
+              id="nav-endorsements"
+              className={`client-portal-nav-item ${activeTab === 'endorsements' ? 'active' : ''}`}
+              onClick={handleEndorsementsClick}
+              title={sidebarCollapsed ? `Endorsements (${pendingCount})` : undefined}
+            >
+              <svg className="icon" viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <polyline points="17 11 19 13 23 9" />
+              </svg>
+              <span>Endorsements</span>
+              <span className="client-portal-nav-count client-portal-nav-count--amber">
+                {pendingCount}
+              </span>
+              {!sidebarCollapsed && (
+                <svg
+                  className={`client-portal-chevron ${endorsementsOpen ? 'open' : ''}`}
+                  viewBox="0 0 24 24"
+                >
+                  <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+
+            {!sidebarCollapsed && endorsementsOpen && (
+              <div className="client-portal-submenu">
+                <button
+                  type="button"
+                  className={`client-portal-submenu-item ${activeTab === 'endorsements' && endorsementFilter === 'ALL' ? 'active' : ''}`}
+                  onClick={() => handleSubStageClick('ALL')}
+                >
+                  <span className="client-portal-submenu-dot" />
+                  <span className="client-portal-submenu-label">All Endorsements</span>
+                  <span className="client-portal-submenu-count">{totalCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`client-portal-submenu-item ${activeTab === 'endorsements' && endorsementFilter === 'Pending Review' ? 'active' : ''}`}
+                  onClick={() => handleSubStageClick('Pending Review')}
+                >
+                  <span className="client-portal-submenu-dot dot--amber" />
+                  <span className="client-portal-submenu-label">Pending Review</span>
+                  <span className="client-portal-submenu-count count--amber">{pendingCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`client-portal-submenu-item ${activeTab === 'endorsements' && endorsementFilter === 'Accepted for Interview' ? 'active' : ''}`}
+                  onClick={() => handleSubStageClick('Accepted for Interview')}
+                >
+                  <span className="client-portal-submenu-dot dot--blue" style={{ background: '#3D7DD6' }} />
+                  <span className="client-portal-submenu-label">Accepted for Interview</span>
+                  <span className="client-portal-submenu-count count--blue" style={{ background: 'rgba(61, 125, 214, 0.12)', color: '#3D7DD6' }}>{acceptedCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`client-portal-submenu-item ${activeTab === 'endorsements' && endorsementFilter === 'Passed Interview' ? 'active' : ''}`}
+                  onClick={() => handleSubStageClick('Passed Interview')}
+                >
+                  <span className="client-portal-submenu-dot dot--green" />
+                  <span className="client-portal-submenu-label">Passed Interview</span>
+                  <span className="client-portal-submenu-count count--green">{passedCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`client-portal-submenu-item ${activeTab === 'endorsements' && endorsementFilter === 'Declined' ? 'active' : ''}`}
+                  onClick={() => handleSubStageClick('Declined')}
+                >
+                  <span className="client-portal-submenu-dot dot--red" />
+                  <span className="client-portal-submenu-label">Declined</span>
+                  <span className="client-portal-submenu-count count--red">{declinedCount}</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"

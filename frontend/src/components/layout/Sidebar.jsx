@@ -274,14 +274,53 @@ export default function Sidebar({
 
               <div className={`submenu-wrapper ${openMenus['recruitment-selection'] && !collapsed ? 'open' : ''}`}>
                 <div className="submenu-inner">
-                  <Link to="/recruitment-selection" className={`submenu-item${!location.search || location.search.includes('view=pipeline') ? ' active' : ''}`}>
+                  <Link
+                    to="/recruitment-selection"
+                    className={`submenu-item${location.pathname === '/recruitment-selection' && !new URLSearchParams(location.search).get('stage') ? ' active' : ''}`}
+                  >
                     Selection Pipeline
                   </Link>
-                  <Link to="/recruitment-selection?view=schedules" className={`submenu-item${location.search.includes('view=schedules') ? ' active' : ''}`}>
-                    Interview Schedules
+                  <Link
+                    to="/recruitment-selection?stage=pooling"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 'pooling' ? ' active' : ''}`}
+                  >
+                    Pooling and Initial Screening
                   </Link>
-                  <Link to="/recruitment-selection?view=evaluations" className={`submenu-item${location.search.includes('view=evaluations') ? ' active' : ''}`}>
-                    Candidate Evaluations
+                  <Link
+                    to="/recruitment-selection?stage=area_manager"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 'area_manager' ? ' active' : ''}`}
+                  >
+                    Area Manager 2nd Interview
+                  </Link>
+                  <Link
+                    to="/recruitment-selection?stage=client_interview"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 'client_interview' ? ' active' : ''}`}
+                  >
+                    Client Final Interview
+                  </Link>
+                  <Link
+                    to="/recruitment-selection?stage=hr_requirements"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 'hr_requirements' ? ' active' : ''}`}
+                  >
+                    HR Pre-Employment Requirements
+                  </Link>
+                  <Link
+                    to="/recruitment-selection?stage=contract_signing"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 'contract_signing' ? ' active' : ''}`}
+                  >
+                    Orientation and Contract Signing
+                  </Link>
+                  <Link
+                    to="/recruitment-selection?stage=for_deployment"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 'for_deployment' ? ' active' : ''}`}
+                  >
+                    For Deployment
+                  </Link>
+                  <Link
+                    to="/recruitment-selection?stage=re_pooling"
+                    className={`submenu-item${new URLSearchParams(location.search).get('stage') === 're_pooling' ? ' active' : ''}`}
+                  >
+                    Re-Pooling (Line Up)
                   </Link>
                 </div>
               </div>

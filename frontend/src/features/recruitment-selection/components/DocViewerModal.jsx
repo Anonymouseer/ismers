@@ -7,23 +7,32 @@ const DOC_ICONS = {
 const DOC_TITLES = { resume: 'Resume', certificate: 'Certificates', portfolio: 'Portfolio' };
 
 function ResumeDoc({ app, job }) {
+  const jobTitle = job?.title || app?.jobTitle || app?.jobId || 'Unassigned Position';
+  const clientName = job?.client || app?.client || '—';
+  const breakdown = app?.breakdown || {
+    skills: app?.score || 70,
+    experience: 75,
+    screening: 80,
+    availability: 90,
+  };
+
   return (
     <div className="doc-page">
-      <div className="doc-page-name">{app.name}</div>
-      <div className="doc-page-role">Applicant — {job.title}, {job.client}</div>
-      <div className="doc-page-row"><b>Location:</b> {app.location}</div>
-      <div className="doc-page-row"><b>Relevant Experience:</b> {app.experience}</div>
-      <div className="doc-page-row"><b>Date Applied:</b> {app.applied}</div>
+      <div className="doc-page-name">{app?.name || 'Applicant'}</div>
+      <div className="doc-page-role">Applicant — {jobTitle}, {clientName}</div>
+      <div className="doc-page-row"><b>Location:</b> {app?.location || '—'}</div>
+      <div className="doc-page-row"><b>Relevant Experience:</b> {app?.experience || '—'}</div>
+      <div className="doc-page-row"><b>Date Applied:</b> {app?.applied || '—'}</div>
       <div className="doc-page-section-title">Profile Summary (AI-Extracted)</div>
       <ul>
-        <li>Skills Match: {app.breakdown.skills}%</li>
-        <li>Experience Fit: {app.breakdown.experience}%</li>
-        <li>Screening Signal: {app.breakdown.screening}%</li>
-        <li>Availability: {app.breakdown.availability}%</li>
+        <li>Skills Match: {breakdown.skills}%</li>
+        <li>Experience Fit: {breakdown.experience}%</li>
+        <li>Screening Signal: {breakdown.screening}%</li>
+        <li>Availability: {breakdown.availability}%</li>
       </ul>
       <div className="doc-page-section-title">Screening Notes on File</div>
       <div>
-        {app.notes.length
+        {app?.notes && app.notes.length
           ? app.notes.map((n, i) => <div key={i}>{n.text}</div>)
           : 'No screening notes recorded yet.'}
       </div>
@@ -33,10 +42,11 @@ function ResumeDoc({ app, job }) {
 }
 
 function CertificateDoc({ app, job }) {
+  const jobTitle = job?.title || app?.jobTitle || app?.jobId || 'Unassigned Position';
   return (
     <div className="doc-page">
       <div className="doc-page-name">Certificates on File</div>
-      <div className="doc-page-role">{app.name} — {job.title}</div>
+      <div className="doc-page-role">{app?.name} — {jobTitle}</div>
       <div className="doc-page-section-title">Submitted Certifications</div>
       <ul>
         <li>NC II / Relevant Skills Certificate</li>
@@ -49,10 +59,11 @@ function CertificateDoc({ app, job }) {
 }
 
 function PortfolioDoc({ app, job }) {
+  const jobTitle = job?.title || app?.jobTitle || app?.jobId || 'Unassigned Position';
   return (
     <div className="doc-page">
       <div className="doc-page-name">Portfolio</div>
-      <div className="doc-page-role">{app.name} — {job.title}</div>
+      <div className="doc-page-role">{app?.name} — {jobTitle}</div>
       <div className="doc-page-section-title">Submitted Work Samples</div>
       <div>No portfolio items uploaded for this role type, or file preview is not yet connected.</div>
       <div className="doc-page-note">Portfolio uploads typically apply to creative, technical, or specialist roles.</div>

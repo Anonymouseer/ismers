@@ -55,6 +55,8 @@ class ApplicantController extends Controller
             'stage' => $applicant->stage,
             'status' => $applicant->status,
             'sentToRecruitment' => (bool) $applicant->sent_to_recruitment,
+            'recruitmentStage' => $applicant->recruitment_stage,
+            'aiScore' => $applicant->sent_to_recruitment ? $this->computeAiScore($applicant) : null,
             'submissionSource' => $applicant->submission_source,
             'registeredDate' => $applicant->created_at->format('M d, Y'),
 
@@ -112,6 +114,70 @@ class ApplicantController extends Controller
             'date' => now()->format('M d, Y'),
             'text' => $text,
         ]);
+    }
+
+    private const JOB_KEYWORDS = [
+        'jo1' => ['inventory', 'warehouse', 'pallet', 'logistics', 'stock', 'picking', 'packing'],
+        'jo2' => ['forklift', 'warehouse', 'logistics', 'pallet', 'material handling', 'inventory'],
+        'jo3' => ['inventory', 'stock', 'wms', 'cycle count', 'data entry', 'clerk'],
+        'jo4' => ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics'],
+        'jo5' => ['customer service', 'crm', 'english proficiency', 'call center', 'customer support', 'communication'],
+        'jo6' => ['technical troubleshooting', 'ticketing', 'networking', 'technical support', 'troubleshooting'],
+        'jo7' => ['sales', 'outbound', 'inbound', 'crm', 'cold calling', 'leads'],
+        'jo8' => ['team leader', 'supervisor', 'bpo', 'coaching', 'kpi', 'csat'],
+        'jo9' => ['machine operation', 'quality inspection', 'safety compliance', 'production', 'troubleshooting'],
+        'jo10' => ['quality control', 'inspection', 'qc', 'calipers', 'manufacturing', 'specifications'],
+        'jo11' => ['supervisor', 'production line', 'kpi', 'line balancing', 'manufacturing'],
+        'jo12' => ['packaging', 'sorting', 'labeling', 'finished goods', 'packing'],
+        'jo13' => ['admin', 'office', 'excel', 'documentation', 'scheduling', 'clerical'],
+        'jo14' => ['sales associate', 'retail', 'customer service', 'stocking', 'replenishment'],
+        'jo15' => ['cashier', 'pos', 'cash handling', 'retail', 'customer service'],
+        'jo16' => ['merchandiser', 'visual', 'display', 'retail layout', 'branding'],
+        'jo17' => ['front desk', 'guest relations', 'booking systems', 'hospitality', 'customer service', 'front office'],
+        'jo18' => ['housekeeping', 'cleaning', 'room turnaround', 'resort', 'hospitality'],
+        'jo19' => ['f&b', 'server', 'waiter', 'restaurant', 'dining', 'hospitality'],
+        'jo20' => ['maintenance', 'technician', 'electrical', 'plumbing', 'repairs'],
+        'jo21' => ['leasing', 'real estate', 'sales', 'viewings', 'property', 'contracts'],
+        'jo22' => ['property administrator', 'tenant records', 'lease renewals', 'admin'],
+        'jo23' => ['front desk', 'reception', 'lobby', 'concierge', 'visitor logs'],
+        'jo24' => ['maintenance coordinator', 'repairs', 'facilities', 'building systems'],
+        'jo25' => ['medical technologist', 'medtech', 'lab testing', 'specimen analysis', 'doh'],
+        'jo26' => ['radiologic', 'x-ray', 'imaging', 'radtech', 'radiation safety'],
+        'jo27' => ['patient service', 'registration', 'healthcare front desk', 'appointments'],
+        'jo28' => ['billing', 'hmo', 'insurance claims', 'patient accounts', 'accounting'],
+        'jo29' => ['packing', 'produce', 'grading', 'harvest', 'hygiene', 'export'],
+        'jo30' => ['qa inspector', 'quality control', 'export-grade', 'agri', 'produce'],
+        'jo31' => ['logistics coordinator', 'container bookings', 'freight', 'export documentation'],
+        'jo32' => ['farm supervisor', 'harvest scheduling', 'field crews', 'agriculture'],
+        'jo33' => ['construction', 'laborer', 'material handling', 'masonry', 'site work'],
+        'jo34' => ['site engineer', 'autocad', 'civil engineering', 'inspections', 'plans'],
+        'jo35' => ['safety officer', 'bosh', 'ppe', 'oshs', 'hazard inspection'],
+        'jo36' => ['heavy equipment', 'backhoe', 'excavator', 'operator license', 'grading'],
+    ];
+
+    /**
+     * Compute AI match score based on Job Order keyword matching against applicant skills and work history.
+     */
+    private function computeAiScore(Applicant $applicant): int
+    {
+        $targetId = $applicant->target_job_id ?? 'jo1';
+        $keywords = self::JOB_KEYWORDS[$targetId] ?? [];
+        if (empty($keywords)) {
+            return 0;
+        }
+
+        $skills = $applicant->skills->pluck('name')->toArray();
+        $work = $applicant->workHistory->map(fn ($w) => "{$w->role} {$w->company}")->toArray();
+        $searchable = strtolower(implode(' ', array_merge($skills, $work)));
+
+        $matched = 0;
+        foreach ($keywords as $kw) {
+            if (str_contains($searchable, strtolower($kw))) {
+                $matched++;
+            }
+        }
+
+        return (int) round(($matched / count($keywords)) * 100);
     }
 
     /**
@@ -740,35 +806,93 @@ class ApplicantController extends Controller
                     'jobTitle' => $job?->title,
                     'client' => $job?->client,
                     'status' => $applicant->recruitment_stage ?? 'pooling',
-                    'score' => 70,
+                    'score' => $this->computeAiScore($applicant),
                     'applied' => $applicant->created_at->format('M d, Y'),
                     'experience' => $applicant->experience_summary ?: '—',
                     'location' => $applicant->city_address ?? '—',
+                    'phone' => $applicant->contact_number ?? '—',
+                    'email' => $applicant->email_address ?? '—',
                     'fromRegistration' => true,
                     'regId' => $applicant->reg_id,
+                    'skills' => $applicant->skills->map(fn ($s) => $s->name)->toArray(),
+                    'workHistory' => $applicant->workHistory->map(fn ($w) => [
+                        'role' => $w->role,
+                        'company' => $w->company,
+                        'duration' => $w->duration ?? '2022 – Present',
+                    ])->toArray(),
+                    'education' => $applicant->education->map(fn ($e) => [
+                        'level' => $e->level ?? 'College / Vocational',
+                        'school' => $e->school,
+                        'degree' => $e->degree ?? 'Technical Course',
+                        'years' => trim(($e->start_year ?? '') . ' – ' . ($e->end_year ?? '')),
+                    ])->toArray(),
+                    'documents' => $applicant->documents->map(fn ($d) => [
+                        'name' => $d->type ?: 'Document',
+                        'fileName' => $d->name ?: 'verified_doc.pdf',
+                        'uploadedAt' => $d->created_at ? $d->created_at->format('M d, Y') : 'Aug 14, 2026',
+                        'verified' => true,
+                    ])->toArray(),
                     'breakdown' => [
-                        'skills' => 70,
-                        'experience' => 70,
-                        'screening' => 70,
-                        'availability' => 70,
+                        'skills' => min($applicant->skills->count() * 8, 25) * 4,
+                        'experience' => min($applicant->workHistory->count() * 12, 25) * 4,
+                        'screening' => min($applicant->education->count() * 12, 25) * 4,
+                        'availability' => min($applicant->documents->count() * 8, 25) * 4,
                     ],
-                    'interview' => null,
+                    'interview' => $applicant->interview_schedule,
                     'notes' => $applicant->history->map(fn ($h) => [
                         'text' => $h->text,
                         'meta' => 'System · ' . $h->created_at->format('M d, Y'),
                     ])->toArray(),
-                    'checklist' => [
+                    'checklist' => $applicant->screening_checklist ?? [
                         'requirements' => false,
                         'identity' => false,
                         'history' => false,
                         'reference' => false,
                     ],
-                    'docStatus' => [
+                    'docStatus' => $applicant->document_status ?? [
                         'resume' => false,
                         'certificate' => false,
                         'portfolio' => false,
                     ],
-                    'recruiterRating' => 0,
+                    'recruiterRating' => $applicant->recruiter_rating ?? 0,
+                    'assignedManager' => $applicant->assigned_manager ?? 'Area Manager 1 (North NCR)',
+                    'interviewPlatform' => $applicant->interview_platform ?? 'Zoom Meeting',
+                    'clientEndorsementStatus' => $applicant->client_endorsement_status ?? 'Pending Review',
+                    'preEmploymentChecklist' => $applicant->pre_employment_checklist ?? [
+                        'medical_exam' => false,
+                        'nbi_clearance' => false,
+                        'sss_document' => false,
+                        'philhealth_mdr' => false,
+                        'pagibig_mid' => false,
+                        'bir_tin' => false,
+                        'psa_birth_cert' => false,
+                    ],
+                    'medicalReferral' => $applicant->medical_referral ?? null,
+                    'statutoryNumbers' => $applicant->statutory_numbers ?? [
+                        'sss' => '',
+                        'philhealth' => '',
+                        'pagibig' => '',
+                        'tin' => '',
+                    ],
+                    'employmentContract' => $applicant->employment_contract ?? null,
+                    'orientationModules' => $applicant->orientation_modules ?? [
+                        'module1' => false,
+                        'module2' => false,
+                        'module3' => false,
+                        'module4' => false,
+                        'module5' => false,
+                    ],
+                    'atmEndorsement' => $applicant->atm_endorsement ?? null,
+                    'deploymentDetails' => $applicant->deployment_details ?? null,
+                    'ppeIssuance' => $applicant->ppe_issuance ?? [
+                        'uniformShirt' => false,
+                        'shirtSize' => 'L',
+                        'safetyShoes' => false,
+                        'shoeSize' => '42',
+                        'safetyVest' => false,
+                        'idBadge' => false,
+                        'whistleKit' => false,
+                    ],
                 ];
             });
 
@@ -778,18 +902,232 @@ class ApplicantController extends Controller
     public function updateRecruitmentStage(string $id, Request $request): JsonResponse
     {
         $request->validate([
-            'recruitment_stage' => 'required|string|in:pooling,area_manager,client_interview,hr_requirements,contract_signing,for_deployment,re_pooling',
+            'recruitment_stage' => 'nullable|string|in:pooling,area_manager,client_interview,hr_requirements,contract_signing,for_deployment,re_pooling',
             'status' => 'nullable|string|in:active,inactive,on_hold,hired,rejected,withdrawn,blacklisted',
+            'screening_checklist' => 'nullable|array',
+            'document_status' => 'nullable|array',
+            'recruiter_rating' => 'nullable|integer|min:0|max:5',
+            'assigned_manager' => 'nullable|string|max:255',
+            'interview_platform' => 'nullable|string|max:255',
+            'client_endorsement_status' => 'nullable|string|max:255',
+            'pre_employment_checklist' => 'nullable|array',
+            'medical_referral' => 'nullable|array',
+            'statutory_numbers' => 'nullable|array',
+            'employment_contract' => 'nullable|array',
+            'orientation_modules' => 'nullable|array',
+            'atm_endorsement' => 'nullable|array',
+            'deployment_details' => 'nullable|array',
+            'ppe_issuance' => 'nullable|array',
         ]);
 
-        $applicant = Applicant::where('id', $id)->firstOrFail();
+        $cleanId = preg_replace('/^cand-/', '', $id);
+        $applicant = Applicant::where('id', is_numeric($cleanId) ? (int)$cleanId : 0)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->orWhere('reg_id', $cleanId)
+            ->orWhere('reg_id', $id)
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$cleanId])
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$id])
+            ->first();
+        if (!$applicant) {
+            return response()->json(['ok' => false, 'message' => 'Applicant not found.'], 404);
+        }
 
-        $applicant->update([
-            'recruitment_stage' => $request->recruitment_stage,
-            'status' => $request->status ?? $applicant->status,
+        $updates = [];
+        if ($request->has('recruitment_stage')) {
+            $updates['recruitment_stage'] = $request->recruitment_stage;
+        }
+        if ($request->has('status')) {
+            $updates['status'] = $request->status;
+        }
+        if ($request->has('screening_checklist')) {
+            $updates['screening_checklist'] = $request->screening_checklist;
+        }
+        if ($request->has('document_status')) {
+            $updates['document_status'] = $request->document_status;
+        }
+        if ($request->has('recruiter_rating')) {
+            $updates['recruiter_rating'] = $request->recruiter_rating;
+        }
+        if ($request->has('assigned_manager')) {
+            $updates['assigned_manager'] = $request->assigned_manager;
+        }
+        if ($request->has('interview_platform')) {
+            $updates['interview_platform'] = $request->interview_platform;
+        }
+        if ($request->has('client_endorsement_status')) {
+            $updates['client_endorsement_status'] = $request->client_endorsement_status;
+        }
+        if ($request->has('pre_employment_checklist')) {
+            $updates['pre_employment_checklist'] = $request->pre_employment_checklist;
+        }
+        if ($request->has('medical_referral')) {
+            $updates['medical_referral'] = $request->medical_referral;
+        }
+        if ($request->has('statutory_numbers')) {
+            $updates['statutory_numbers'] = $request->statutory_numbers;
+        }
+        if ($request->has('employment_contract')) {
+            $updates['employment_contract'] = $request->employment_contract;
+        }
+        if ($request->has('orientation_modules')) {
+            $updates['orientation_modules'] = $request->orientation_modules;
+        }
+        if ($request->has('atm_endorsement')) {
+            $updates['atm_endorsement'] = $request->atm_endorsement;
+        }
+        if ($request->has('deployment_details')) {
+            $updates['deployment_details'] = $request->deployment_details;
+        }
+        if ($request->has('ppe_issuance')) {
+            $updates['ppe_issuance'] = $request->ppe_issuance;
+        }
+
+        if (!empty($updates)) {
+            $applicant->update($updates);
+        }
+
+        if ($request->filled('recruitment_stage')) {
+            $this->logHistory($applicant, "Recruitment stage updated to: {$request->recruitment_stage}");
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updateRecruitmentScreening(string $id, Request $request): JsonResponse
+    {
+        $cleanId = preg_replace('/^cand-/', '', $id);
+        $applicant = Applicant::where('id', is_numeric($cleanId) ? (int)$cleanId : 0)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->orWhere('reg_id', $cleanId)
+            ->orWhere('reg_id', $id)
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$cleanId])
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$id])
+            ->first();
+        if (!$applicant) {
+            return response()->json(['ok' => false, 'message' => 'Applicant not found.'], 404);
+        }
+
+        $updates = [];
+        if ($request->has('pre_employment_checklist')) {
+            $updates['pre_employment_checklist'] = $request->pre_employment_checklist;
+        } elseif ($request->has('preEmploymentChecklist')) {
+            $updates['pre_employment_checklist'] = $request->preEmploymentChecklist;
+        }
+        if ($request->has('medical_referral')) {
+            $updates['medical_referral'] = $request->medical_referral;
+        } elseif ($request->has('medicalReferral')) {
+            $updates['medical_referral'] = $request->medicalReferral;
+        }
+        if ($request->has('statutory_numbers')) {
+            $updates['statutory_numbers'] = $request->statutory_numbers;
+        } elseif ($request->has('statutoryNumbers')) {
+            $updates['statutory_numbers'] = $request->statutoryNumbers;
+        }
+        if ($request->has('employment_contract')) {
+            $updates['employment_contract'] = $request->employment_contract;
+        } elseif ($request->has('employmentContract')) {
+            $updates['employment_contract'] = $request->employmentContract;
+        }
+        if ($request->has('orientation_modules')) {
+            $updates['orientation_modules'] = $request->orientation_modules;
+        } elseif ($request->has('orientationModules')) {
+            $updates['orientation_modules'] = $request->orientationModules;
+        }
+        if ($request->has('atm_endorsement')) {
+            $updates['atm_endorsement'] = $request->atm_endorsement;
+        } elseif ($request->has('atmEndorsement')) {
+            $updates['atm_endorsement'] = $request->atmEndorsement;
+        }
+        if ($request->has('deployment_details')) {
+            $updates['deployment_details'] = $request->deployment_details;
+        } elseif ($request->has('deploymentDetails')) {
+            $updates['deployment_details'] = $request->deploymentDetails;
+        }
+        if ($request->has('ppe_issuance')) {
+            $updates['ppe_issuance'] = $request->ppe_issuance;
+        } elseif ($request->has('ppeIssuance')) {
+            $updates['ppe_issuance'] = $request->ppeIssuance;
+        }
+        if ($request->has('screening_checklist')) {
+            $updates['screening_checklist'] = $request->screening_checklist;
+        } elseif ($request->has('checklist')) {
+            $updates['screening_checklist'] = $request->checklist;
+        }
+        if ($request->has('document_status')) {
+            $updates['document_status'] = $request->document_status;
+        } elseif ($request->has('docStatus')) {
+            $updates['document_status'] = $request->docStatus;
+        }
+        if ($request->has('recruiter_rating')) {
+            $updates['recruiter_rating'] = $request->recruiter_rating;
+        } elseif ($request->has('recruiterRating')) {
+            $updates['recruiter_rating'] = $request->recruiterRating;
+        }
+        if ($request->has('assigned_manager')) {
+            $updates['assigned_manager'] = $request->assigned_manager;
+        } elseif ($request->has('assignedManager')) {
+            $updates['assigned_manager'] = $request->assignedManager;
+        }
+        if ($request->has('interview_platform')) {
+            $updates['interview_platform'] = $request->interview_platform;
+        } elseif ($request->has('interviewPlatform')) {
+            $updates['interview_platform'] = $request->interviewPlatform;
+        }
+        if ($request->has('client_endorsement_status')) {
+            $updates['client_endorsement_status'] = $request->client_endorsement_status;
+        }
+
+        if (!empty($updates)) {
+            $applicant->update($updates);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updateClientEndorsementStatus(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'client_endorsement_status' => 'required|string',
+            'interview_schedule' => 'nullable|array',
         ]);
 
-        $this->logHistory($applicant, "Recruitment stage updated to: {$request->recruitment_stage}");
+        $cleanId = preg_replace('/^cand-/', '', $id);
+        $applicant = Applicant::where('id', is_numeric($cleanId) ? (int)$cleanId : 0)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->orWhere('reg_id', $cleanId)
+            ->orWhere('reg_id', $id)
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$cleanId])
+            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$id])
+            ->first();
+        if (!$applicant) {
+            return response()->json(['ok' => false, 'message' => 'Applicant not found.'], 404);
+        }
+
+        $status = $request->client_endorsement_status;
+        $updates = ['client_endorsement_status' => $status];
+
+        if ($request->has('interview_schedule')) {
+            $updates['interview_schedule'] = $request->interview_schedule;
+        }
+
+        if ($status === 'Passed Interview') {
+            $updates['recruitment_stage'] = 'hr_requirements';
+            $applicant->update($updates);
+            $this->logHistory($applicant, 'Candidate PASSED Client Final Interview. Pipeline stage advanced to HR Requirements & Contract Signing.');
+        } elseif ($status === 'Declined') {
+            $updates['recruitment_stage'] = 're_pooling';
+            $applicant->update($updates);
+            $this->logHistory($applicant, 'Candidate DECLINED by Client in Client Portal. Automatically returned to Re-Pooling for line up to other client job orders.');
+        } elseif ($status === 'Accepted for Interview' && $request->filled('interview_schedule')) {
+            $sched = $request->interview_schedule;
+            $dt = ($sched['date'] ?? '') . ' at ' . ($sched['time'] ?? '');
+            $mode = $sched['mode'] ?? 'Zoom Video Meeting';
+            $applicant->update($updates);
+            $this->logHistory($applicant, "Client accepted candidate. Final interview scheduled on {$dt} via {$mode}.");
+        } else {
+            $applicant->update($updates);
+            $this->logHistory($applicant, "Client endorsement status updated to: {$status}");
+        }
 
         return response()->json(['ok' => true]);
     }

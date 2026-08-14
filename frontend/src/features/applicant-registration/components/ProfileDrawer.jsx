@@ -203,7 +203,7 @@ export default function ProfileDrawer({ regId, onClose }) {
                   <div className="stage-btn-row">
                     <a
                       className="stage-btn go"
-                      href="/recruitment"
+                      href="/recruitment-selection"
                       style={{ textDecoration: 'none', display: 'inline-block' }}
                     >
                       Open in Recruitment & Selection

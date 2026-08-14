@@ -5,11 +5,11 @@ export function initials(name) {
 }
 
 export function scoreClass(score) {
-  return score >= 80 ? 'high' : score >= 60 ? 'mid' : 'low';
+  return score >= 70 ? 'high' : score >= 40 ? 'mid' : 'low';
 }
 
 export function scoreColor(score) {
-  return score >= 80 ? 'var(--green)' : score >= 60 ? 'var(--amber)' : 'var(--red)';
+  return score >= 70 ? 'var(--green)' : score >= 40 ? 'var(--amber)' : 'var(--muted)';
 }
 
 export function formatDate(date) {

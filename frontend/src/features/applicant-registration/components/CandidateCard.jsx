@@ -1,18 +1,24 @@
-import { initials, targetById, STATUS_META } from '../services/ApplicantRegistrationService';
+import { initials, targetById, STATUS_META, computeMatchScore } from '../services/ApplicantRegistrationService';
 
 export default function CandidateCard({ candidate, onOpen }) {
   const job = targetById(candidate.targetJobId);
   const statusMeta = STATUS_META[candidate.status] || STATUS_META.active;
   const showStatusFlag = candidate.status !== 'active';
+  const aiScore = candidate.aiScore ?? (job ? computeMatchScore(candidate, job) : null);
+  const scoreClass = aiScore != null ? (aiScore >= 70 ? 'high' : aiScore >= 40 ? 'mid' : 'low') : '';
 
   return (
     <div className="cand-card" onClick={() => onOpen(candidate.regId)}>
       <div className="cand-top">
         <div className="cand-avatar">{initials(candidate.name)}</div>
         <div className="cand-name">{candidate.name}</div>
-        <div className="cand-skill-count">
-          {candidate.skills.length} skill{candidate.skills.length === 1 ? '' : 's'}
-        </div>
+        {aiScore != null ? (
+          <div className={`score-badge ${scoreClass}`}>{aiScore}%</div>
+        ) : (
+          <div className="cand-skill-count">
+            {candidate.skills.length} skill{candidate.skills.length === 1 ? '' : 's'}
+          </div>
+        )}
       </div>
       <div className="cand-job">
         <svg className="icon" viewBox="0 0 24 24">

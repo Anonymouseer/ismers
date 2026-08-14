@@ -47,6 +47,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/applicants/{regId}/send-to-recruitment', [ApplicantController::class, 'sendToRecruitment']);
     Route::get('/recruitment/applications', [ApplicantController::class, 'recruitmentApplications']);
     Route::patch('/applicants/{id}/recruitment-stage', [ApplicantController::class, 'updateRecruitmentStage']);
+    Route::patch('/applicants/{id}/recruitment-screening', [ApplicantController::class, 'updateRecruitmentScreening']);
+    Route::patch('/applicants/{id}/client-endorsement-status', [ApplicantController::class, 'updateClientEndorsementStatus']);
 
     // ── Client Portal Auth ──
     Route::prefix('client-portal')->group(function () {

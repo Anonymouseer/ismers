@@ -7,6 +7,9 @@ import ClientPortalSuccessToast from '../components/ClientPortalSuccessToast';
 import ClientPortalSummaryCards from '../components/ClientPortalSummaryCards';
 import ClientPortalDashboardSidebar from '../components/ClientPortalDashboardSidebar';
 import ClientPortalSettingsPage from './ClientPortalSettingsPage';
+import ClientCandidateModal from '../components/ClientCandidateModal';
+import ClientScheduleInterviewModal from '../components/ClientScheduleInterviewModal';
+import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import './ClientPortalPage.css';
 
 
@@ -252,6 +255,9 @@ export default function ClientPortalPage() {
   const [endorsedCandidates, setEndorsedCandidates] = useState(MOCK_ENDORSED_CANDIDATES);
   const [deployedRoster, setDeployedRoster] = useState(MOCK_DEPLOYED_ROSTER);
   const [endorsementFilter, setEndorsementFilter] = useState('ALL');
+  const [endorsementSearch, setEndorsementSearch] = useState('');
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [schedulingCandidate, setSchedulingCandidate] = useState(null);
   const [rosterSearch, setRosterSearch] = useState('');
   const [rosterStatusFilter, setRosterStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -398,18 +404,347 @@ export default function ClientPortalPage() {
     }, 400);
   };
 
-  const handleAcceptCandidate = (candId) => {
+  useEffect(() => {
+    // 1. Initial Session Load
+    const rawSession = localStorage.getItem('cp_session');
+    if (rawSession) {
+      try {
+        setSession(JSON.parse(rawSession));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // 2. Fetch candidates & synchronize endorsements
+    fetch('http://localhost:8000/api/v1/recruitment/applications')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((dbApps) => {
+        if (dbApps && dbApps.length > 0) {
+          const clientCandidates = dbApps
+            .filter((a) => a.status === 'client_interview' || a.status === 'hr_requirements' || a.status === 're_pooling')
+            .map((a) => {
+              const cpStatus =
+                a.status === 're_pooling' && (!a.clientEndorsementStatus || a.clientEndorsementStatus === 'Pending Review')
+                  ? 'Declined'
+                  : a.clientEndorsementStatus ||
+                    localStorage.getItem(`cp_endorsement_${a.name}`) ||
+                    localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
+                    'Pending Review';
+
+              return {
+                id: `cand-${a.id}`,
+                dbId: a.id,
+                regId: a.regId,
+                name: a.name,
+                position: a.jobTitle || 'Operations Candidate',
+                jobRef: a.jobId ? `PRF-2026-${String(a.jobId).padStart(4, '0')}` : 'PRF-2026-0081',
+                matchScore: a.score || 88,
+                experience: a.experience || '3 years relevant industry experience',
+                skills: ['Technical Proficiency', 'Communications', 'Operations Protocol'],
+                endorsedDate: a.applied || 'Aug 14, 2026',
+                status: cpStatus,
+                recruiter: 'M. Dela Cruz (Lead Recruiter)',
+              };
+            });
+
+          if (clientCandidates.length > 0) {
+            setEndorsedCandidates((prev) => {
+              const existingMap = new Map(prev.map((c) => [c.name, c]));
+              clientCandidates.forEach((c) => {
+                existingMap.set(c.name, { ...(existingMap.get(c.name) || {}), ...c });
+              });
+              return Array.from(existingMap.values());
+            });
+          }
+        }
+      })
+      .catch(() => {});
+
+    // 3. Realtime Cross-Tab and Subsystem Synchronization
+    const handleSync = (data) => {
+      if (!data) return;
+
+      if (data.type === 'ENDORSEMENT_STATUS_CHANGED' || (data.type === 'STAGE_CHANGED' && data.payload?.stage === 'client_interview')) {
+        const { candidateId, dbId, regId, name, status, stage, applicant, candidate } = data.payload || {};
+        const cleanCandId = candidateId ? String(candidateId).replace(/^cand-/, '') : '';
+        const candName = name || applicant?.name || candidate?.name;
+        const resolvedStatus = status || 'Pending Review';
+
+        setEndorsedCandidates((prev) => {
+          const index = prev.findIndex(
+            (c) =>
+              (dbId && String(c.dbId) === String(dbId)) ||
+              (regId && c.regId && c.regId.toLowerCase() === regId.toLowerCase()) ||
+              (candName && c.name && c.name.toLowerCase().trim() === candName.toLowerCase().trim()) ||
+              (cleanCandId && (String(c.dbId) === cleanCandId || c.id === candidateId || c.id === `cand-${cleanCandId}`))
+          );
+
+          if (index !== -1) {
+            const copy = [...prev];
+            copy[index] = { ...copy[index], status: resolvedStatus };
+            return copy;
+          }
+
+          // If new candidate endorsed to Client Portal (0ms instant addition)
+          const newCand = candidate || {
+            id: candidateId ? (String(candidateId).startsWith('cand-') ? candidateId : `cand-${candidateId}`) : `cand-${dbId || Date.now()}`,
+            dbId: dbId || candidateId,
+            regId: regId || applicant?.regId,
+            name: candName || 'Candidate',
+            position: applicant?.jobTitle || 'Operations Candidate',
+            jobRef: applicant?.jobId ? `PRF-2026-${String(applicant.jobId).padStart(4, '0')}` : 'PRF-2026-0081',
+            matchScore: applicant?.score || 88,
+            experience: applicant?.experience || '3 years relevant industry experience',
+            skills: ['Technical Proficiency', 'Communications', 'Operations Protocol'],
+            endorsedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+            status: resolvedStatus,
+            recruiter: 'M. Dela Cruz (Lead Recruiter)',
+          };
+
+          return [newCand, ...prev];
+        });
+
+        setSelectedCandidate((prev) => {
+          if (!prev) return prev;
+          const matches =
+            (dbId && String(prev.dbId) === String(dbId)) ||
+            (regId && prev.regId && prev.regId.toLowerCase() === regId.toLowerCase()) ||
+            (candName && prev.name && prev.name.toLowerCase().trim() === candName.toLowerCase().trim()) ||
+            (cleanCandId && (String(prev.dbId) === cleanCandId || prev.id === candidateId || prev.id === `cand-${cleanCandId}`));
+          return matches ? { ...prev, status: resolvedStatus } : prev;
+        });
+      } else if (data.type === 'STAGE_CHANGED') {
+        const { candidateId, dbId, regId, name, stage } = data.payload || {};
+        const cleanCandId = candidateId ? String(candidateId).replace(/^cand-/, '') : '';
+
+        if (stage === 'pooling' || stage === 'area_manager') {
+          setEndorsedCandidates((prev) =>
+            prev.map((c) => {
+              const matches =
+                (dbId && String(c.dbId) === String(dbId)) ||
+                (regId && c.regId && c.regId.toLowerCase() === regId.toLowerCase()) ||
+                (name && c.name && c.name.toLowerCase().trim() === name.toLowerCase().trim()) ||
+                (cleanCandId && (String(c.dbId) === cleanCandId || c.id === candidateId || c.id === `cand-${cleanCandId}`));
+              if (matches) {
+                return { ...c, status: 'Pending Review' };
+              }
+              return c;
+            })
+          );
+        }
+      }
+    };
+
+    const unsub = subscribeRealtimeEvents(handleSync);
+    return () => unsub();
+  }, []);
+
+  const handleEndorsementStatusChange = (candId, newStatus) => {
+    const targetCand = endorsedCandidates.find((c) => c.id === candId || c.dbId === candId || c.regId === candId || c.name === candId);
+
+    try {
+      localStorage.setItem(`cp_endorsement_${candId}`, newStatus);
+      if (targetCand?.id) localStorage.setItem(`cp_endorsement_${targetCand.id}`, newStatus);
+      if (targetCand?.dbId) {
+        localStorage.setItem(`cp_endorsement_cand-${targetCand.dbId}`, newStatus);
+        localStorage.setItem(`cp_endorsement_${targetCand.dbId}`, newStatus);
+      }
+      if (targetCand?.regId) {
+        localStorage.setItem(`cp_endorsement_cand-${targetCand.regId}`, newStatus);
+        localStorage.setItem(`cp_endorsement_${targetCand.regId}`, newStatus);
+      }
+      if (targetCand?.name) {
+        localStorage.setItem(`cp_endorsement_${targetCand.name}`, newStatus);
+      }
+
+      if (newStatus === 'Passed Interview') {
+        const nextStage = 'hr_requirements';
+        localStorage.setItem(`recruitment_stage_${candId}`, nextStage);
+        if (targetCand?.id) localStorage.setItem(`recruitment_stage_${targetCand.id}`, nextStage);
+        if (targetCand?.dbId) localStorage.setItem(`recruitment_stage_${targetCand.dbId}`, nextStage);
+        if (targetCand?.regId) localStorage.setItem(`recruitment_stage_${targetCand.regId}`, nextStage);
+        if (targetCand?.name) localStorage.setItem(`recruitment_stage_${targetCand.name}`, nextStage);
+      } else if (newStatus === 'Declined') {
+        const nextStage = 're_pooling';
+        localStorage.setItem(`recruitment_stage_${candId}`, nextStage);
+        if (targetCand?.id) localStorage.setItem(`recruitment_stage_${targetCand.id}`, nextStage);
+        if (targetCand?.dbId) localStorage.setItem(`recruitment_stage_${targetCand.dbId}`, nextStage);
+        if (targetCand?.regId) localStorage.setItem(`recruitment_stage_${targetCand.regId}`, nextStage);
+        if (targetCand?.name) localStorage.setItem(`recruitment_stage_${targetCand.name}`, nextStage);
+      }
+
+      // Also update recruitment cached applications in localStorage
+      const cachedRec = localStorage.getItem('ismers_recruitment_applications');
+      if (cachedRec) {
+        try {
+          const parsed = JSON.parse(cachedRec);
+          const updated = parsed.map((a) => {
+            const isMatch =
+              a.id === candId ||
+              a.regId === candId ||
+              a.name === candId ||
+              (targetCand?.dbId && a.id === `cand-${targetCand.dbId}`) ||
+              (targetCand?.regId && a.regId === targetCand.regId) ||
+              (targetCand?.name && a.name === targetCand.name);
+            if (isMatch) {
+              return {
+                ...a,
+                clientEndorsementStatus: newStatus,
+                status: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : a.status,
+              };
+            }
+            return a;
+          });
+          localStorage.setItem('ismers_recruitment_applications', JSON.stringify(updated));
+        } catch (e) {
+          console.warn('Could not update cached recruitment applications:', e);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not save endorsement status locally:', err);
+    }
+
     setEndorsedCandidates((prev) =>
-      prev.map((c) => (c.id === candId ? { ...c, status: 'Accepted for Interview' } : c))
+      prev.map((c) =>
+        c.id === candId || c.dbId === candId || c.regId === candId || c.name === candId
+          ? { ...c, status: newStatus }
+          : c
+      )
     );
-    setSuccessBanner('Candidate accepted for interview. Notification sent to recruiter.');
+
+    setSelectedCandidate((prev) =>
+      prev && (prev.id === candId || prev.dbId === candId || prev.regId === candId || prev.name === candId)
+        ? { ...prev, status: newStatus }
+        : prev
+    );
+
+    // 0ms instant broadcast across all tabs and windows
+    broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
+      candidateId: candId,
+      dbId: targetCand?.dbId,
+      regId: targetCand?.regId,
+      name: targetCand?.name,
+      status: newStatus,
+      stage: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : undefined,
+    });
+
+    const lookupKey = targetCand?.name || targetCand?.regId || targetCand?.dbId || String(candId).replace(/^cand-/, '');
+    fetch(`http://localhost:8000/api/v1/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ 
+        client_endorsement_status: newStatus,
+        stage: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : undefined
+      }),
+    }).catch((err) => {
+      console.warn('Could not sync endorsement status to backend:', err);
+    });
+
+    if (newStatus === 'Passed Interview') {
+      setSuccessBanner('Candidate passed final interview! Recruiter notified to initiate HR requirements & deployment.');
+    } else if (newStatus === 'Accepted for Interview') {
+      setSuccessBanner('Candidate accepted for client interview. Notification dispatched to recruiter.');
+    } else if (newStatus === 'Declined') {
+      setSuccessBanner('Candidate declined. Profile automatically returned to Re-Pooling for line up to other clients.');
+    } else {
+      setSuccessBanner(`Candidate endorsement status updated to ${newStatus}.`);
+    }
+  };
+
+  const handlePassCandidate = (candId) => {
+    handleEndorsementStatusChange(candId, 'Passed Interview');
+  };
+
+  const handleAcceptCandidate = (candId) => {
+    const targetCand = endorsedCandidates.find((c) => c.id === candId || c.dbId === candId || c.regId === candId || c.name === candId);
+    setSchedulingCandidate(targetCand || { id: candId, name: candId, position: 'Candidate', jobRef: 'PRF-2026' });
+  };
+
+  const handleConfirmInterviewSchedule = (candId, scheduleData) => {
+    const targetCand = endorsedCandidates.find((c) => c.id === candId || c.dbId === candId || c.regId === candId || c.name === candId);
+
+    try {
+      localStorage.setItem(`cp_endorsement_${candId}`, 'Accepted for Interview');
+      localStorage.setItem(`cp_interview_${candId}`, JSON.stringify(scheduleData));
+      if (targetCand?.id) {
+        localStorage.setItem(`cp_endorsement_${targetCand.id}`, 'Accepted for Interview');
+        localStorage.setItem(`cp_interview_${targetCand.id}`, JSON.stringify(scheduleData));
+      }
+      if (targetCand?.dbId) {
+        localStorage.setItem(`cp_endorsement_cand-${targetCand.dbId}`, 'Accepted for Interview');
+        localStorage.setItem(`cp_endorsement_${targetCand.dbId}`, 'Accepted for Interview');
+        localStorage.setItem(`cp_interview_${targetCand.dbId}`, JSON.stringify(scheduleData));
+      }
+      if (targetCand?.regId) {
+        localStorage.setItem(`cp_endorsement_cand-${targetCand.regId}`, 'Accepted for Interview');
+        localStorage.setItem(`cp_endorsement_${targetCand.regId}`, 'Accepted for Interview');
+        localStorage.setItem(`cp_interview_${targetCand.regId}`, JSON.stringify(scheduleData));
+      }
+      if (targetCand?.name) {
+        localStorage.setItem(`cp_endorsement_${targetCand.name}`, 'Accepted for Interview');
+        localStorage.setItem(`cp_interview_${targetCand.name}`, JSON.stringify(scheduleData));
+      }
+
+      // Also update recruitment cached applications in localStorage
+      const cachedRec = localStorage.getItem('ismers_recruitment_apps');
+      if (cachedRec) {
+        const parsed = JSON.parse(cachedRec);
+        const updated = parsed.map((a) => {
+          if (
+            (targetCand?.dbId && String(a.id) === String(targetCand.dbId)) ||
+            (targetCand?.regId && a.regId === targetCand.regId) ||
+            (targetCand?.name && a.name === targetCand.name) ||
+            String(a.id) === String(candId) ||
+            a.name === candId
+          ) {
+            return { ...a, clientEndorsementStatus: 'Accepted for Interview', interview: scheduleData };
+          }
+          return a;
+        });
+        localStorage.setItem('ismers_recruitment_apps', JSON.stringify(updated));
+      }
+    } catch {
+      // ignore
+    }
+
+    setEndorsedCandidates((prev) =>
+      prev.map((c) => (c.id === candId ? { ...c, status: 'Accepted for Interview', interview: scheduleData } : c))
+    );
+
+    setSelectedCandidate((prev) =>
+      prev && (prev.id === candId || prev.dbId === candId || prev.regId === candId || prev.name === candId)
+        ? { ...prev, status: 'Accepted for Interview', interview: scheduleData }
+        : prev
+    );
+
+    // 0ms instant broadcast across all tabs and windows
+    broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
+      candidateId: candId,
+      dbId: targetCand?.dbId,
+      regId: targetCand?.regId,
+      name: targetCand?.name,
+      status: 'Accepted for Interview',
+      interview: scheduleData,
+    });
+
+    const lookupKey = targetCand?.name || targetCand?.regId || targetCand?.dbId || String(candId).replace(/^cand-/, '');
+    fetch(`http://localhost:8000/api/v1/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        client_endorsement_status: 'Accepted for Interview',
+        interview_schedule: scheduleData,
+      }),
+    }).catch((err) => {
+      console.warn('Could not sync endorsement status to backend:', err);
+    });
+
+    setSchedulingCandidate(null);
+    setSuccessBanner(`Interview scheduled with ${targetCand?.name || 'candidate'} on ${scheduleData.date} at ${scheduleData.time} via ${scheduleData.mode}. Automated invites dispatched.`);
   };
 
   const handleDeclineCandidate = (candId) => {
-    setEndorsedCandidates((prev) =>
-      prev.map((c) => (c.id === candId ? { ...c, status: 'Declined' } : c))
-    );
-    setSuccessBanner('Candidate status updated to Declined.');
+    handleEndorsementStatusChange(candId, 'Declined');
   };
 
   const handleRenewRosterContract = (rosterId) => {
@@ -511,17 +846,124 @@ export default function ClientPortalPage() {
           }
         } else {
           // Fallback: load from localStorage cache if no account id
-          const storedJobs = localStorage.getItem(`cp_jobs_${parsed.email}`);
+          const storedJobs = localStorage.getItem(`cp_jobs_${parsed?.email}`);
           if (storedJobs && !cancelled) {
             setJobRequests(JSON.parse(storedJobs));
           }
+        }
+
+        // Load dynamic candidate endorsements from recruitment
+        try {
+          const recRes = await fetch('http://localhost:8000/api/v1/recruitment/applications');
+          if (recRes.ok) {
+            const apps = await recRes.json();
+            const endorsedStages = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired'];
+            const dynamicEndorsed = apps
+              .filter((a) => endorsedStages.includes(a.status))
+              .map((a) => {
+                const skillsArr = Array.isArray(a.skills) && a.skills.length > 0
+                  ? a.skills.map((s) => (typeof s === 'string' ? s : s.name))
+                  : ['BOSH Certified', 'PPE Compliance', 'Hazard Inspection', 'OSHS'];
+                return {
+                  id: `cand-${a.id || a.regId}`,
+                  dbId: a.id,
+                  regId: a.regId,
+                  name: a.name,
+                  position: a.jobTitle || 'Safety Officer',
+                  jobRef: a.jobId ? `PRF-2026-${String(a.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
+                  matchScore: a.score || 80,
+                  experience: a.experience || '4 years accredited safety officer in construction site projects',
+                  skills: skillsArr,
+                  workHistory: a.workHistory || [],
+                  education: a.education || [],
+                  documents: a.documents || [],
+                  breakdown: a.breakdown || null,
+                  phone: a.phone || null,
+                  email: a.email || null,
+                  endorsedDate: a.applied || 'Aug 14, 2026',
+                  status: (a.clientEndorsementStatus && a.clientEndorsementStatus !== 'Pending Review')
+                    ? a.clientEndorsementStatus
+                    : (localStorage.getItem(`cp_endorsement_${a.name}`) ||
+                       localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
+                       localStorage.getItem(`cp_endorsement_cand-${a.regId}`) ||
+                       localStorage.getItem(`cp_endorsement_${a.id}`) ||
+                       localStorage.getItem(`cp_endorsement_${a.regId}`) ||
+                       a.clientEndorsementStatus ||
+                       'Pending Review'),
+                  recruiter: a.assignedManager || 'PRIMEPOWER Recruitment',
+                  client: a.client,
+                };
+              });
+
+            if (!cancelled && dynamicEndorsed.length > 0) {
+              setEndorsedCandidates(() => {
+                const combined = [...dynamicEndorsed];
+                MOCK_ENDORSED_CANDIDATES.forEach((m) => {
+                  if (!combined.some((c) => c.name === m.name)) {
+                    combined.push(m);
+                  }
+                });
+                return combined;
+              });
+            }
+          }
+        } catch {
+          // Fallback to initial mock data
         }
       } catch {
         navigate('/client-portal/login', { replace: true });
       }
     };
     init();
-    return () => { cancelled = true; };
+
+    const handleSyncEvent = (evt) => {
+      const data = evt.data || evt.detail;
+      if (!data) return;
+
+      if (data.type === 'CANDIDATE_ENDORSED' || data.type === 'STAGE_CHANGED') {
+        const { applicant } = data.payload || {};
+        if (applicant) {
+          setEndorsedCandidates((prev) => {
+            if (prev.some((c) => c.name === applicant.name || (applicant.id && c.dbId === applicant.id))) {
+              return prev.map((c) => {
+                if (c.name === applicant.name || (applicant.id && c.dbId === applicant.id)) {
+                  return { ...c, status: applicant.clientEndorsementStatus || c.status };
+                }
+                return c;
+              });
+            }
+            const skillsArr = Array.isArray(applicant.skills) && applicant.skills.length > 0
+              ? applicant.skills.map((s) => (typeof s === 'string' ? s : s.name))
+              : ['BOSH Certified', 'PPE Compliance', 'Hazard Inspection', 'OSHS'];
+            return [
+              {
+                id: `cand-${applicant.id || applicant.regId || Date.now()}`,
+                dbId: applicant.id,
+                regId: applicant.regId,
+                name: applicant.name,
+                position: applicant.jobTitle || 'Safety Officer',
+                jobRef: applicant.jobId ? `PRF-2026-${String(applicant.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
+                matchScore: applicant.score || 80,
+                experience: applicant.experience || '4 years accredited safety officer in construction site projects',
+                skills: skillsArr,
+                endorsedDate: applicant.applied || new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                status: applicant.clientEndorsementStatus || 'Pending Review',
+                recruiter: applicant.assignedManager || 'PRIMEPOWER Recruitment',
+                client: applicant.client,
+              },
+              ...prev,
+            ];
+          });
+        }
+      }
+    };
+
+    const unsubscribe = subscribeRealtimeEvents(handleSyncEvent);
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [navigate]);
 
   const handleLogout = () => {
@@ -706,6 +1148,8 @@ export default function ClientPortalPage() {
           setSidebarCollapsed={setSidebarCollapsed}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          endorsementFilter={endorsementFilter}
+          setEndorsementFilter={setEndorsementFilter}
           jobRequests={jobRequests}
           endorsedCandidates={endorsedCandidates}
           deployedRoster={deployedRoster}
@@ -915,25 +1359,56 @@ export default function ClientPortalPage() {
               </div>
 
               <div className="client-portal-card client-portal-controls-card">
-                <div className="client-portal-status-pills">
-                  {['ALL', 'Pending Review', 'Accepted for Interview', 'Declined'].map((st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      className={`client-portal-pill ${endorsementFilter === st ? 'active' : ''}`}
-                      onClick={() => setEndorsementFilter(st)}
-                    >
-                      {st}
-                    </button>
-                  ))}
+                <div className="client-portal-search-wrap">
+                  <svg className="icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    className="client-portal-search-input"
+                    placeholder="Search endorsed candidates by name, position, or ref ID..."
+                    value={endorsementSearch}
+                    onChange={(e) => setEndorsementSearch(e.target.value)}
+                  />
+                </div>
+                <div className="client-portal-dropdown-filter-wrap">
+                  <label htmlFor="cp-endorsement-stage-filter" className="client-portal-filter-label">Endorsement Stage:</label>
+                  <select
+                    id="cp-endorsement-stage-filter"
+                    className="client-portal-filter-select"
+                    value={endorsementFilter}
+                    onChange={(e) => setEndorsementFilter(e.target.value)}
+                  >
+                    <option value="ALL">All Stages ({endorsedCandidates.length})</option>
+                    <option value="Pending Review">Pending Review ({endorsedCandidates.filter((c) => c.status === 'Pending Review').length})</option>
+                    <option value="Accepted for Interview">Accepted for Interview ({endorsedCandidates.filter((c) => c.status === 'Accepted for Interview').length})</option>
+                    <option value="Passed Interview">Passed Interview ({endorsedCandidates.filter((c) => c.status === 'Passed Interview' || c.status === 'Passed Client Interview' || c.status === 'Hired').length})</option>
+                    <option value="Declined">Declined ({endorsedCandidates.filter((c) => c.status === 'Declined').length})</option>
+                  </select>
                 </div>
               </div>
 
               <div className="client-portal-endorsement-grid">
                 {endorsedCandidates
-                  .filter((c) => endorsementFilter === 'ALL' || c.status === endorsementFilter)
+                  .filter((c) => {
+                    const matchesStatus = endorsementFilter === 'ALL' || c.status === endorsementFilter;
+                    const q = endorsementSearch.trim().toLowerCase();
+                    if (!q) return matchesStatus;
+                    const matchesSearch =
+                      (c.name && c.name.toLowerCase().includes(q)) ||
+                      (c.position && c.position.toLowerCase().includes(q)) ||
+                      (c.jobRef && c.jobRef.toLowerCase().includes(q)) ||
+                      (c.skills && c.skills.some((sk) => sk.toLowerCase().includes(q)));
+                    return matchesStatus && matchesSearch;
+                  })
                   .map((cand) => (
-                    <div key={cand.id} className="client-portal-card cp-endorsement-card">
+                    <div
+                      key={cand.id}
+                      className="client-portal-card cp-endorsement-card"
+                      onClick={() => setSelectedCandidate(cand)}
+                      title="Click to view full AI Profile & validated credentials"
+                    >
                       <div className="cp-endorsement-card-header">
                         <div className="cp-endorsement-avatar">{cand.name[0]}</div>
                         <div className="cp-endorsement-title-block">
@@ -960,30 +1435,102 @@ export default function ClientPortalPage() {
                         </div>
                         <div className="cp-endorsement-meta-row">
                           <span>Endorsed on {cand.endorsedDate} by {cand.recruiter}</span>
-                          <span className={`client-portal-badge ${cand.status === 'Accepted for Interview' ? 'client-portal-badge--filled' : cand.status === 'Declined' ? 'cp-badge--declined' : 'client-portal-badge--review'}`}>
+                          <span className={`client-portal-badge ${
+                            cand.status === 'Accepted for Interview'
+                              ? 'client-portal-badge--filled'
+                              : cand.status === 'Declined'
+                              ? 'cp-badge--declined'
+                              : 'client-portal-badge--review'
+                          }`}>
                             {cand.status}
                           </span>
                         </div>
                       </div>
 
-                      {cand.status === 'Pending Review' && (
-                        <div className="cp-endorsement-card-actions">
-                          <button
-                            type="button"
-                            className="cp-btn-decline"
-                            onClick={() => handleDeclineCandidate(cand.id)}
-                          >
-                            Decline Candidate
-                          </button>
-                          <button
-                            type="button"
-                            className="client-portal-btn-primary cp-btn-accept"
-                            onClick={() => handleAcceptCandidate(cand.id)}
-                          >
-                            Accept for Interview
-                          </button>
+                      <div className="cp-endorsement-card-footer" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          className="cp-card-review-btn"
+                          onClick={() => setSelectedCandidate(cand)}
+                        >
+                          <span>Review Full AI Profile &amp; Credentials</span>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                          </svg>
+                        </button>
+
+                        <div className="cp-endorsement-actions-row">
+                          {cand.status === 'Pending Review' && (
+                            <>
+                              <button
+                                type="button"
+                                className="cp-btn-decline"
+                                onClick={() => handleDeclineCandidate(cand.id)}
+                              >
+                                Decline
+                              </button>
+                              <button
+                                type="button"
+                                className="client-portal-btn-primary cp-btn-accept"
+                                onClick={() => handleAcceptCandidate(cand.id)}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                  <line x1="16" y1="2" x2="16" y2="6" />
+                                  <line x1="8" y1="2" x2="8" y2="6" />
+                                </svg>
+                                Accept &amp; Schedule
+                              </button>
+                            </>
+                          )}
+                          {cand.status === 'Accepted for Interview' && (
+                            <>
+                              <button
+                                type="button"
+                                className="cp-btn-decline"
+                                onClick={() => handleDeclineCandidate(cand.id)}
+                              >
+                                Decline
+                              </button>
+                              <button
+                                type="button"
+                                className="cp-btn-reschedule"
+                                onClick={() => handleAcceptCandidate(cand.id)}
+                              >
+                                Reschedule
+                              </button>
+                              <button
+                                type="button"
+                                className="client-portal-btn-primary cp-btn-pass"
+                                onClick={() => handlePassCandidate(cand.id)}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                Pass Candidate
+                              </button>
+                            </>
+                          )}
+                          {(cand.status === 'Passed Interview' || cand.status === 'Passed Client Interview' || cand.status === 'Hired') && (
+                            <div className="cp-passed-pill" style={{ width: '100%', justifyContent: 'center' }}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--green, #149e6e)' }}>
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              <span>Passed Client Final Interview &middot; Approved</span>
+                            </div>
+                          )}
+                          {cand.status === 'Declined' && (
+                            <button
+                              type="button"
+                              className="client-portal-btn-primary cp-btn-accept"
+                              style={{ width: '100%', justifyContent: 'center' }}
+                              onClick={() => handleAcceptCandidate(cand.id)}
+                            >
+                              Reopen &amp; Schedule Interview
+                            </button>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
               </div>
@@ -1273,6 +1820,28 @@ export default function ClientPortalPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── CANDIDATE PROFILE & AI MATCH DOSSIER MODAL ── */}
+      {selectedCandidate && (
+        <ClientCandidateModal
+          candidate={selectedCandidate}
+          onClose={() => setSelectedCandidate(null)}
+          onAccept={(candId) => handleAcceptCandidate(candId)}
+          onDecline={(candId) => handleDeclineCandidate(candId)}
+          onPass={(candId) => handlePassCandidate(candId)}
+          onReschedule={(candId) => handleAcceptCandidate(candId)}
+          onStatusChange={(candId, newStatus) => handleEndorsementStatusChange(candId, newStatus)}
+        />
+      )}
+
+      {/* ── AUTOMATIC INTERVIEW SCHEDULER MODAL ── */}
+      {schedulingCandidate && (
+        <ClientScheduleInterviewModal
+          candidate={schedulingCandidate}
+          onClose={() => setSchedulingCandidate(null)}
+          onConfirm={(scheduleData) => handleConfirmInterviewSchedule(schedulingCandidate.id, scheduleData)}
+        />
       )}
     </div>
   );

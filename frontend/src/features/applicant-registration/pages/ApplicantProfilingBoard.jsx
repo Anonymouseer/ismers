@@ -8,7 +8,7 @@ import RoleSwitcher from '../components/RoleSwitcher';
 import RegisterApplicantPage from './RegisterApplicantPage';
 import {
   COLUMN_ORDER, STAGE_META, STATUS_META, JOB_TARGETS, CATEGORIES, boardColumn,
-  hasPermission, targetById, initials,
+  hasPermission, targetById, initials, computeMatchScore,
 } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
 import './ApplicantRegistrationBoard.css';
@@ -246,6 +246,7 @@ export default function ApplicantProfilingBoard() {
                     <th>Applicant Name</th>
                     <th>Target Category</th>
                     <th>Assigned Job Order</th>
+                    {viewMode === 'sent' && <th>AI Score</th>}
                     <th>Status</th>
                     <th>Registered Date</th>
                     <th style={{ textAlign: 'right' }}>Actions</th>
@@ -255,6 +256,8 @@ export default function ApplicantProfilingBoard() {
                   {filtered.filter((c) => boardColumn(c) === viewMode).map((cand) => {
                     const job = targetById(cand.targetJobId);
                     const statusMeta = STATUS_META[cand.status] || STATUS_META.active;
+                    const aiScore = cand.aiScore ?? (job ? computeMatchScore(cand, job) : null);
+                    const scoreClass = aiScore != null ? (aiScore >= 70 ? 'high' : aiScore >= 40 ? 'mid' : 'low') : '';
                     return (
                       <tr key={cand.regId} onClick={() => setOpenRegId(cand.regId)} className="stage-table-row">
                         <td className="cell-regid">{cand.regId}</td>
@@ -280,6 +283,15 @@ export default function ApplicantProfilingBoard() {
                             <span className="table-unassigned">No target assigned</span>
                           )}
                         </td>
+                        {viewMode === 'sent' && (
+                          <td>
+                            {aiScore != null ? (
+                              <span className={`score-badge ${scoreClass}`}>{aiScore}%</span>
+                            ) : (
+                              <span className="table-unassigned">—</span>
+                            )}
+                          </td>
+                        )}
                         <td>
                           <span className="cand-status-flag" style={{ color: statusMeta.color }}>
                             <span className="dot" style={{ background: statusMeta.color }} />
