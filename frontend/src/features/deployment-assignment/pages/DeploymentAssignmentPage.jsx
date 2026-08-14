@@ -4,11 +4,10 @@ import ClientsDeploymentTable from '../components/ClientsDeploymentTable';
 import ClientDeploymentProfile from '../components/ClientDeploymentProfile';
 import ComplianceModal from '../components/ComplianceModal';
 import DeploymentSlipModal from '../components/DeploymentSlipModal';
-import RenewalModal from '../components/RenewalModal';
 import RecordDetailsModal from '../components/RecordDetailsModal';
 import NewDeploymentModal from '../components/NewDeploymentModal';
 import { useDeploymentAssignmentStore } from '../store/DeploymentAssignmentStore';
-import { JOB_ORDER_OPTIONS, daysLeft } from '../services/DeploymentAssignmentService';
+import { JOB_ORDER_OPTIONS } from '../services/DeploymentAssignmentService';
 import '../pages/DeploymentAssignmentPage.css';
 import '../../client-management/pages/ClientManagementPage.css';
 
@@ -20,7 +19,7 @@ export default function DeploymentAssignmentPage() {
   const [clientSearch, setClientSearch] = useState('');
   const [clientStatusFilter, setClientStatusFilter] = useState('all');
 
-  // Active focused modal: null | 'compliance' | 'slip' | 'renewal' | 'details'
+  // Active focused modal: null | 'compliance' | 'slip' | 'details'
   const [activeModal, setActiveModal] = useState(null);
   const [activeRecordId, setActiveRecordId] = useState(null);
 
@@ -31,26 +30,25 @@ export default function DeploymentAssignmentPage() {
     setModalOpen,
     setStage,
     toggleRequirement,
-    extendContract,
     addDeployment,
   } = useDeploymentAssignmentStore();
 
   // Aggregate Client list with deployment stats
   const clientDeploymentList = useMemo(() => {
     const defaultClients = [
-      { name: 'ABC Logistics', industry: 'Warehousing & Logistics', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Karla Reyes', supervisorContact: '+63 917 555 1234', renewal: 'Sep 30, 2026' },
-      { name: 'Seda Vertis North', industry: 'Hospitality & Hotels', site: 'Vertis North, Quezon City', supervisor: 'Cecille Lim', supervisorContact: '+63 917 555 0192', renewal: 'Oct 03, 2026' },
-      { name: 'Vikings Luxury Buffet', industry: 'Food & Beverage', site: 'SM Mall of Asia, Pasay City', supervisor: 'Marco Santos', supervisorContact: '+63 918 333 4455', renewal: 'Nov 15, 2026' },
-      { name: 'City Garden Hotel', industry: 'Hospitality & Lodging', site: 'P Burgos St, Makati City', supervisor: 'Dennis Ocampo', supervisorContact: '+63 917 444 8899', renewal: 'Oct 05, 2026' },
-      { name: 'Y2 Hotel Residence', industry: 'Hospitality & Suites', site: 'Makati Avenue, Makati City', supervisor: 'Jasmine Uy', supervisorContact: '+63 920 111 2233', renewal: 'Dec 01, 2026' },
-      { name: 'Delta Manufacturing', industry: 'Manufacturing & Industrial', site: 'Caloocan Industrial Estate', supervisor: 'Manuel Sy', supervisorContact: '+63 919 777 6655', renewal: 'Aug 05, 2026' },
-      { name: 'Northline BPO', industry: 'Business Process Outsourcing', site: 'Ayala Ave, Makati City', supervisor: 'Cynthia Soriano', supervisorContact: '+63 917 888 9900', renewal: 'Nov 15, 2026' },
+      { name: 'ABC Logistics', industry: 'Warehousing & Logistics', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Karla Reyes', supervisorContact: '+63 917 555 1234' },
+      { name: 'Seda Vertis North', industry: 'Hospitality & Hotels', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim', supervisorContact: '+63 917 555 0192' },
+      { name: 'Vikings Luxury Buffet', industry: 'Food & Beverage', site: 'SM Mall of Asia, Seaside Blvd, Pasay City', supervisor: 'Marco Santos', supervisorContact: '+63 918 333 4455' },
+      { name: 'City Garden Hotel', industry: 'Hospitality & Lodging', site: 'P. Burgos cor. Makati Ave, Makati City', supervisor: 'Dennis Ocampo', supervisorContact: '+63 917 444 8899' },
+      { name: 'Y2 Hotel Residence', industry: 'Hospitality & Suites', site: 'Santiago cor. Valdez St, Makati City', supervisor: 'Jasmine Uy', supervisorContact: '+63 920 111 2233' },
+      { name: 'Delta Manufacturing', industry: 'Manufacturing & Industrial', site: 'Caloocan Industrial Estate, Metro Manila', supervisor: 'Manuel Sy', supervisorContact: '+63 919 777 6655' },
+      { name: 'Northline BPO', industry: 'Business Process Outsourcing', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano', supervisorContact: '+63 917 888 9900' },
     ];
 
     return defaultClients.map((c) => {
       const assignedStaff = deployments.filter((d) => d.client === c.name);
       const joList = JOB_ORDER_OPTIONS.filter((j) => j.client === c.name);
-      const activeOnSite = assignedStaff.filter((d) => d.stage === 'on_site' || d.stage === 'for_renewal').length;
+      const activeOnSite = assignedStaff.filter((d) => d.stage === 'on_site').length;
 
       return {
         ...c,
@@ -72,13 +70,8 @@ export default function DeploymentAssignmentPage() {
         c.industry.toLowerCase().includes(q) ||
         c.site.toLowerCase().includes(q);
 
-      const days = daysLeft(c.renewal);
-      const isExpiring = days <= 90;
-
       let matchesStatus = true;
-      if (clientStatusFilter === 'expiring') {
-        matchesStatus = isExpiring;
-      } else if (clientStatusFilter === 'active') {
+      if (clientStatusFilter === 'active') {
         matchesStatus = c.status === 'active';
       }
 
@@ -105,11 +98,6 @@ export default function DeploymentAssignmentPage() {
     setActiveModal('slip');
   }
 
-  function handleOpenRenewal(id) {
-    setActiveRecordId(id);
-    setActiveModal('renewal');
-  }
-
   function handleOpenDetails(id) {
     setActiveRecordId(id);
     setActiveModal('details');
@@ -130,7 +118,7 @@ export default function DeploymentAssignmentPage() {
             </div>
             <h1 className="page-title">Deployment &amp; Assignment</h1>
             <div className="page-sub">
-              {stats.total} personnel assigned &nbsp;·&nbsp; {clientDeploymentList.length} client accounts &nbsp;·&nbsp; Client-First Staffing Hierarchy
+              {stats.total} personnel assigned &nbsp;·&nbsp; {clientDeploymentList.length} client accounts &nbsp;·&nbsp; Deployment &amp; Site Tracking
             </div>
           </div>
 
@@ -160,10 +148,10 @@ export default function DeploymentAssignmentPage() {
               >
                 <div>
                   <div className="panel-title" style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>
-                    Client Accounts
+                    Client Accounts &amp; Deployment Directory
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--muted-fg)', marginTop: 2 }}>
-                    Select a client to view their Job Orders and assigned Deployed Personnel
+                    Select a client account to view active Job Orders, site facilities, and assigned personnel
                   </div>
                 </div>
 
@@ -172,7 +160,7 @@ export default function DeploymentAssignmentPage() {
                 </span>
               </div>
 
-              {/* FILTER BAR MATCHING CLIENT MANAGEMENT */}
+              {/* FILTER BAR */}
               <div
                 className="filter-bar"
                 style={{
@@ -200,7 +188,7 @@ export default function DeploymentAssignmentPage() {
                   <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: 'var(--muted-fg)' }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
                   <input
                     type="text"
-                    placeholder="Search clients, industry, or site..."
+                    placeholder="Search client, industry, or facility site..."
                     value={clientSearch}
                     onChange={(e) => setClientSearch(e.target.value)}
                     style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 12, color: 'var(--text)', width: '100%' }}
@@ -219,8 +207,7 @@ export default function DeploymentAssignmentPage() {
                   onChange={(e) => setClientStatusFilter(e.target.value)}
                 >
                   <option value="all">All Accounts ({clientDeploymentList.length})</option>
-                  <option value="active">Active Clients</option>
-                  <option value="expiring">3-Month Renewal Alerts</option>
+                  <option value="active">Active Client Accounts</option>
                 </select>
               </div>
 
@@ -238,7 +225,6 @@ export default function DeploymentAssignmentPage() {
               onBack={() => setSelectedClientName(null)}
               onOpenCompliance={handleOpenCompliance}
               onOpenSlip={handleOpenSlip}
-              onOpenRenewal={handleOpenRenewal}
               onOpenRecord={handleOpenDetails}
               onNewDeployment={() => setModalOpen(true)}
             />
@@ -263,27 +249,17 @@ export default function DeploymentAssignmentPage() {
         onAdvanceStage={setStage}
       />
 
-      {/* MODAL 3: CONTRACT RENEWAL & REDEPLOYMENT DIALOG */}
-      <RenewalModal
-        deployment={activeRecord}
-        open={activeModal === 'renewal'}
-        onClose={handleCloseModal}
-        onExtendContract={extendContract}
-        onAdvanceStage={setStage}
-      />
-
-      {/* MODAL 4: COMPLETE DEPLOYMENT AUDIT DETAILS */}
+      {/* MODAL 3: COMPLETE DEPLOYMENT AUDIT DETAILS */}
       <RecordDetailsModal
         deployment={activeRecord}
         open={activeModal === 'details'}
         onClose={handleCloseModal}
         onOpenCompliance={handleOpenCompliance}
         onOpenSlip={handleOpenSlip}
-        onOpenRenewal={handleOpenRenewal}
         onAdvanceStage={setStage}
       />
 
-      {/* MODAL 5: NEW DEPLOYMENT SCHEDULE INTAKE */}
+      {/* MODAL 4: NEW DEPLOYMENT SCHEDULE INTAKE */}
       <NewDeploymentModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}

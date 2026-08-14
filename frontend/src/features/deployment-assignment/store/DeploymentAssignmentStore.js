@@ -3,26 +3,12 @@ import {
   getDeployments,
   stageToStatus,
   complianceReadiness,
-  daysLeft,
   nextDepId,
   TODAY,
 } from '../services/DeploymentAssignmentService';
 import { ISMERSBridge } from '../services/ismersBridge';
 
-const STORAGE_KEY = 'ismers.deployments.v5';
-
-const STAGE_MIGRATION_MAP = {
-  monitoring: 'on_site',
-  in_progress: 'on_site',
-  reporting: 'dispatched',
-  scheduled: 'scheduled',
-  assigned: 'assigned',
-  pre_deployment: 'pre_deployment',
-  on_site: 'on_site',
-  for_renewal: 'for_renewal',
-  completed: 'completed',
-  closed: 'closed',
-};
+const STORAGE_KEY = 'ismers.deployments.v6';
 
 function loadInitialDeployments() {
   try {
@@ -30,22 +16,7 @@ function loadInitialDeployments() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((d) => ({
-          ...d,
-          stage: STAGE_MIGRATION_MAP[d.stage] || d.stage || 'on_site',
-          compliance: d.compliance || {
-            medicalClearance: true,
-            nbiClearance: true,
-            govtIds: true,
-            signedContract: true,
-            ppeIssued: true,
-            clientOrientation: true,
-          },
-          supervisor: d.supervisor || 'Operations Supervisor',
-          supervisorContact: d.supervisorContact || '+63 900 000 0000',
-          shift: d.shift || 'Regular Day Shift (08:00 - 17:00)',
-          history: d.history || [],
-        }));
+        return parsed;
       }
     }
   } catch {
@@ -105,19 +76,12 @@ export function useDeploymentAssignmentStore() {
 
       const matchesClient = clientFilter === 'all' || d.client === clientFilter;
       const status = stageToStatus(d.stage);
-      const isRenewalDue = daysLeft(d.end) <= 90 && d.stage !== 'closed';
 
       let matchesStatus = false;
       if (activeStatus === 'all') {
         matchesStatus = true;
-      } else if (
-        activeStatus === 'renewal_review' ||
-        activeStatus === 'renewals' ||
-        activeStatus === 'renewal_due'
-      ) {
-        matchesStatus = isRenewalDue || d.stage === 'for_renewal' || status === 'renewal_review';
       } else if (activeStatus === 'active_onsite' || activeStatus === 'active') {
-        matchesStatus = status === 'active_onsite' || d.stage === 'on_site' || d.stage === 'for_renewal';
+        matchesStatus = status === 'active_onsite' || d.stage === 'on_site';
       } else if (activeStatus === 'scheduled_dispatch' || activeStatus === 'scheduled') {
         matchesStatus = status === 'scheduled_dispatch' || d.stage === 'scheduled' || d.stage === 'dispatched';
       } else if (activeStatus === 'pending_clearance') {
@@ -134,14 +98,13 @@ export function useDeploymentAssignmentStore() {
 
   const stats = useMemo(() => {
     const total = deployments.length;
-    const activeOnSite = deployments.filter((d) => d.stage === 'on_site' || d.stage === 'for_renewal').length;
+    const activeOnSite = deployments.filter((d) => d.stage === 'on_site').length;
     const pendingClearance = deployments.filter(
       (d) => d.stage === 'assigned' || d.stage === 'pre_deployment'
     ).length;
-    const endingSoon = deployments.filter((d) => {
-      const diff = daysLeft(d.end);
-      return diff >= 0 && diff <= 90 && d.stage !== 'completed' && d.stage !== 'closed';
-    }).length;
+    const concluded = deployments.filter(
+      (d) => d.stage === 'completed' || d.stage === 'closed'
+    ).length;
 
     const readinessScores = deployments.map((d) => complianceReadiness(d).percent);
     const avgReadiness = readinessScores.length
@@ -152,7 +115,7 @@ export function useDeploymentAssignmentStore() {
       total,
       activeOnSite,
       pendingClearance,
-      endingSoon,
+      concluded,
       avgReadiness,
       clientCount: new Set(deployments.map((d) => d.client)).size,
     };
@@ -192,8 +155,7 @@ export function useDeploymentAssignmentStore() {
         scheduled: 'Deployment Scheduled',
         dispatched: 'Dispatched with Deployment Slip',
         on_site: 'Confirmed Active On-Site by Client Supervisor',
-        for_renewal: '3-Month Renewal Review Activated',
-        completed: 'Contract Concluded / Released',
+        completed: 'Deployment Concluded',
         closed: 'Record Archived',
       };
 
@@ -240,35 +202,6 @@ export function useDeploymentAssignmentStore() {
       );
     },
     [syncStageToBridge]
-  );
-
-  const extendContract = useCallback(
-    (id, newEndDate) => {
-      const todayFormatted = TODAY.toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      });
-      setDeployments((prev) =>
-        prev.map((d) => {
-          if (d.id !== id) return d;
-          return {
-            ...d,
-            end: newEndDate,
-            stage: 'on_site',
-            history: [
-              {
-                date: todayFormatted,
-                event: 'Contract Extended',
-                note: `Contract validity extended to ${newEndDate}.`,
-              },
-              ...(d.history || []),
-            ],
-          };
-        })
-      );
-    },
-    []
   );
 
   const addDeployment = useCallback(
@@ -338,7 +271,6 @@ export function useDeploymentAssignmentStore() {
     closeDetail,
     setStage,
     toggleRequirement,
-    extendContract,
     addDeployment,
   };
 }

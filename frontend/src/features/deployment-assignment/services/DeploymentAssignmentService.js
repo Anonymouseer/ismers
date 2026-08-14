@@ -34,17 +34,15 @@ export const STATUS_META = {
   pending_clearance: { label: 'Pending Clearance', color: 'var(--purple)', soft: 'var(--purple-soft)', order: 1 },
   scheduled_dispatch: { label: 'Scheduled / Dispatched', color: 'var(--blue)', soft: 'var(--blue-soft)', order: 2 },
   active_onsite: { label: 'Active On-Site', color: 'var(--green)', soft: 'var(--green-soft)', order: 3 },
-  renewal_review: { label: '3-Month Renewal Review', color: 'var(--amber)', soft: 'var(--amber-soft)', order: 4 },
-  completed: { label: 'Completed / Released', color: 'var(--muted-fg)', soft: 'var(--border-soft)', order: 5 },
+  completed: { label: 'Deployment Concluded', color: 'var(--muted-fg)', soft: 'var(--border-soft)', order: 4 },
 };
 
-export const STATUS_ORDER = ['pending_clearance', 'scheduled_dispatch', 'active_onsite', 'renewal_review', 'completed'];
+export const STATUS_ORDER = ['pending_clearance', 'scheduled_dispatch', 'active_onsite', 'completed'];
 
 export function stageToStatus(stage) {
   if (stage === 'assigned' || stage === 'pre_deployment') return 'pending_clearance';
   if (stage === 'scheduled' || stage === 'dispatched' || stage === 'reporting') return 'scheduled_dispatch';
-  if (stage === 'on_site' || stage === 'active' || stage === 'in_progress' || stage === 'monitoring') return 'active_onsite';
-  if (stage === 'for_renewal' || stage === 'renewal_due' || stage === 'ending') return 'renewal_review';
+  if (stage === 'on_site' || stage === 'active' || stage === 'in_progress' || stage === 'monitoring' || stage === 'for_renewal') return 'active_onsite';
   return 'completed'; // completed | closed
 }
 
@@ -55,9 +53,8 @@ export const TRACK_NODES = [
   { id: 'scheduled', label: '3. Deployment Scheduled' },
   { id: 'dispatched', label: '4. Dispatched / Endorsed' },
   { id: 'on_site', label: '5. Confirmed Active On-Site' },
-  { id: 'for_renewal', label: '6. 3-Month Renewal Review' },
-  { id: 'completed', label: '7. Contract Concluded' },
-  { id: 'closed', label: '8. Record Archived' },
+  { id: 'completed', label: '6. Deployment Concluded' },
+  { id: 'closed', label: '7. Record Archived' },
 ];
 
 export const STAGE_INDEX = {
@@ -66,28 +63,27 @@ export const STAGE_INDEX = {
   scheduled: 2,
   dispatched: 3,
   on_site: 4,
-  for_renewal: 5,
-  completed: 6,
-  closed: 7,
+  completed: 5,
+  closed: 6,
 };
 
 // Job orders referenced by deployments
 export const JOB_ORDER_OPTIONS = [
-  { ref: 'JO-001', client: 'ABC Logistics', title: 'Warehouse Associate', supervisor: 'Mario Santos (Operations Mgr)' },
-  { ref: 'JO-002', client: 'ABC Logistics', title: 'Forklift Operator', supervisor: 'Mario Santos (Operations Mgr)' },
-  { ref: 'JO-003', client: 'Nova Retail Group', title: 'Visual Merchandiser', supervisor: 'Karen David (Store Mgr)' },
-  { ref: 'JO-004', client: 'Nova Retail Group', title: 'Store Associate', supervisor: 'Karen David (Store Mgr)' },
-  { ref: 'JO-005', client: 'Meridian BPO Solutions', title: 'Customer Service Representative', supervisor: 'Arnel Cruz (Team Lead)' },
-  { ref: 'JO-006', client: 'Meridian BPO Solutions', title: 'Technical Support Specialist', supervisor: 'Arnel Cruz (Team Lead)' },
-  { ref: 'JO-007', client: 'Golden Harvest Agri Corp', title: 'Farm Technician', supervisor: 'Danilo Aquino (Farm Supervisor)' },
-  { ref: 'JO-008', client: 'CarePlus Health Staffing', title: 'Home Care Aide', supervisor: 'Dr. Elena Reyes (Director)' },
-  { ref: 'JO-009', client: 'Swift Freight Logistics', title: 'Delivery Driver', supervisor: 'Ramon Dela Cruz (Logistics Head)' },
-  { ref: 'JO-010', client: 'Summit Manufacturing Inc.', title: 'Production Line Worker', supervisor: 'Engr. Victor Tan (Plant Head)' },
-  { ref: 'JO-011', client: 'Swift Freight Logistics', title: 'Warehouse Supervisor', supervisor: 'Ramon Dela Cruz (Logistics Head)' },
-  { ref: 'JO-012', client: 'Northline BPO', title: 'Customer Service Rep', supervisor: 'Cynthia Soriano (Operations)' },
-  { ref: 'JO-013', client: 'Northline BPO', title: 'Technical Support Agent', supervisor: 'Cynthia Soriano (Operations)' },
-  { ref: 'JO-014', client: 'Delta Manufacturing', title: 'Machine Operator', supervisor: 'Manuel Sy (Production Supv)' },
-  { ref: 'JO-015', client: 'Sunrise Hospitality Group', title: 'Front Desk Associate', supervisor: 'Cecille Lim (Hotel GM)' },
+  { ref: 'JO-001', client: 'ABC Logistics', title: 'Warehouse Associate', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Mario Santos (Operations Mgr)' },
+  { ref: 'JO-002', client: 'ABC Logistics', title: 'Forklift Operator', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Mario Santos (Operations Mgr)' },
+  { ref: 'JO-003', client: 'Nova Retail Group', title: 'Visual Merchandiser', site: 'SM Megamall, Mandaluyong', supervisor: 'Karen David (Store Mgr)' },
+  { ref: 'JO-004', client: 'Nova Retail Group', title: 'Store Associate', site: 'Ayala Malls Manila Bay, Paranaque', supervisor: 'Karen David (Store Mgr)' },
+  { ref: 'JO-005', client: 'Meridian BPO Solutions', title: 'Customer Service Representative', site: 'Cyberpark Tower 1, Cubao, Quezon City', supervisor: 'Arnel Cruz (Team Lead)' },
+  { ref: 'JO-006', client: 'Meridian BPO Solutions', title: 'Technical Support Specialist', site: 'Cyberpark Tower 1, Cubao, Quezon City', supervisor: 'Arnel Cruz (Team Lead)' },
+  { ref: 'JO-007', client: 'Golden Harvest Agri Corp', title: 'Farm Technician', site: 'San Ildefonso Plantation Site, Bulacan', supervisor: 'Danilo Aquino (Farm Supervisor)' },
+  { ref: 'JO-008', client: 'CarePlus Health Staffing', title: 'Home Care Aide', site: 'St. Luke’s Medical Extension Site, BGC', supervisor: 'Dr. Elena Reyes (Director)' },
+  { ref: 'JO-009', client: 'Swift Freight Logistics', title: 'Delivery Driver', site: 'North Harbor Hub, Port Area, Manila', supervisor: 'Ramon Dela Cruz (Logistics Head)' },
+  { ref: 'JO-010', client: 'Summit Manufacturing Inc.', title: 'Production Line Worker', site: 'Light Industry & Science Park, Laguna', supervisor: 'Engr. Victor Tan (Plant Head)' },
+  { ref: 'JO-011', client: 'Swift Freight Logistics', title: 'Warehouse Supervisor', site: 'North Harbor Hub, Port Area, Manila', supervisor: 'Ramon Dela Cruz (Logistics Head)' },
+  { ref: 'JO-012', client: 'Northline BPO', title: 'Customer Service Rep', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano (Operations)' },
+  { ref: 'JO-013', client: 'Northline BPO', title: 'Technical Support Agent', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano (Operations)' },
+  { ref: 'JO-014', client: 'Delta Manufacturing', title: 'Machine Operator', site: 'Caloocan Industrial Estate, Metro Manila', supervisor: 'Manuel Sy (Production Supv)' },
+  { ref: 'JO-015', client: 'Seda Vertis North', title: 'Front Desk Associate', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim (Hotel GM)' },
 ];
 
 // ---- MOCK DATA (Primepower Client Deployments) ----
@@ -100,7 +96,7 @@ const MOCK_DEPLOYMENTS = [
     position: 'Front Desk Associate',
     supervisor: 'Cecille Lim (Hotel GM)',
     supervisorContact: '+63 917 555 0192',
-    site: 'Vertis North, Quezon City',
+    site: 'Vertis North, Astra cor. Lux Drive, QC',
     start: 'Jul 03, 2026',
     end: 'Oct 03, 2026',
     stage: 'on_site',
@@ -182,10 +178,10 @@ const MOCK_DEPLOYMENTS = [
     position: 'Kitchen Staff / Food Prep',
     supervisor: 'Marco Santos (Executive Chef)',
     supervisorContact: '+63 917 222 3456',
-    site: 'SM Mall of Asia, Pasay City',
+    site: 'SM Mall of Asia, Seaside Blvd, Pasay City',
     start: 'Jul 10, 2026',
     end: 'Oct 10, 2026',
-    stage: 'for_renewal',
+    stage: 'on_site',
     shift: 'Mid Shift (11:00 - 20:00)',
     compliance: {
       medicalClearance: true,
@@ -199,7 +195,6 @@ const MOCK_DEPLOYMENTS = [
     history: [
       { date: 'Jul 09, 2026', event: 'Sanitation Clearance Verified', note: 'Food handler medical certificate cleared.' },
       { date: 'Jul 10, 2026', event: 'Active Deployment', note: 'Kitchen prep and dining support.' },
-      { date: 'Jul 24, 2026', event: '3-Month Renewal Alert', note: 'Contract nearing 90-day threshold.' },
     ],
   },
   {
@@ -210,7 +205,7 @@ const MOCK_DEPLOYMENTS = [
     position: 'Housekeeping Attendant',
     supervisor: 'Dennis Ocampo (Hotel Manager)',
     supervisorContact: '+63 919 888 1234',
-    site: 'P Burgos St, Makati City',
+    site: 'P. Burgos cor. Makati Ave, Makati City',
     start: 'Jul 26, 2026',
     end: 'Jan 26, 2027',
     stage: 'dispatched',
@@ -237,7 +232,7 @@ const MOCK_DEPLOYMENTS = [
     position: 'Front Desk Associate',
     supervisor: 'Cecille Lim (Hotel GM)',
     supervisorContact: '+63 917 555 0192',
-    site: 'Vertis North, Quezon City',
+    site: 'Vertis North, Astra cor. Lux Drive, QC',
     start: 'Jul 28, 2026',
     end: 'Oct 28, 2026',
     stage: 'pre_deployment',
@@ -264,7 +259,7 @@ const MOCK_DEPLOYMENTS = [
     position: 'Dining Service Associate',
     supervisor: 'Marco Santos (Executive Chef)',
     supervisorContact: '+63 917 222 3456',
-    site: 'SM Mall of Asia, Pasay City',
+    site: 'SM Mall of Asia, Seaside Blvd, Pasay City',
     start: 'Jul 30, 2026',
     end: 'Jul 30, 2027',
     stage: 'assigned',
@@ -289,7 +284,7 @@ const MOCK_DEPLOYMENTS = [
     position: 'Maintenance Technician',
     supervisor: 'Gina Alcantara (Head of Operations)',
     supervisorContact: '+63 922 555 9012',
-    site: 'Makati City',
+    site: 'Santiago cor. Valdez St, Makati City',
     start: 'Jun 22, 2026',
     end: 'Jul 22, 2026',
     stage: 'completed',
@@ -304,7 +299,7 @@ const MOCK_DEPLOYMENTS = [
     },
     history: [
       { date: 'Jun 22, 2026', event: 'Deployed On-Site', note: 'Maintenance contract started.' },
-      { date: 'Jul 22, 2026', event: 'Contract Concluded', note: 'Completed 1-month emergency coverage smoothly; cleared for redeployment.' },
+      { date: 'Jul 22, 2026', event: 'Deployment Concluded', note: 'Completed 1-month deployment period smoothly.' },
     ],
   },
 ];
@@ -328,16 +323,6 @@ export function daysLeft(dateStr) {
   if (!dateStr) return 0;
   const d = new Date(dateStr);
   return Math.ceil((d - TODAY) / 86400000);
-}
-
-export function countdownLabel(dateStr) {
-  const diff = daysLeft(dateStr);
-  if (diff < 0) return { text: 'Ended', color: 'var(--muted-fg)', soft: 'var(--border-soft)' };
-  if (diff === 0) return { text: 'Ends today', color: 'var(--red)', soft: 'var(--red-soft)' };
-  if (diff <= 14) return { text: `Urgent: ${diff}d left`, color: 'var(--red)', soft: 'var(--red-soft)' };
-  if (diff <= 30) return { text: `${diff}d left`, color: 'var(--amber)', soft: 'var(--amber-soft)' };
-  if (diff <= 90) return { text: `${diff}d to renewal`, color: 'var(--amber)', soft: 'var(--amber-soft)' };
-  return { text: `${diff}d remaining`, color: 'var(--muted-fg)', soft: 'var(--border-soft)' };
 }
 
 export function nextDepId(deployments) {
@@ -377,17 +362,12 @@ export function renderStageActionsText(d) {
       };
     case 'on_site':
       return {
-        note: `Active deployment ongoing at ${d.site}. Monitor contract term and prepare for 3-month renewal review.`,
-        action: { label: 'Initiate 3-Month Renewal Review', next: 'for_renewal', kind: 'go' },
-      };
-    case 'for_renewal':
-      return {
-        note: `Contract is within the 90-day review period. Process contract renewal extension or release worker for redeployment upon end date.`,
-        action: { label: 'Mark Contract Concluded / Release', next: 'completed', kind: 'go' },
+        note: `Active deployment ongoing at ${d.site}. Staff is on-site and reporting daily.`,
+        action: { label: 'Conclude Deployment Term', next: 'completed', kind: 'go' },
       };
     case 'completed':
       return {
-        note: `Contract concluded smoothly. Worker is cleared for redeployment to another open Job Order or archive.`,
+        note: `Deployment term concluded smoothly at ${d.site}. Record is ready for archiving.`,
         action: { label: 'Archive Deployment Record', next: 'closed', kind: 'go' },
       };
     case 'closed':

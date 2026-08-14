@@ -2,20 +2,19 @@ import { useState, useMemo } from 'react';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
 import {
   complianceReadiness,
-  countdownLabel,
   initials,
   STATUS_META,
   stageToStatus,
-  daysLeft,
   JOB_ORDER_OPTIONS,
 } from '../services/DeploymentAssignmentService';
 
 const COLUMNS = [
   { key: 'employee', label: 'Deployed Personnel', sortable: true },
   { key: 'position', label: 'Job Order / Role', sortable: true },
+  { key: 'site', label: 'Deployment Facility & Site', sortable: false },
   { key: 'compliance', label: 'Pre-Deployment Compliance', sortable: true },
   { key: 'status', label: 'Deployment Status', sortable: true },
-  { key: 'contract', label: 'Contract Term', sortable: true },
+  { key: 'contract', label: 'Deployment Duration', sortable: true },
   { key: 'actions', label: 'Workflow Action', sortable: false },
 ];
 
@@ -33,7 +32,6 @@ export default function ClientDeploymentProfile({
   onBack,
   onOpenCompliance,
   onOpenSlip,
-  onOpenRenewal,
   onOpenRecord,
   onNewDeployment,
 }) {
@@ -58,12 +56,9 @@ export default function ClientDeploymentProfile({
     const total = clientDeployments.length;
     const active = clientDeployments.filter((d) => d.stage === 'on_site' || d.stage === 'for_renewal').length;
     const pending = clientDeployments.filter((d) => d.stage === 'assigned' || d.stage === 'pre_deployment').length;
-    const renewing = clientDeployments.filter((d) => {
-      const diff = daysLeft(d.end);
-      return diff >= 0 && diff <= 90 && d.stage !== 'completed' && d.stage !== 'closed';
-    }).length;
+    const concluded = clientDeployments.filter((d) => d.stage === 'completed' || d.stage === 'closed').length;
 
-    return { total, active, pending, renewing };
+    return { total, active, pending, concluded };
   }, [clientDeployments]);
 
   // Filtered by selected Job Order, status, and search
@@ -72,21 +67,21 @@ export default function ClientDeploymentProfile({
     return clientDeployments.filter((d) => {
       const matchesJo = selectedJoRef === 'all' || d.jobOrderRef === selectedJoRef;
       const status = stageToStatus(d.stage);
-      const isRenewalDue = daysLeft(d.end) <= 90 && d.stage !== 'closed';
 
       let matchesStatus = true;
       if (statusFilter === 'pending_clearance') {
         matchesStatus = status === 'pending_clearance' || d.stage === 'assigned' || d.stage === 'pre_deployment';
       } else if (statusFilter === 'active_onsite') {
         matchesStatus = status === 'active_onsite' || d.stage === 'on_site';
-      } else if (statusFilter === 'renewal_review') {
-        matchesStatus = isRenewalDue || d.stage === 'for_renewal';
+      } else if (statusFilter === 'completed') {
+        matchesStatus = status === 'completed' || d.stage === 'completed' || d.stage === 'closed';
       }
 
       const matchesQ =
         !q ||
         d.employee.toLowerCase().includes(q) ||
         d.position.toLowerCase().includes(q) ||
+        (d.site && d.site.toLowerCase().includes(q)) ||
         d.id.toLowerCase().includes(q);
 
       return matchesJo && matchesStatus && matchesQ;
@@ -99,8 +94,6 @@ export default function ClientDeploymentProfile({
       switch (sortKey) {
         case 'position':
           return String(a.position || '').localeCompare(String(b.position || '')) * dir;
-        case 'contract':
-          return (daysLeft(a.end) - daysLeft(b.end)) * dir;
         case 'compliance':
           return (complianceReadiness(a).percent - complianceReadiness(b).percent) * dir;
         default:
@@ -205,9 +198,9 @@ export default function ClientDeploymentProfile({
           <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>Pending Clearance</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--purple)', marginTop: 2 }}>{clientStats.pending}</div>
         </div>
-        <div style={{ background: 'var(--amber-soft)', border: '1px solid var(--amber)', borderRadius: 12, padding: '12px 16px' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--amber)', textTransform: 'uppercase' }}>3-Month Renewal Alerts</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--amber)', marginTop: 2 }}>{clientStats.renewing}</div>
+        <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px' }}>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Completed Deployments</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--muted-fg)', marginTop: 2 }}>{clientStats.concluded}</div>
         </div>
       </div>
 
@@ -283,7 +276,7 @@ export default function ClientDeploymentProfile({
               <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: 'var(--muted-fg)' }}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
               <input
                 type="text"
-                placeholder="Search staff name or role..."
+                placeholder="Search staff name or facility..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: 12, color: 'var(--text)', width: '100%' }}
@@ -296,10 +289,10 @@ export default function ClientDeploymentProfile({
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">All Statuses</option>
+              <option value="all">All Deployment Statuses</option>
               <option value="pending_clearance">Pending Clearance</option>
               <option value="active_onsite">Active On-Site</option>
-              <option value="renewal_review">3-Month Renewal Alerts</option>
+              <option value="completed">Concluded</option>
             </select>
           </div>
 
@@ -338,8 +331,6 @@ export default function ClientDeploymentProfile({
                   const status = stageToStatus(d.stage);
                   const meta = STATUS_META[status];
                   const read = complianceReadiness(d);
-                  const cd = countdownLabel(d.end);
-                  const isExpiring = daysLeft(d.end) <= 90 && d.stage !== 'completed' && d.stage !== 'closed';
 
                   return (
                     <tr
@@ -366,6 +357,16 @@ export default function ClientDeploymentProfile({
                       <td style={{ padding: '13px 18px' }}>
                         <div style={{ fontWeight: 700, color: 'var(--text)' }}>{d.position}</div>
                         <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 600 }}>Ref: {d.jobOrderRef}</div>
+                      </td>
+
+                      {/* DEPLOYMENT FACILITY & SITE */}
+                      <td style={{ padding: '13px 18px' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>
+                          {d.site}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--muted-fg)', marginTop: 2 }}>
+                          {d.shift || 'Regular Day Shift'} &nbsp;·&nbsp; Supv: {d.supervisor ? d.supervisor.split(' ')[0] : 'Supervisor'}
+                        </div>
                       </td>
 
                       {/* COMPLIANCE */}
@@ -407,9 +408,6 @@ export default function ClientDeploymentProfile({
                         <div style={{ fontWeight: 700, fontSize: 11.5, color: 'var(--text)' }}>
                           {d.start} → {d.end}
                         </div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: cd.color, marginTop: 2 }}>
-                          {cd.text}
-                        </div>
                       </td>
 
                       {/* WORKFLOW ACTION */}
@@ -435,23 +433,13 @@ export default function ClientDeploymentProfile({
                             </button>
                           )}
 
-                          {(isExpiring || d.stage === 'for_renewal') && (
-                            <button
-                              className="btn primary"
-                              style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, background: 'var(--amber)', borderColor: 'var(--amber)', color: '#000' }}
-                              onClick={() => onOpenRenewal(d.id)}
-                            >
-                              Renew Contract →
-                            </button>
-                          )}
-
-                          {d.stage === 'on_site' && !isExpiring && (
+                          {d.stage === 'on_site' && (
                             <button
                               className="btn"
                               style={{ padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
                               onClick={() => onOpenRecord(d.id)}
                             >
-                              View Details
+                              View Deployment Details
                             </button>
                           )}
                         </div>

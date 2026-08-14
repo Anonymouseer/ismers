@@ -1,6 +1,5 @@
 import {
   complianceReadiness,
-  countdownLabel,
   PRE_DEPLOYMENT_ITEMS,
   renderStageActionsText,
   STAGE_INDEX,
@@ -41,7 +40,6 @@ export default function RecordDetailsModal({
   onClose,
   onOpenCompliance,
   onOpenSlip,
-  onOpenRenewal,
   onAdvanceStage,
 }) {
   if (!open || !deployment) return null;
@@ -49,7 +47,6 @@ export default function RecordDetailsModal({
   const status = stageToStatus(deployment.stage);
   const meta = STATUS_META[status];
   const read = complianceReadiness(deployment);
-  const cd = countdownLabel(deployment.end);
   const { note, action } = renderStageActionsText(deployment);
   const checklist = deployment.compliance || {};
   const history = deployment.history || [];
@@ -110,10 +107,10 @@ export default function RecordDetailsModal({
 
         {/* BODY SCROLL */}
         <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* 8-STAGE LIFECYCLE TRACKER */}
+          {/* DEPLOYMENT LIFECYCLE TRACKER */}
           <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '14px 16px' }}>
             <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 8 }}>
-              Deployment Lifecycle Status:
+              Deployment Stage &amp; Workflow:
             </div>
             <StageTrack deployment={deployment} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border-soft)', fontSize: 12 }}>
@@ -136,10 +133,10 @@ export default function RecordDetailsModal({
             {/* ASSIGNMENT & SUPERVISOR INFO */}
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 10 }}>
-                Assignment &amp; Site Details:
+                Assigned Site &amp; Deployment Facility:
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
-                <div><span style={{ color: 'var(--muted-fg)' }}>Client:</span> <b>{deployment.client}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Client Company:</span> <b>{deployment.client}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Job Order Ref:</span> <b>{deployment.jobOrderRef}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Assigned Position:</span> <b>{deployment.position}</b></div>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Site Facility:</span> <b>{deployment.site}</b></div>
@@ -148,31 +145,26 @@ export default function RecordDetailsModal({
               </div>
             </div>
 
-            {/* CONTRACT & 90-DAY EXPIRATION AUDIT */}
+            {/* DEPLOYMENT PERIOD DURATION */}
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 10 }}>
-                Contract Validity &amp; Renewal:
+                Deployment Period Duration:
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12 }}>
                 <div><span style={{ color: 'var(--muted-fg)' }}>Deployment Start:</span> <b>{deployment.start}</b></div>
-                <div><span style={{ color: 'var(--muted-fg)' }}>Contract End:</span> <b>{deployment.end}</b></div>
-                <div>
-                  <span style={{ color: 'var(--muted-fg)' }}>Renewal Threshold:</span>{' '}
-                  <span style={{ fontWeight: 800, color: cd.color, background: cd.soft, padding: '2px 8px', borderRadius: 8 }}>
-                    {cd.text}
-                  </span>
-                </div>
-                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-soft)' }}>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Deployment End:</span> <b>{deployment.end}</b></div>
+                <div><span style={{ color: 'var(--muted-fg)' }}>Current Status:</span> <b style={{ color: meta.color }}>{meta.label}</b></div>
+                <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--border-soft)' }}>
                   <button
                     type="button"
                     className="btn"
-                    style={{ width: '100%', fontSize: 11, fontWeight: 700, background: 'var(--amber-soft)', color: 'var(--amber)', border: '1px solid var(--amber)' }}
+                    style={{ width: '100%', fontSize: 11.5, fontWeight: 700 }}
                     onClick={() => {
                       onClose();
-                      onOpenRenewal(deployment.id);
+                      onOpenSlip(deployment.id);
                     }}
                   >
-                    Extend / Renew Contract
+                    View Official Endorsement Pass
                   </button>
                 </div>
               </div>
@@ -183,7 +175,7 @@ export default function RecordDetailsModal({
           <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--purple)', textTransform: 'uppercase' }}>
-                Pre-Deployment Checklist (DOLE DO 174):
+                Pre-Deployment Verification (DOLE DO 174):
               </div>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: read.isReady ? 'var(--green)' : 'var(--purple)' }}>
                 {read.count}/6 Items Verified ({read.percent}%)
@@ -216,24 +208,13 @@ export default function RecordDetailsModal({
               >
                 Edit Compliance Checklist
               </button>
-              <button
-                type="button"
-                className="btn"
-                style={{ fontSize: 11, fontWeight: 700 }}
-                onClick={() => {
-                  onClose();
-                  onOpenSlip(deployment.id);
-                }}
-              >
-                View Deployment Slip &amp; Pass
-              </button>
             </div>
           </div>
 
           {/* AUDIT TIMELINE */}
           <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', marginBottom: 8 }}>
-              Milestone Audit History:
+              Deployment Milestone Log:
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 11.5 }}>
               {history.map((h, i) => (

@@ -1,15 +1,14 @@
 import { useState, useMemo } from 'react';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
-import { daysLeft, countdownLabel } from '../services/DeploymentAssignmentService';
 
 const COLUMNS = [
   { key: 'name', label: 'Client Account', sortable: true },
   { key: 'status', label: 'Account Status', sortable: true },
   { key: 'deployedCount', label: 'Deployed Headcount', sortable: true },
   { key: 'jobOrdersCount', label: 'Active Job Orders', sortable: true },
-  { key: 'site', label: 'Primary Deployment Site', sortable: false },
-  { key: 'supervisor', label: 'Account Supervisor', sortable: true },
-  { key: 'renewal', label: 'Contract Renewal', sortable: true },
+  { key: 'site', label: 'Primary Deployment Facility & Site', sortable: false },
+  { key: 'supervisor', label: 'Site Operations Supervisor', sortable: true },
+  { key: 'period', label: 'Deployment Period', sortable: false },
   { key: 'actions', label: 'Action', sortable: false },
 ];
 
@@ -36,8 +35,6 @@ export default function ClientsDeploymentTable({
           return (a.deployedCount - b.deployedCount) * dir;
         case 'jobOrdersCount':
           return (a.jobOrdersCount - b.jobOrdersCount) * dir;
-        case 'renewal':
-          return (daysLeft(a.renewal) - daysLeft(b.renewal)) * dir;
         default:
           return String(a.name || '').localeCompare(String(b.name || '')) * dir;
       }
@@ -79,106 +76,97 @@ export default function ClientsDeploymentTable({
         </thead>
         <tbody>
           {sortedClients.length ? (
-            sortedClients.map((c) => {
-              const days = daysLeft(c.renewal);
-              const isUrgent = days <= 30;
-              const isEndingSoon = days <= 90;
-              const cd = countdownLabel(c.renewal);
-
-              return (
-                <tr
-                  key={c.name}
-                  style={{ borderBottom: '1px solid var(--border-soft)', transition: 'background 0.14s ease', cursor: 'pointer' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--secondary)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                  onClick={() => onSelectClient(c.name)}
-                >
-                  {/* CLIENT WITH LOGO */}
-                  <td style={{ padding: '13px 18px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img
-                        src={logoUrl(c.name)}
-                        alt=""
-                        width={34}
-                        height={34}
-                        style={{ borderRadius: 8, flexShrink: 0, border: '1px solid var(--border-soft)' }}
-                      />
-                      <div>
-                        <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13 }}>{c.name}</div>
-                        <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{c.industry}</div>
-                      </div>
+            sortedClients.map((c) => (
+              <tr
+                key={c.name}
+                style={{ borderBottom: '1px solid var(--border-soft)', transition: 'background 0.14s ease', cursor: 'pointer' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--secondary)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                onClick={() => onSelectClient(c.name)}
+              >
+                {/* CLIENT WITH LOGO */}
+                <td style={{ padding: '13px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <img
+                      src={logoUrl(c.name)}
+                      alt=""
+                      width={34}
+                      height={34}
+                      style={{ borderRadius: 8, flexShrink: 0, border: '1px solid var(--border-soft)' }}
+                    />
+                    <div>
+                      <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13 }}>{c.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{c.industry}</div>
                     </div>
-                  </td>
+                  </div>
+                </td>
 
-                  {/* ACCOUNT STATUS */}
-                  <td style={{ padding: '13px 18px' }}>
-                    <span
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: 12,
-                        fontSize: 11,
-                        fontWeight: 800,
-                        background: c.status === 'active' ? 'var(--green-soft)' : 'var(--amber-soft)',
-                        color: c.status === 'active' ? 'var(--green)' : 'var(--amber)',
-                        border: `1px solid ${c.status === 'active' ? 'var(--green)' : 'var(--amber)'}`,
-                        display: 'inline-block',
-                      }}
-                    >
-                      {c.status ? c.status.toUpperCase() : 'ACTIVE'}
-                    </span>
-                  </td>
+                {/* ACCOUNT STATUS */}
+                <td style={{ padding: '13px 18px' }}>
+                  <span
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 12,
+                      fontSize: 11,
+                      fontWeight: 800,
+                      background: 'var(--green-soft)',
+                      color: 'var(--green)',
+                      border: '1px solid var(--green)',
+                      display: 'inline-block',
+                    }}
+                  >
+                    ACTIVE CLIENT
+                  </span>
+                </td>
 
-                  {/* DEPLOYED HEADCOUNT */}
-                  <td style={{ padding: '13px 18px' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
-                      {c.deployedCount} Deployed Staff
-                    </span>
-                  </td>
+                {/* DEPLOYED HEADCOUNT */}
+                <td style={{ padding: '13px 18px' }}>
+                  <span style={{ fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
+                    {c.deployedCount} Deployed Staff
+                  </span>
+                </td>
 
-                  {/* ACTIVE JOB ORDERS */}
-                  <td style={{ padding: '13px 18px' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--primary)', background: 'var(--blue-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
-                      {c.jobOrdersCount} Job Orders
-                    </span>
-                  </td>
+                {/* ACTIVE JOB ORDERS */}
+                <td style={{ padding: '13px 18px' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--primary)', background: 'var(--blue-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
+                    {c.jobOrdersCount} Active Roles
+                  </span>
+                </td>
 
-                  {/* PRIMARY SITE */}
-                  <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600 }}>
-                    {c.site}
-                  </td>
+                {/* PRIMARY SITE */}
+                <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: 'var(--primary)', flexShrink: 0 }}><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 11.4 7.6 11.9a1 1 0 0 0 1.3 0C13 21.4 20 15.4 20 10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" /></svg>
+                    <span>{c.site}</span>
+                  </div>
+                </td>
 
-                  {/* ACCOUNT SUPERVISOR */}
-                  <td style={{ padding: '13px 18px' }}>
-                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>{c.supervisor}</div>
-                    <div style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{c.supervisorContact}</div>
-                  </td>
+                {/* ACCOUNT SUPERVISOR */}
+                <td style={{ padding: '13px 18px' }}>
+                  <div style={{ fontWeight: 700, color: 'var(--text)' }}>{c.supervisor}</div>
+                  <div style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{c.supervisorContact}</div>
+                </td>
 
-                  {/* CONTRACT RENEWAL */}
-                  <td style={{ padding: '13px 18px' }}>
-                    <div style={{ fontWeight: isUrgent ? 800 : 700, color: isUrgent ? 'var(--red)' : isEndingSoon ? 'var(--amber)' : 'var(--text)' }}>
-                      {c.renewal}
-                    </div>
-                    <div style={{ fontSize: 10.5, color: cd.color, fontWeight: 700 }}>
-                      {cd.text}
-                    </div>
-                  </td>
+                {/* DEPLOYMENT PERIOD */}
+                <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600, fontSize: 11.5 }}>
+                  Jul 2026 – Jan 2027
+                </td>
 
-                  {/* ACTION */}
-                  <td style={{ padding: '13px 18px', textAlign: 'right' }}>
-                    <button
-                      className="btn primary"
-                      style={{ padding: '6px 14px', fontSize: 11, fontWeight: 800 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectClient(c.name);
-                      }}
-                    >
-                      Open Job Orders &amp; Staff →
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
+                {/* ACTION */}
+                <td style={{ padding: '13px 18px', textAlign: 'right' }}>
+                  <button
+                    className="btn primary"
+                    style={{ padding: '6px 14px', fontSize: 11, fontWeight: 800 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectClient(c.name);
+                    }}
+                  >
+                    View Job Orders &amp; Staff →
+                  </button>
+                </td>
+              </tr>
+            ))
           ) : (
             <tr>
               <td colSpan={COLUMNS.length} style={{ padding: 36, textAlign: 'center', color: 'var(--muted-fg)', fontSize: 12 }}>
