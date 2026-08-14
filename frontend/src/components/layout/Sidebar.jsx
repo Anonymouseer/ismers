@@ -327,54 +327,19 @@ export default function Sidebar({
             </div>
 
             {/* Deployment & Assignment */}
-            <div className="nav-menu-wrapper">
-              <Link
-                to="/deployment-assignment"
-                className={`nav-item${activeItem === 'deployment-assignment' ? ' active' : ''}`}
-                onClick={() => handleParentClick('deployment-assignment')}
-              >
-                <span className="icon-slot">
-                  <svg className="icon" viewBox="0 0 24 24">
-                    <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.5.5 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.112z" />
-                    <path d="m21.854 2.146-10.94 10.94" />
-                  </svg>
-                </span>
-                <span className="label">Deployment &amp; Assignment</span>
-                <button
-                  type="button"
-                  className="chevron-slot"
-                  onClick={(e) => toggleSubmenu('deployment-assignment', e)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <svg className={`chevron ${openMenus['deployment-assignment'] ? 'open' : ''}`} viewBox="0 0 24 24">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
-              </Link>
-
-              <div className={`submenu-wrapper ${openMenus['deployment-assignment'] && !collapsed ? 'open' : ''}`}>
-                <div className="submenu-inner">
-                  <Link
-                    to="/deployment-assignment?view=board"
-                    className={`submenu-item${location.search.includes('view=board') ? ' active' : ''}`}
-                  >
-                    Deployment Dispatch Board
-                  </Link>
-                  <Link
-                    to="/deployment-assignment?view=table"
-                    className={`submenu-item${(!location.search || location.search.includes('view=table')) ? ' active' : ''}`}
-                  >
-                    Staff Assignments
-                  </Link>
-                  <Link
-                    to="/deployment-assignment?view=renewals"
-                    className={`submenu-item${location.search.includes('view=renewals') ? ' active' : ''}`}
-                  >
-                    Contract Renewals
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <Link
+              to="/deployment-assignment"
+              className={`nav-item${activeItem === 'deployment-assignment' ? ' active' : ''}`}
+              onClick={() => handleParentClick('deployment-assignment')}
+            >
+              <span className="icon-slot">
+                <svg className="icon" viewBox="0 0 24 24">
+                  <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.5.5 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.112z" />
+                  <path d="m21.854 2.146-10.94 10.94" />
+                </svg>
+              </span>
+              <span className="label">Deployment &amp; Assignment</span>
+            </Link>
           </div>
 
           {/* AI & ANALYTICS */}
