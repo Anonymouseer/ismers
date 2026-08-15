@@ -6,6 +6,7 @@ import {
   STATUS_META,
   stageToStatus,
   JOB_ORDER_OPTIONS,
+  PRE_DEPLOYMENT_ITEMS,
 } from '../services/DeploymentAssignmentService';
 
 const COLUMNS = [
@@ -425,17 +426,27 @@ export default function ClientDeploymentProfile({
 
                       {/* READ-ONLY COMPLIANCE STATUS */}
                       <td style={{ padding: '13px 18px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 120 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 700 }}>
-                            <span style={{ color: read.isReady ? 'var(--green)' : 'var(--purple)' }}>
-                              {read.isReady ? '✓ Verified in Recruitment' : `${read.count}/6 Pre-Cleared`}
-                            </span>
-                            <span style={{ color: 'var(--muted-fg)' }}>{read.percent}%</span>
-                          </div>
-                          <div style={{ height: 6, borderRadius: 3, background: 'var(--bg)', overflow: 'hidden' }}>
-                            <div style={{ width: `${read.percent}%`, height: '100%', background: read.isReady ? 'var(--green)' : 'var(--purple)', borderRadius: 3 }}></div>
-                          </div>
-                        </div>
+                        {(() => {
+                          const effectiveMissing = PRE_DEPLOYMENT_ITEMS.filter((item) => !read.effectiveCompliance?.[item.key]);
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 130 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 700 }}>
+                                <span style={{ color: read.isReady ? 'var(--green)' : 'var(--amber, #d97706)' }}>
+                                  {read.isReady ? '✓ 6/6 Fully Compliant' : `${read.count}/6 Pre-Cleared`}
+                                </span>
+                                <span style={{ color: 'var(--muted-fg)' }}>{read.percent}%</span>
+                              </div>
+                              <div style={{ height: 6, borderRadius: 3, background: 'var(--bg)', overflow: 'hidden' }}>
+                                <div style={{ width: `${read.percent}%`, height: '100%', background: read.isReady ? 'var(--green)' : 'var(--amber, #d97706)', borderRadius: 3 }}></div>
+                              </div>
+                              {!read.isReady && effectiveMissing.length > 0 && (
+                                <div style={{ fontSize: '10px', color: 'var(--red, #dc2626)', fontWeight: 700, marginTop: 2 }}>
+                                  Missing: {effectiveMissing.map((m) => m.label).join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* DEPLOYMENT STATUS */}
@@ -466,26 +477,54 @@ export default function ClientDeploymentProfile({
 
                       {/* WORKFLOW ACTION */}
                       <td style={{ padding: '13px 18px', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
-                          {(d.stage === 'assigned' || d.stage === 'pre_deployment' || d.stage === 'scheduled' || d.stage === 'dispatched') && (
-                            <button
-                              className="btn primary"
-                              style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, background: 'var(--blue)', borderColor: 'var(--blue)' }}
-                              onClick={() => onOpenSlip(d.id)}
-                            >
-                              Issue Pass →
-                            </button>
-                          )}
+                        {(() => {
+                          const effectiveMissing = PRE_DEPLOYMENT_ITEMS.filter((item) => !read.effectiveCompliance?.[item.key]);
+                          const isPendingStage = d.stage === 'assigned' || d.stage === 'pre_deployment' || d.stage === 'scheduled' || d.stage === 'dispatched';
 
-                          <button
-                            className="btn"
-                            style={{ padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
-                            onClick={() => onOpenRecord(d.id)}
-                          >
-                            View Details
-                          </button>
-                        </div>
+                          return (
+                            <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                              {isPendingStage && (
+                                read.isReady ? (
+                                  <button
+                                    className="btn primary"
+                                    style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, background: 'var(--blue)', borderColor: 'var(--blue)' }}
+                                    onClick={() => onOpenSlip(d.id)}
+                                  >
+                                    Issue Pass →
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="btn"
+                                    disabled
+                                    style={{
+                                      padding: '6px 10px',
+                                      fontSize: '10.5px',
+                                      fontWeight: 700,
+                                      opacity: 0.6,
+                                      cursor: 'not-allowed',
+                                      background: 'var(--bg)',
+                                      border: '1px dashed var(--border)',
+                                      color: 'var(--muted-fg)',
+                                    }}
+                                    title={`Pass locked: ${effectiveMissing.map((m) => m.label).join(', ')} incomplete.`}
+                                  >
+                                    Pass Locked ✕
+                                  </button>
+                                )
+                              )}
+
+                              <button
+                                className="btn"
+                                style={{ padding: '6px 12px', fontSize: 11, fontWeight: 700 }}
+                                onClick={() => onOpenRecord(d.id)}
+                              >
+                                View Details
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </td>
+
                     </tr>
                   );
                 })

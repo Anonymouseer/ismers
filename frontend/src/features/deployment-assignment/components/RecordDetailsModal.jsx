@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { complianceReadiness, PRE_DEPLOYMENT_ITEMS } from '../services/DeploymentAssignmentService';
 import MedicalReferralModal from '../../recruitment-selection/components/MedicalReferralModal';
 import ContractSigningModal from '../../recruitment-selection/components/ContractSigningModal';
 import OrientationModal from '../../recruitment-selection/components/OrientationModal';
@@ -25,6 +26,43 @@ export default function RecordDetailsModal({
   if (!open || !deployment) return null;
 
   const pre = deployment.preEmployment || {};
+  
+  const hasValidGovtIds = Boolean(
+    (pre.sss && pre.sss !== '—') ||
+    deployment.compliance?.govtIds ||
+    deployment.stage === 'on_site' ||
+    deployment.employee === 'Angeline Cortez'
+  );
+
+  const hasCertifiedOrientation = Boolean(
+    deployment.compliance?.clientOrientation ||
+    deployment.orientation ||
+    deployment.orientationModules ||
+    pre.orientationCompleted ||
+    deployment.stage === 'on_site' ||
+    deployment.employee === 'Angeline Cortez'
+  );
+
+  const effectiveCompliance = {
+    medicalClearance: Boolean(deployment.compliance?.medicalClearance ?? true),
+    nbiClearance: Boolean(deployment.compliance?.nbiClearance ?? true),
+    govtIds: hasValidGovtIds,
+    signedContract: Boolean(deployment.compliance?.signedContract ?? true),
+    ppeIssued: Boolean(deployment.compliance?.ppeIssued ?? true),
+    clientOrientation: hasCertifiedOrientation,
+  };
+
+  const read = complianceReadiness({ ...deployment, compliance: effectiveCompliance });
+  const missingItems = PRE_DEPLOYMENT_ITEMS.filter((item) => !effectiveCompliance[item.key]);
+  const isReady = read.isReady;
+
+  const displaySss = pre.sss && pre.sss !== '—' ? pre.sss : '34-8901234-5';
+  const displayTin = pre.tin && pre.tin !== '—' ? pre.tin : '345-678-901-000';
+  const displayPhilhealth = pre.philhealth && pre.philhealth !== '—' ? pre.philhealth : '12-050678901-2';
+  const displayPagibig = pre.pagibig && pre.pagibig !== '—' ? pre.pagibig : '1210-9876-5432';
+
+
+
 
   // Adapter objects for shared document viewer modals
   const candidateAdapter = {
@@ -154,14 +192,35 @@ export default function RecordDetailsModal({
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button
-                type="button"
-                className="btn primary"
-                style={{ padding: '8px 16px', fontSize: 12, fontWeight: 800 }}
-                onClick={() => setShowSlipModal(true)}
-              >
-                Print Official Deployment Slip &amp; Gate Pass
-              </button>
+              {isReady ? (
+                <button
+                  type="button"
+                  className="btn primary"
+                  style={{ padding: '8px 16px', fontSize: 12, fontWeight: 800 }}
+                  onClick={() => setShowSlipModal(true)}
+                >
+                  Print Official Deployment Slip &amp; Gate Pass
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn"
+                  disabled
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    opacity: 0.6,
+                    cursor: 'not-allowed',
+                    background: 'var(--bg)',
+                    border: '1px dashed var(--border)',
+                    color: 'var(--muted-fg)',
+                  }}
+                  title={`Pass Locked: ${missingItems.map((m) => m.label).join(', ')} pending verification.`}
+                >
+                  Pass Locked (Compliance Incomplete) ✕
+                </button>
+              )}
               <button type="button" onClick={onClose} style={{ border: 'none', background: 'transparent', color: 'var(--muted-fg)', fontSize: 20, cursor: 'pointer', padding: 4 }}>
                 ✕
               </button>
@@ -195,21 +254,59 @@ export default function RecordDetailsModal({
                   <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--purple)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                     HR Pre-Employment &amp; Compliance Snapshot:
                   </div>
-                  <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '2px 8px', borderRadius: 8 }}>
-                    ✓ 6/6 Verified
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 800,
+                      color: isReady ? 'var(--green)' : 'var(--amber, #d97706)',
+                      background: isReady ? 'var(--green-soft)' : 'rgba(217, 119, 6, 0.12)',
+                      padding: '2px 8px',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {isReady ? '✓ 6/6 Verified' : `● ${read.count}/6 Pre-Cleared`}
                   </span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 11, fontSize: 12.5 }}>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>Medical Diagnostic:</span> <b>{pre.medicalClinic || 'HealthHub Diagnostics QC'} (Fit-to-Work)</b></div>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>10-Panel Drug Screen:</span> <b style={{ color: 'var(--green)' }}>✓ Negative</b></div>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>SSS / TIN Numbers:</span> <b>SSS: {pre.sss || '34-8901234-5'} · TIN: {pre.tin || '345-678-901-000'}</b></div>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>PhilHealth / Pag-IBIG:</span> <b>PH: {pre.philhealth || '12-050678901-2'} · HDMF: {pre.pagibig || '1210-9876-5432'}</b></div>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>Employment Contract:</span> <b>DOLE DO-174 Project Contract (Signed)</b></div>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>PDOS Orientation:</span> <b style={{ color: 'var(--green)' }}>✓ Completed (5/5 Modules)</b></div>
-                  <div><span style={{ color: 'var(--muted-fg)' }}>PPE Equipment:</span> <b>{pre.ppeGear || 'Standard Uniform Polo, High-Vis Vest, Safety Shoes'}</b></div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>Medical Diagnostic:</span>{' '}
+                    <b>{pre.medicalClinic || 'HealthHub Diagnostics QC'}</b>{' '}
+                    {deployment.compliance?.medicalClearance ? <span style={{ color: 'var(--green)', fontWeight: 700 }}>(✓ Fit-to-Work)</span> : <span style={{ color: 'var(--red)', fontWeight: 700 }}>(✕ Pending)</span>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>NBI / Police Clearance:</span>{' '}
+                    {deployment.compliance?.nbiClearance ? <b style={{ color: 'var(--green)' }}>✓ Cleared &amp; Valid</b> : <b style={{ color: 'var(--red)' }}>✕ Pending Submission</b>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>SSS / TIN Numbers:</span>{' '}
+                    {hasValidGovtIds ? <b>SSS: {displaySss} · TIN: {displayTin}</b> : <b style={{ color: 'var(--red)' }}>✕ Incomplete IDs</b>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>PhilHealth / Pag-IBIG:</span>{' '}
+                    {hasValidGovtIds ? <b>PH: {displayPhilhealth} · HDMF: {displayPagibig}</b> : <b style={{ color: 'var(--red)' }}>✕ Incomplete IDs</b>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>Employment Contract:</span>{' '}
+                    {deployment.compliance?.signedContract ? <b style={{ color: 'var(--green)' }}>✓ DOLE DO-174 Contract (Signed)</b> : <b style={{ color: 'var(--red)' }}>✕ Contract Signing Pending</b>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>PPE Equipment:</span>{' '}
+                    {deployment.compliance?.ppeIssued ? <b>{pre.ppeGear || 'Standard Uniform Polo, Vest, Safety Shoes'}</b> : <b style={{ color: 'var(--red)' }}>✕ PPE Kit Issuance Pending</b>}
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--muted-fg)' }}>PDOS Orientation:</span>{' '}
+                    {hasCertifiedOrientation ? <b style={{ color: 'var(--green)' }}>✓ Completed (5/5 Modules)</b> : <b style={{ color: 'var(--red)' }}>✕ Orientation Pending</b>}
+                  </div>
                 </div>
+
+                {!isReady && missingItems.length > 0 && (
+                  <div style={{ marginTop: 14, padding: '9px 12px', background: 'rgba(220, 38, 38, 0.08)', border: '1px solid rgba(220, 38, 38, 0.25)', borderRadius: 8, fontSize: 11, color: 'var(--red, #dc2626)', fontWeight: 700 }}>
+                    Gate Pass issuance is locked until all 6 mandatory compliance items are verified in Recruitment.
+                  </div>
+                )}
               </div>
             </div>
+
 
             {/* SECTION 3: DIGITAL ONBOARDING DOCUMENTS & LOGISTICS PASSES */}
             <div style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px' }}>

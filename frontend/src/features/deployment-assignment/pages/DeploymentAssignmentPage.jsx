@@ -133,47 +133,41 @@ export default function DeploymentAssignmentPage() {
   }, [deployments]);
 
 
+  const [acknowledgedClients, setAcknowledgedClients] = useState(() => {
+    try {
+      const raw = localStorage.getItem('ismers_acknowledged_clients');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleSelectClient = (clientName) => {
+    setSelectedClientName(clientName);
+    if (clientName && !acknowledgedClients.includes(clientName)) {
+      const updated = [...acknowledgedClients, clientName];
+      setAcknowledgedClients(updated);
+      try {
+        localStorage.setItem('ismers_acknowledged_clients', JSON.stringify(updated));
+        localStorage.removeItem('ismers_latest_deployment_alert');
+      } catch (e) {}
+    }
+  };
+
   // Compute new mobilization counts per client from Recruitment bridge & pending dispatch stages
   const newCountsByClient = useMemo(() => {
     const counts = {};
 
-    // 1. From live deployments state: any personnel in assigned, pre_deployment, scheduled, or dispatched
     deployments.forEach((d) => {
-      if (d.stage === 'assigned' || d.stage === 'pre_deployment' || d.stage === 'scheduled' || d.stage === 'dispatched') {
+      const isUnopened = !acknowledgedClients.includes(d.client);
+      const isPending = d.stage === 'assigned' || d.stage === 'pre_deployment' || d.stage === 'scheduled' || d.stage === 'dispatched';
+      if (isPending && isUnopened) {
         counts[d.client] = (counts[d.client] || 0) + 1;
       }
     });
 
-    // 2. From bridge hires stored in localStorage
-    try {
-      const bridgeRaw = localStorage.getItem('ismers_bridge_hires_v2');
-      if (bridgeRaw) {
-        const entries = JSON.parse(bridgeRaw);
-        if (Array.isArray(entries)) {
-          entries.forEach(([key, hire]) => {
-            if (hire && hire.client && !hire.linkedDeploymentId) {
-              counts[hire.client] = (counts[hire.client] || 0) + 1;
-            }
-          });
-        }
-      }
-      const latestRaw = localStorage.getItem('ismers_latest_deployment_alert');
-      if (latestRaw) {
-        const parsed = JSON.parse(latestRaw);
-        if (parsed && parsed.client && !counts[parsed.client]) {
-          counts[parsed.client] = (counts[parsed.client] || 0) + 1;
-        }
-      }
-    } catch (e) {}
-
-    // 3. Fallback baseline if empty to ensure initial visible notification feedback
-    if (Object.keys(counts).length === 0) {
-      counts['Seda Vertis North'] = 1;
-      counts['Vikings Luxury Buffet'] = 1;
-    }
-
     return counts;
-  }, [deployments]);
+  }, [deployments, acknowledgedClients]);
 
   const totalNewMobilizations = useMemo(() => {
     return Object.values(newCountsByClient).reduce((acc, c) => acc + c, 0);
@@ -336,7 +330,7 @@ export default function DeploymentAssignmentPage() {
               <ClientsDeploymentTable
                 clientList={filteredClientList}
                 newCountsByClient={newCountsByClient}
-                onSelectClient={setSelectedClientName}
+                onSelectClient={handleSelectClient}
               />
             </div>
           ) : (
