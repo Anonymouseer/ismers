@@ -22,7 +22,7 @@ export default function ComplianceModal({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 100,
+        zIndex: 1200,
         background: 'rgba(0,0,0,0.65)',
         backdropFilter: 'blur(3px)',
         display: 'flex',
@@ -93,19 +93,25 @@ export default function ComplianceModal({
                     borderRadius: 12,
                     background: isChecked ? 'var(--green-soft)' : 'var(--bg)',
                     border: `1px solid ${isChecked ? 'var(--green)' : 'var(--border)'}`,
-                    cursor: 'pointer',
+                    cursor: isChecked ? 'default' : 'pointer',
                     transition: 'all 0.15s ease',
                   }}
                 >
                   <input
                     type="checkbox"
                     checked={isChecked}
-                    onChange={() => onToggleRequirement(deployment.id, item.key)}
-                    style={{ marginTop: 3, width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--green)' }}
+                    disabled={isChecked}
+                    onChange={() => !isChecked && onToggleRequirement(deployment.id, item.key)}
+                    style={{ marginTop: 3, width: 16, height: 16, cursor: isChecked ? 'default' : 'pointer', accentColor: 'var(--green)' }}
                   />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 800, color: isChecked ? 'var(--green)' : 'var(--text)' }}>
-                      {idx + 1}. {item.label}
+                    <div style={{ fontSize: 12.5, fontWeight: 800, color: isChecked ? 'var(--green)' : 'var(--text)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{idx + 1}. {item.label}</span>
+                      {isChecked && (
+                        <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--green)', background: 'var(--panel)', border: '1px solid var(--green)', borderRadius: 4, padding: '1px 6px' }}>
+                          ✓ Verified &amp; Locked
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--muted-fg)', marginTop: 2 }}>
                       {item.desc}

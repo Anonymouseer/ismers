@@ -22,6 +22,7 @@ function SortIcon({ direction }) {
 
 export default function ClientsDeploymentTable({
   clientList = [],
+  newCountsByClient = {},
   onSelectClient,
 }) {
   const [sortKey, setSortKey] = useState('name');
@@ -76,55 +77,101 @@ export default function ClientsDeploymentTable({
         </thead>
         <tbody>
           {sortedClients.length ? (
-            sortedClients.map((c) => (
-              <tr
-                key={c.name}
-                style={{ borderBottom: '1px solid var(--border-soft)', transition: 'background 0.14s ease', cursor: 'pointer' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--secondary)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                onClick={() => onSelectClient(c.name)}
-              >
-                {/* CLIENT WITH LOGO */}
-                <td style={{ padding: '13px 18px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <img
-                      src={logoUrl(c.name)}
-                      alt=""
-                      width={34}
-                      height={34}
-                      style={{ borderRadius: 8, flexShrink: 0, border: '1px solid var(--border-soft)' }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13 }}>{c.name}</div>
-                      <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{c.industry}</div>
+            sortedClients.map((c) => {
+              const newCount = newCountsByClient[c.name] || 0;
+              const hasNew = newCount > 0;
+              return (
+                <tr
+                  key={c.name}
+                  style={{
+                    borderBottom: '1px solid var(--border-soft)',
+                    transition: 'background 0.14s ease',
+                    cursor: 'pointer',
+                    background: hasNew ? 'rgba(20, 158, 110, 0.05)' : 'transparent',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = hasNew ? 'rgba(20, 158, 110, 0.10)' : 'var(--secondary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = hasNew ? 'rgba(20, 158, 110, 0.05)' : 'transparent')}
+                  onClick={() => onSelectClient(c.name)}
+                >
+                  {/* CLIENT WITH LOGO */}
+                  <td style={{ padding: '13px 18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <img
+                        src={logoUrl(c.name)}
+                        alt=""
+                        width={34}
+                        height={34}
+                        style={{ borderRadius: 8, flexShrink: 0, border: '1px solid var(--border-soft)' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span>{c.name}</span>
+                          {hasNew && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                fontWeight: 800,
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                background: 'var(--green-soft, #e8f5e9)',
+                                color: 'var(--green, #149e6e)',
+                                border: '1px solid var(--green, #149e6e)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                              }}
+                            >
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--green, #149e6e)' }}></span>
+                              +{newCount} New
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{c.industry}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
+                  </td>
 
-                {/* ACCOUNT STATUS */}
-                <td style={{ padding: '13px 18px' }}>
-                  <span
-                    style={{
-                      padding: '4px 10px',
-                      borderRadius: 12,
-                      fontSize: 11,
-                      fontWeight: 800,
-                      background: 'var(--green-soft)',
-                      color: 'var(--green)',
-                      border: '1px solid var(--green)',
-                      display: 'inline-block',
-                    }}
-                  >
-                    ACTIVE CLIENT
-                  </span>
-                </td>
+                  {/* ACCOUNT STATUS */}
+                  <td style={{ padding: '13px 18px' }}>
+                    <span
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 12,
+                        fontSize: 11,
+                        fontWeight: 800,
+                        background: 'var(--green-soft)',
+                        color: 'var(--green)',
+                        border: '1px solid var(--green)',
+                        display: 'inline-block',
+                      }}
+                    >
+                      ACTIVE CLIENT
+                    </span>
+                  </td>
 
-                {/* DEPLOYED HEADCOUNT */}
-                <td style={{ padding: '13px 18px' }}>
-                  <span style={{ fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
-                    {c.deployedCount} Deployed Staff
-                  </span>
-                </td>
+                  {/* DEPLOYED HEADCOUNT */}
+                  <td style={{ padding: '13px 18px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
+                        {c.deployedCount} Deployed
+                      </span>
+                      {hasNew && (
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            color: '#fff',
+                            background: 'var(--green, #149e6e)',
+                            padding: '2px 7px',
+                            borderRadius: '10px',
+                            fontSize: '10px',
+                          }}
+                        >
+                          +{newCount}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
 
                 {/* ACTIVE JOB ORDERS */}
                 <td style={{ padding: '13px 18px' }}>
@@ -166,8 +213,10 @@ export default function ClientsDeploymentTable({
                   </button>
                 </td>
               </tr>
-            ))
-          ) : (
+            );
+          })
+        ) : (
+
             <tr>
               <td colSpan={COLUMNS.length} style={{ padding: 36, textAlign: 'center', color: 'var(--muted-fg)', fontSize: 12 }}>
                 No clients found matching your search.

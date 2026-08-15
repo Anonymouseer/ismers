@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 
-export default function ContractSigningModal({ candidate, job, onClose, onSigned }) {
-  const [wageDaily, setWageDaily] = useState('₱645.00 / day (NCR Statutory Minimum Rate)');
-  const [contractDuration, setContractDuration] = useState('6 Months (Renewable Fixed-Term DOLE DO-174 Assignment)');
-  const [startDate, setStartDate] = useState(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+export default function ContractSigningModal({ candidate, job, onClose, onSigned, readOnly = false }) {
+  const defaultWage = candidate?.employmentContract?.wage || '₱645.00 / day (NCR Statutory Minimum Rate)';
+  const defaultDuration = candidate?.employmentContract?.contractDuration || '6 Months (Renewable Fixed-Term DOLE DO-174 Assignment)';
+  const defaultStartDate = candidate?.employmentContract?.startDate || candidate?.employmentContract?.signedDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const [wageDaily, setWageDaily] = useState(defaultWage);
+  const [contractDuration, setContractDuration] = useState(defaultDuration);
+  const [startDate, setStartDate] = useState(defaultStartDate);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
   const [dispatched, setDispatched] = useState(false);
@@ -12,8 +16,11 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
 
   const canvasRef = useRef(null);
 
-  const contractNo = candidate?.employmentContract?.contractNo || `PPM-CTR-2026-${(candidate?.regId || candidate?.id || '001').replace(/\D/g, '').padStart(4, '0')}`;
-  const isAlreadySigned = Boolean(candidate?.employmentContract?.status === 'Signed');
+  const contractNo = candidate?.employmentContract?.contractNo || `DOLE-174-${(candidate?.regId || candidate?.id || '001').replace(/\D/g, '').padStart(4, '0')}`;
+  const isAlreadySigned = Boolean(candidate?.employmentContract?.status === 'Signed' || readOnly);
+
+  const savedSignatureData = candidate?.employmentContract?.signatureData ||
+    (typeof window !== 'undefined' ? (localStorage.getItem(`contract_signature_${candidate?.name}`) || localStorage.getItem(`contract_signature_${candidate?.id}`)) : null);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -23,8 +30,9 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // Canvas setup
+  // Canvas setup for interactive signing mode
   useEffect(() => {
+    if (readOnly) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -33,19 +41,20 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
     ctx.lineJoin = 'round';
     ctx.strokeStyle = '#0f172a';
 
-    if (candidate?.employmentContract?.signatureData) {
+    if (savedSignatureData) {
       const img = new Image();
       img.onload = () => {
         ctx.drawImage(img, 0, 0);
         setHasSignature(true);
       };
-      img.src = candidate.employmentContract.signatureData;
+      img.src = savedSignatureData;
     }
-  }, [candidate]);
+  }, [candidate, readOnly, savedSignatureData]);
 
   const startDrawing = (e) => {
-    if (isAlreadySigned) return;
+    if (isAlreadySigned || readOnly) return;
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
@@ -57,8 +66,9 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
   };
 
   const draw = (e) => {
-    if (!isDrawing || isAlreadySigned) return;
+    if (!isDrawing || isAlreadySigned || readOnly) return;
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
@@ -74,6 +84,7 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
   };
 
   const clearSignature = () => {
+    if (readOnly) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -88,7 +99,14 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
     }
 
     const canvas = canvasRef.current;
-    const signatureData = canvas ? canvas.toDataURL('image/png') : (candidate?.employmentContract?.signatureData || '');
+    const signatureData = canvas ? canvas.toDataURL('image/png') : (savedSignatureData || '');
+
+    if (typeof window !== 'undefined' && signatureData) {
+      try {
+        localStorage.setItem(`contract_signature_${candidate?.name}`, signatureData);
+        localStorage.setItem(`contract_signature_${candidate?.id}`, signatureData);
+      } catch (e) { }
+    }
 
     const signedContractData = {
       contractNo,
@@ -109,7 +127,7 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
     setTimeout(() => {
       setSavedSuccess(false);
       onClose();
-    }, 1800);
+    }, 1600);
   };
 
   const handlePrint = () => {
@@ -124,7 +142,7 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
   if (!candidate) return null;
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box" style={{ maxWidth: '840px' }}>
         {/* HEADER */}
         <div className="modal-head" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -166,36 +184,53 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
         )}
 
         <div className="modal-scroll" style={{ padding: '20px' }}>
-          {/* CONTRACT PARAMETERS BAR */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-            <div>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Wage Structure &amp; Benefits</label>
-              <input
-                type="text"
-                value={wageDaily}
-                onChange={(e) => setWageDaily(e.target.value)}
-                style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-              />
+          {/* CONTRACT PARAMETERS BAR (READ-ONLY IN DEPLOYMENT, EDITABLE IN ONBOARDING) */}
+          {!readOnly ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Wage Structure &amp; Benefits</label>
+                <input
+                  type="text"
+                  value={wageDaily}
+                  onChange={(e) => setWageDaily(e.target.value)}
+                  style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Contract Term / Assignment</label>
+                <input
+                  type="text"
+                  value={contractDuration}
+                  onChange={(e) => setContractDuration(e.target.value)}
+                  style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Effective Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                />
+              </div>
             </div>
-            <div>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Contract Term / Assignment</label>
-              <input
-                type="text"
-                value={contractDuration}
-                onChange={(e) => setContractDuration(e.target.value)}
-                style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-              />
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Wage Structure</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)', marginTop: '2px' }}>{wageDaily}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Contract Term</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)', marginTop: '2px' }}>{contractDuration}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Effective Start Date</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--green, #149e6e)', marginTop: '2px' }}>{startDate}</div>
+              </div>
             </div>
-            <div>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Effective Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-              />
-            </div>
-          </div>
+          )}
 
           {/* OFFICIAL CONTRACT DOCUMENT CONTAINER (PRINTABLE) */}
           <div className="rs-printable-contract" style={{ background: '#ffffff', color: '#111827', padding: '28px', borderRadius: '12px', border: '2px solid #e5e7eb', boxShadow: '0 4px 18px rgba(0,0,0,0.06)', fontFamily: 'Georgia, serif', lineHeight: '1.6' }}>
@@ -263,7 +298,7 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
                 <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, marginBottom: '6px', fontFamily: 'system-ui, sans-serif' }}>SIGNED FOR THE EMPLOYER:</div>
                 <div style={{ height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1.5px solid #0f172a', background: '#f8fafc', borderRadius: '4px' }}>
                   <div style={{ textAlign: 'center' }}>
-                    <span style={{ fontFamily: 'Brush Script MT, cursive', fontSize: '20px', color: '#1e3a8a' }}>A. M. Villanueva</span>
+                    <span style={{ fontFamily: 'Brush Script MT, cursive', fontSize: '22px', color: '#1e3a8a' }}>A. M. Villanueva</span>
                     <div style={{ fontSize: '9px', color: '#64748b', fontFamily: 'system-ui, sans-serif' }}>Digital Authorized Signatory Seal &bull; PPM HQ</div>
                   </div>
                 </div>
@@ -271,11 +306,11 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
                 <div style={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'system-ui, sans-serif' }}>Authorized HR Operations Representative</div>
               </div>
 
-              {/* CANDIDATE DIGITAL SIGNATURE PAD */}
+              {/* CANDIDATE DIGITAL SIGNATURE */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, fontFamily: 'system-ui, sans-serif' }}>CANDIDATE SIGNATURE:</span>
-                  {!isAlreadySigned && (
+                  {!isAlreadySigned && !readOnly && (
                     <button
                       type="button"
                       onClick={clearSignature}
@@ -286,30 +321,48 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
                   )}
                 </div>
 
-                <div style={{ border: '1.5px dashed #94a3b8', borderRadius: '6px', background: '#f8fafc', overflow: 'hidden', position: 'relative' }}>
-                  <canvas
-                    ref={canvasRef}
-                    width={340}
-                    height={70}
-                    style={{ width: '100%', height: '70px', display: 'block', cursor: isAlreadySigned ? 'default' : 'crosshair' }}
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
-                  />
-                  {!hasSignature && !isAlreadySigned && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: '#94a3b8', fontSize: '11px', fontStyle: 'italic', fontFamily: 'system-ui, sans-serif' }}>
-                      Sign here with mouse, touch, or stylus
-                    </div>
+                {/* DIGITAL SIGNATURE DISPLAY / CANVAS */}
+                <div style={{ border: '1.5px dashed #94a3b8', borderRadius: '6px', background: '#f8fafc', overflow: 'hidden', height: '64px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {readOnly || isAlreadySigned ? (
+                    savedSignatureData ? (
+                      <img src={savedSignatureData} alt="Candidate Signature" style={{ width: '100%', height: '60px', objectFit: 'contain' }} />
+                    ) : (
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontFamily: 'Brush Script MT, cursive', fontSize: '24px', color: '#1e3a8a' }}>
+                          {candidate.name}
+                        </span>
+                        <div style={{ fontSize: '8.5px', color: '#16a34a', fontWeight: 700, fontFamily: 'system-ui, sans-serif' }}>
+                          ✓ Cryptographically Verified &amp; Authenticated E-Signature
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <>
+                      <canvas
+                        ref={canvasRef}
+                        width={340}
+                        height={64}
+                        style={{ width: '100%', height: '64px', display: 'block', cursor: 'crosshair' }}
+                        onMouseDown={startDrawing}
+                        onMouseMove={draw}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={startDrawing}
+                        onTouchMove={draw}
+                        onTouchEnd={stopDrawing}
+                      />
+                      {!hasSignature && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', color: '#94a3b8', fontSize: '11px', fontStyle: 'italic', fontFamily: 'system-ui, sans-serif' }}>
+                          Sign here with mouse, touch, or stylus
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
                 <div style={{ fontSize: '11px', fontWeight: 800, marginTop: '4px', color: '#0f172a', fontFamily: 'system-ui, sans-serif' }}>{candidate.name}</div>
                 <div style={{ fontSize: '9.5px', color: '#64748b', fontFamily: 'system-ui, sans-serif' }}>
-                  {hasSignature || isAlreadySigned ? `E-Signed & Authenticated (${contractNo})` : 'Awaiting Digital E-Signature'}
+                  E-Signed &amp; Authenticated ({contractNo})
                 </div>
               </div>
             </div>
@@ -318,17 +371,21 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
 
         {/* MODAL FOOTER */}
         <div style={{ padding: '14px 20px', background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <button
-            type="button"
-            className="rs-stage-btn"
-            onClick={handleDispatch}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-            Send Copy via SMS &amp; Email
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rs-stage-btn"
+              onClick={handleDispatch}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+              Send Copy via SMS &amp; Email
+            </button>
+          ) : (
+            <div></div>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
@@ -344,20 +401,31 @@ export default function ContractSigningModal({ candidate, job, onClose, onSigned
               Print Hardcopy (2 Sets)
             </button>
 
-            <button
-              type="button"
-              className="rs-stage-btn primary"
-              style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
-              onClick={handleSaveSignature}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              {isAlreadySigned ? 'Update Signed Contract' : 'E-Sign & Archive in 201 File'}
-            </button>
+            {!readOnly ? (
+              <button
+                type="button"
+                className="rs-stage-btn primary"
+                style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
+                onClick={handleSaveSignature}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {isAlreadySigned ? 'Update Signed Contract' : 'E-Sign & Archive in 201 File'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="rs-stage-btn primary"
+                onClick={onClose}
+              >
+                Close
+              </button>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+

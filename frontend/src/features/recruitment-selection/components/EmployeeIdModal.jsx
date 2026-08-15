@@ -30,7 +30,7 @@ export default function EmployeeIdModal({ candidate, job, onClose }) {
   };
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <style>{`
         @media print {
           body * {
@@ -148,7 +148,7 @@ export default function EmployeeIdModal({ candidate, job, onClose }) {
         {/* BODY PRINT AREA */}
         <div className="modal-scroll" style={{ padding: '32px 24px', background: 'var(--bg)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div className="employee-id-print-area" style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', justifyContent: 'center', alignItems: 'center' }}>
-            
+
             {/* ========================================================= */}
             {/* FRONT SIDE (ENLARGED HIGH DENSITY BADGE) */}
             {/* ========================================================= */}

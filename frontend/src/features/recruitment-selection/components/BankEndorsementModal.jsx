@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 
-export default function BankEndorsementModal({ candidate, job, onClose, onEndorsed }) {
+export default function BankEndorsementModal({ candidate, job, onClose, onEndorsed, readOnly = false }) {
   const [selectedBank, setSelectedBank] = useState('BDO Unibank - QC Corporate Banking Center');
   const [accountType, setAccountType] = useState('Corporate Payroll Savings Account (Zero Maintaining Balance)');
   const [dispatched, setDispatched] = useState(false);
@@ -38,7 +38,7 @@ export default function BankEndorsementModal({ candidate, job, onClose, onEndors
   };
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box" style={{ maxWidth: '750px' }}>
         {/* MODAL HEADER */}
         <div className="modal-head" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -69,33 +69,46 @@ export default function BankEndorsementModal({ candidate, job, onClose, onEndors
 
         <div className="modal-scroll" style={{ padding: '20px' }}>
           {/* CONTROLS */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Designated Partner Bank</label>
-              <select
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
-                value={selectedBank}
-                onChange={(e) => setSelectedBank(e.target.value)}
-              >
-                <option value="BDO Unibank - QC Corporate Banking Center">BDO Unibank - QC Corporate Banking Center</option>
-                <option value="Bank of the Philippine Islands (BPI) - Ayala Hub">Bank of the Philippine Islands (BPI) - Ayala Hub</option>
-                <option value="UnionBank of the Philippines - Corporate Digibank">UnionBank of the Philippines - Corporate Digibank</option>
-                <option value="Metrobank - Port Area Branch">Metrobank - Port Area Branch</option>
-              </select>
-            </div>
+          {!readOnly ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Designated Partner Bank</label>
+                <select
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
+                  value={selectedBank}
+                  onChange={(e) => setSelectedBank(e.target.value)}
+                >
+                  <option value="BDO Unibank - QC Corporate Banking Center">BDO Unibank - QC Corporate Banking Center</option>
+                  <option value="Bank of the Philippine Islands (BPI) - Ayala Hub">Bank of the Philippine Islands (BPI) - Ayala Hub</option>
+                  <option value="UnionBank of the Philippines - Corporate Digibank">UnionBank of the Philippines - Corporate Digibank</option>
+                  <option value="Metrobank - Port Area Branch">Metrobank - Port Area Branch</option>
+                </select>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Account Structure</label>
-              <select
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
-                value={accountType}
-                onChange={(e) => setAccountType(e.target.value)}
-              >
-                <option value="Corporate Payroll Savings Account (Zero Maintaining Balance)">Corporate Payroll Savings Account (Zero Maintaining Balance)</option>
-                <option value="Cash Card (Instant Issuance)">Cash Card (Instant Issuance)</option>
-              </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Account Structure</label>
+                <select
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
+                  value={accountType}
+                  onChange={(e) => setAccountType(e.target.value)}
+                >
+                  <option value="Corporate Payroll Savings Account (Zero Maintaining Balance)">Corporate Payroll Savings Account (Zero Maintaining Balance)</option>
+                  <option value="Cash Card (Instant Issuance)">Cash Card (Instant Issuance)</option>
+                </select>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Designated Bank</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)', marginTop: '2px' }}>{selectedBank}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Account Type</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--green, #149e6e)', marginTop: '2px' }}>{accountType}</div>
+              </div>
+            </div>
+          )}
 
           {/* OFFICIAL LETTER CONTAINER (PRINTABLE) */}
           <div className="rs-printable-bank" style={{ background: '#ffffff', color: '#111827', padding: '28px', borderRadius: '12px', border: '2px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontFamily: 'Georgia, serif', lineHeight: '1.6' }}>
@@ -160,20 +173,31 @@ export default function BankEndorsementModal({ candidate, job, onClose, onEndors
             Print Bank Letter
           </button>
 
-          <button
-            type="button"
-            className="rs-stage-btn primary"
-            style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
-            onClick={handleDispatch}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-            Issue &amp; Send to Candidate
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
+              onClick={handleDispatch}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+              Issue &amp; Send to Candidate
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+

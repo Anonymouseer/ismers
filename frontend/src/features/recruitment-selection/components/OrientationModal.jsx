@@ -29,14 +29,14 @@ const ORIENTATION_MODULES = [
   },
 ];
 
-export default function OrientationModal({ candidate, job, onClose, onCertified }) {
+export default function OrientationModal({ candidate, job, onClose, onCertified, readOnly = false }) {
   const [modules, setModules] = useState(
     candidate?.orientationModules || {
-      module1: false,
-      module2: false,
-      module3: false,
-      module4: false,
-      module5: false,
+      module1: true,
+      module2: true,
+      module3: true,
+      module4: true,
+      module5: true,
     }
   );
 
@@ -52,14 +52,17 @@ export default function OrientationModal({ candidate, job, onClose, onCertified 
 
   if (!candidate) return null;
 
-  const completedCount = Object.values(modules).filter(Boolean).length;
+  const completedCount = readOnly ? ORIENTATION_MODULES.length : Object.values(modules).filter(Boolean).length;
   const allModulesDone = completedCount === ORIENTATION_MODULES.length;
-  const isCertified = Boolean(candidate?.orientationModules?.certifiedAt || allModulesDone);
+  const isCertified = Boolean(candidate?.orientationModules?.certifiedAt || allModulesDone || readOnly);
 
   const toggleModule = (modId) => {
+    if (readOnly) return;
+    // Checked modules cannot be unchecked
+    if (modules[modId]) return;
     setModules((prev) => ({
       ...prev,
-      [modId]: !prev[modId],
+      [modId]: true,
     }));
   };
 
@@ -88,7 +91,7 @@ export default function OrientationModal({ candidate, job, onClose, onCertified 
   };
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box" style={{ maxWidth: '780px' }}>
         {/* MODAL HEADER */}
         <div className="modal-head" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -133,17 +136,17 @@ export default function OrientationModal({ candidate, job, onClose, onCertified 
               fontWeight: 800,
               padding: '4px 12px',
               borderRadius: '6px',
-              background: allModulesDone ? 'var(--green-soft, #e8f5e9)' : 'var(--amber-soft, #fef3c7)',
-              color: allModulesDone ? 'var(--green, #149e6e)' : 'var(--amber, #d97706)',
+              background: 'var(--green-soft, #e8f5e9)',
+              color: 'var(--green, #149e6e)',
             }}>
-              {allModulesDone ? '✓ All Modules Briefed' : `${completedCount}/5 Briefed`}
+              ✓ 5/5 Modules Briefed &amp; Certified
             </span>
           </div>
 
           {/* MODULES CHECKLIST */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
             {ORIENTATION_MODULES.map((mod, idx) => {
-              const isChecked = Boolean(modules[mod.id]);
+              const isChecked = readOnly || Boolean(modules[mod.id]);
               return (
                 <div
                   key={mod.id}
@@ -155,7 +158,7 @@ export default function OrientationModal({ candidate, job, onClose, onCertified 
                     borderRadius: '8px',
                     background: isChecked ? 'var(--green-soft, rgba(20, 158, 110, 0.08))' : 'var(--panel)',
                     border: `1px solid ${isChecked ? 'rgba(20, 158, 110, 0.3)' : 'var(--border)'}`,
-                    cursor: 'pointer',
+                    cursor: readOnly || isChecked ? 'default' : 'pointer',
                     transition: 'all 0.14s var(--ease)',
                   }}
                   onClick={() => toggleModule(mod.id)}
@@ -181,8 +184,13 @@ export default function OrientationModal({ candidate, job, onClose, onCertified 
                   </div>
 
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: isChecked ? 'var(--green, #149e6e)' : 'var(--text)' }}>
-                      Module {idx + 1}: {mod.title}
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: isChecked ? 'var(--green, #149e6e)' : 'var(--text)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Module {idx + 1}: {mod.title}</span>
+                      {isChecked && (
+                        <span style={{ fontSize: '9.5px', fontWeight: 800, color: 'var(--green, #149e6e)', background: 'var(--panel)', border: '1px solid var(--green, #149e6e)', borderRadius: '4px', padding: '1px 6px' }}>
+                          ✓ Certified
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '2px' }}>
                       {mod.desc}
@@ -246,19 +254,30 @@ export default function OrientationModal({ candidate, job, onClose, onCertified 
             Print Orientation Certificate
           </button>
 
-          <button
-            type="button"
-            className="rs-stage-btn primary"
-            style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
-            onClick={handleCertify}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            {allModulesDone ? 'Certify & Save Orientation' : 'Save Progress'}
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
+              onClick={handleCertify}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              {allModulesDone ? 'Certify & Save Orientation' : 'Save Progress'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+

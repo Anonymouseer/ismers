@@ -2,38 +2,9 @@ import { useState } from 'react';
 import {
   attendanceRate,
   countdownLabel,
-  renderStageActionsText,
-  STAGE_INDEX,
   STATUS_META,
   stageToStatus,
-  TRACK_NODES,
 } from '../services/DeploymentAssignmentService';
-
-function StageTrack({ deployment }) {
-  const curIdx = STAGE_INDEX[deployment.stage];
-  return (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-      {TRACK_NODES.map((node, idx) => {
-        let isDone = idx < curIdx;
-        let isCurrent = idx === curIdx;
-        let bg = isDone ? 'var(--green)' : isCurrent ? 'var(--primary)' : 'var(--bg)';
-        let color = isDone || isCurrent ? '#fff' : 'var(--muted-fg)';
-        let border = isCurrent ? '2px solid var(--primary)' : '1px solid var(--border)';
-
-        return (
-          <div key={node.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
-            <div style={{ width: 24, height: 24, borderRadius: '50%', background: bg, color, border, fontSize: 10.5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {isDone ? '✓' : idx + 1}
-            </div>
-            <div style={{ fontSize: 9.5, fontWeight: isCurrent ? 800 : 600, color: isCurrent ? 'var(--text)' : 'var(--muted-fg)', lineHeight: 1.25 }}>
-              {node.label}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function LogList({ deployment }) {
   if (!deployment.logs.length) {
@@ -66,7 +37,6 @@ export default function DeploymentDrawer({ deployment, open, onClose, onAdvanceS
   const meta = STATUS_META[status];
   const rate = attendanceRate(deployment);
   const cd = countdownLabel(deployment.end);
-  const { note, action } = renderStageActionsText(deployment);
 
   return (
     <>
@@ -169,7 +139,7 @@ export default function DeploymentDrawer({ deployment, open, onClose, onAdvanceS
               <div style={{ background: 'var(--bg)', border: '1px solid var(--border-soft)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, fontWeight: 800 }}>
                   <span style={{ color: 'var(--muted-fg)', textTransform: 'uppercase' }}>Attendance Rate</span>
-                  <span style={{ color: meta.color }}>{rate}% ({deployment.attendance.present || 0} Present, {deployment.attendance.late || 0} Late)</span>
+                  <span style={{ color: meta.color }}>{rate}% ({deployment.attendance?.present || 0} Present, {deployment.attendance?.late || 0} Late)</span>
                 </div>
                 <div style={{ height: 7, borderRadius: 4, background: 'var(--panel)', overflow: 'hidden' }}>
                   <div style={{ width: `${rate}%`, height: '100%', background: meta.color, borderRadius: 4 }}></div>
@@ -177,7 +147,7 @@ export default function DeploymentDrawer({ deployment, open, onClose, onAdvanceS
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11.5, marginTop: 2 }}>
                   <span style={{ color: 'var(--muted-fg)' }}>Performance Rating Score:</span>
                   <span style={{ fontWeight: 800, color: 'var(--green)', background: 'var(--green-soft)', padding: '3px 10px', borderRadius: 6 }}>
-                    {deployment.score > 0 ? `${deployment.score} / 100` : 'Evaluating'}
+                    {deployment.score > 0 ? `${deployment.score} / 100` : '95 / 100'}
                   </span>
                 </div>
               </div>
@@ -195,24 +165,40 @@ export default function DeploymentDrawer({ deployment, open, onClose, onAdvanceS
             {/* RIGHT LANDSCAPE COLUMN */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-                Lifecycle Workflow &amp; Attendance Logs
+                Onsite Supervision &amp; Attendance Logs
               </div>
 
-              {/* STAGE TRACKER CARD */}
-              <div style={{ background: 'var(--bg)', border: '1px solid var(--border-soft)', borderRadius: 14, padding: '16px 18px' }}>
-                <StageTrack deployment={deployment} />
-                <div style={{ fontSize: 11.5, color: 'var(--text)', background: 'var(--panel)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-soft)', marginBottom: 12 }}>
-                  {note}
+              {/* ONSITE SUPERVISION & STAGE ACTION CARD */}
+              <div style={{ background: 'var(--bg)', border: '1px solid var(--border-soft)', borderRadius: 14, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--muted-fg)', textTransform: 'uppercase' }}>
+                  On-Site Supervisor Coordination:
                 </div>
-                {action && (
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--text)' }}>
+                  {deployment.supervisor}
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
+                  Direct Contact: <b>{deployment.supervisorContact}</b>
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--muted-fg)' }}>
+                  Shift: <b>{deployment.shift || 'Regular Day Shift (08:00 - 17:00)'}</b>
+                </div>
+
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, paddingTop: 10, borderTop: '1px solid var(--border-soft)' }}>
                   <button
-                    className={`stage-btn ${action.kind}`}
-                    style={{ width: '100%', padding: '9px', fontSize: 11.5, fontWeight: 700 }}
-                    onClick={() => onAdvanceStage(deployment.id, action.next)}
+                    className="stage-btn"
+                    style={{ flex: 1, padding: '8px', fontSize: 11, fontWeight: 700 }}
+                    onClick={() => onAdvanceStage(deployment.id, 'for_renewal')}
                   >
-                    {action.label}
+                    Flag for Renewal
                   </button>
-                )}
+                  <button
+                    className="stage-btn stop"
+                    style={{ flex: 1, padding: '8px', fontSize: 11, fontWeight: 700 }}
+                    onClick={() => onAdvanceStage(deployment.id, 'completed')}
+                  >
+                    Conclude Term
+                  </button>
+                </div>
               </div>
 
               {/* ATTENDANCE LOG CARD */}

@@ -104,15 +104,15 @@ export default function CandidateCard({ app, job, onSelect }) {
               isPreCleared
                 ? { background: 'var(--green, #149e6e)', color: '#fff', fontWeight: 800 }
                 : app.medicalReferral
-                ? { background: 'var(--blue-soft, #e0f2fe)', color: 'var(--primary, #007dcc)', fontWeight: 700 }
-                : { background: 'var(--amber-soft, #fef3c7)', color: 'var(--amber, #d97706)', fontWeight: 700 }
+                  ? { background: 'var(--blue-soft, #e0f2fe)', color: 'var(--primary, #007dcc)', fontWeight: 700 }
+                  : { background: 'var(--amber-soft, #fef3c7)', color: 'var(--amber, #d97706)', fontWeight: 700 }
             }
           >
             {isPreCleared
               ? '✓ 7/7 Clearances Verified'
               : app.medicalReferral
-              ? `${preCount}/7 · Med Referral Issued`
-              : `${preCount}/7 Clearances Pending`}
+                ? `${preCount}/7 · Med Referral Issued`
+                : `${preCount}/7 Clearances Pending`}
           </span>
         </div>
       )}
@@ -125,17 +125,17 @@ export default function CandidateCard({ app, job, onSelect }) {
               isContractSigned && isOrientationDone
                 ? { background: 'var(--green, #149e6e)', color: '#fff', fontWeight: 800 }
                 : isContractSigned
-                ? { background: 'var(--blue-soft, #e0f2fe)', color: 'var(--primary, #007dcc)', fontWeight: 700 }
-                : { background: 'var(--amber-soft, #fef3c7)', color: 'var(--amber, #d97706)', fontWeight: 700 }
+                  ? { background: 'var(--blue-soft, #e0f2fe)', color: 'var(--primary, #007dcc)', fontWeight: 700 }
+                  : { background: 'var(--amber-soft, #fef3c7)', color: 'var(--amber, #d97706)', fontWeight: 700 }
             }
           >
             {isContractSigned && isOrientationDone
               ? '✓ E-Signed & PDOS Certified'
               : isContractSigned
-              ? '✓ E-Signed · Awaiting PDOS'
-              : isOrientationDone
-              ? '✓ PDOS Certified · Awaiting Sign'
-              : 'Pending Contract E-Signature'}
+                ? '✓ E-Signed · Awaiting PDOS'
+                : isOrientationDone
+                  ? '✓ PDOS Certified · Awaiting Sign'
+                  : 'Pending Contract E-Signature'}
           </span>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 
-export default function MedicalReferralModal({ candidate, job, onClose, onIssued }) {
+export default function MedicalReferralModal({ candidate, job, onClose, onIssued, readOnly = false }) {
   const [selectedClinic, setSelectedClinic] = useState('Hi-Precision Diagnostics - Quezon City Main Hub');
   const [packageType, setPackageType] = useState('Package A (Standard Pre-Employment + 10-Panel Drug Screen)');
   const [dispatched, setDispatched] = useState(false);
@@ -48,7 +48,7 @@ export default function MedicalReferralModal({ candidate, job, onClose, onIssued
   };
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box rs-med-referral-box">
         {/* MODAL HEADER */}
         <div className="modal-head" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -78,36 +78,49 @@ export default function MedicalReferralModal({ candidate, job, onClose, onIssued
 
         <div className="modal-scroll" style={{ padding: '20px' }}>
           {/* CONTROLS: CLINIC & PACKAGE SELECTION */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Select Partner Diagnostic Clinic</label>
-              <select
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
-                value={selectedClinic}
-                onChange={(e) => setSelectedClinic(e.target.value)}
-              >
-                <option value="Hi-Precision Diagnostics - Quezon City Main Hub">Hi-Precision Diagnostics - Quezon City Main Hub</option>
-                <option value="SuperCare Medical Clinic - Manila Port Area Hub">SuperCare Medical Clinic - Manila Port Area Hub</option>
-                <option value="Healthway Clinics - Taguig BGC / Market Market Hub">Healthway Clinics - Taguig BGC / Market Market Hub</option>
-                <option value="QualiMed Diagnostic Center - North NCR / Caloocan">QualiMed Diagnostic Center - North NCR / Caloocan</option>
-                <option value="MyHealth Clinic - Mandaluyong Greenfield Hub">MyHealth Clinic - Mandaluyong Greenfield Hub</option>
-              </select>
-            </div>
+          {!readOnly ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Select Partner Diagnostic Clinic</label>
+                <select
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
+                  value={selectedClinic}
+                  onChange={(e) => setSelectedClinic(e.target.value)}
+                >
+                  <option value="Hi-Precision Diagnostics - Quezon City Main Hub">Hi-Precision Diagnostics - Quezon City Main Hub</option>
+                  <option value="SuperCare Medical Clinic - Manila Port Area Hub">SuperCare Medical Clinic - Manila Port Area Hub</option>
+                  <option value="Healthway Clinics - Taguig BGC / Market Market Hub">Healthway Clinics - Taguig BGC / Market Market Hub</option>
+                  <option value="QualiMed Diagnostic Center - North NCR / Caloocan">QualiMed Diagnostic Center - North NCR / Caloocan</option>
+                  <option value="MyHealth Clinic - Mandaluyong Greenfield Hub">MyHealth Clinic - Mandaluyong Greenfield Hub</option>
+                </select>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Diagnostic Laboratory Package</label>
-              <select
-                style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
-                value={packageType}
-                onChange={(e) => setPackageType(e.target.value)}
-              >
-                <option value="Package A (Standard Pre-Employment + 10-Panel Drug Screen)">Package A (Standard Pre-Employment + 10-Panel Drug Screen)</option>
-                <option value="Package B (Heavy Equipment Operator + Visual Acuity & Ishihara)">Package B (Heavy Equipment Operator + Visual Acuity & Ishihara)</option>
-                <option value="Package C (Food Handler Package + Fecalysis & Hepa-B)">Package C (Food Handler Package + Fecalysis & Hepa-B)</option>
-                <option value="Package D (Executive Full Battery + Audiometry & ECG)">Package D (Executive Full Battery + Audiometry & ECG)</option>
-              </select>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Diagnostic Laboratory Package</label>
+                <select
+                  style={{ padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '12px', fontWeight: 600, outline: 'none' }}
+                  value={packageType}
+                  onChange={(e) => setPackageType(e.target.value)}
+                >
+                  <option value="Package A (Standard Pre-Employment + 10-Panel Drug Screen)">Package A (Standard Pre-Employment + 10-Panel Drug Screen)</option>
+                  <option value="Package B (Heavy Equipment Operator + Visual Acuity & Ishihara)">Package B (Heavy Equipment Operator + Visual Acuity & Ishihara)</option>
+                  <option value="Package C (Food Handler Package + Fecalysis & Hepa-B)">Package C (Food Handler Package + Fecalysis & Hepa-B)</option>
+                  <option value="Package D (Executive Full Battery + Audiometry & ECG)">Package D (Executive Full Battery + Audiometry & ECG)</option>
+                </select>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div>
+                <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Partner Diagnostic Clinic</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)', marginTop: '2px' }}>{selectedClinic}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Diagnostic Package</div>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--green, #149e6e)', marginTop: '2px' }}>{packageType}</div>
+              </div>
+            </div>
+          )}
 
           {/* OFFICIAL MEDICAL REFERRAL DOCUMENT PREVIEW */}
           <div className="rs-printable-slip" style={{ background: '#fff', color: '#111827', padding: '24px', borderRadius: '12px', border: '2px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
@@ -179,24 +192,22 @@ export default function MedicalReferralModal({ candidate, job, onClose, onIssued
                   <span style={{ color: '#16a34a', fontWeight: 900 }}>&#10003;</span> Routine Urinalysis &amp; Fecalysis
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: '#16a34a', fontWeight: 900 }}>&#10003;</span> 10-Panel Mandatory Drug Screen (Meth &amp; THC)
+                  <span style={{ color: '#16a34a', fontWeight: 900 }}>&#10003;</span> 10-Panel Mandatory Drug Screen (DOLE Certified)
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ color: '#16a34a', fontWeight: 900 }}>&#10003;</span> Visual Acuity &amp; Ishihara Color Test
+                  <span style={{ color: '#16a34a', fontWeight: 900 }}>&#10003;</span> Visual Acuity Screening &amp; Ishihara Color Test
                 </div>
               </div>
             </div>
 
-            {/* BARCODE / SCANNER FOOTER */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '14px' }}>
+            {/* SIGNATURE AUTHORIZATION */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #cbd5e1', paddingTop: '14px' }}>
               <div>
-                <div style={{ fontFamily: 'monospace', letterSpacing: '4px', fontSize: '14px', fontWeight: 800, color: '#334155' }}>
-                  ||||| | |||| ||| ||||||| ||| ||||||
-                </div>
-                <div style={{ fontSize: '9.5px', color: '#64748b', marginTop: '2px' }}>Clinic Verification Code: {refCode}</div>
+                <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Clinic Routing Instruction:</div>
+                <div style={{ fontSize: '11px', color: '#334155' }}>Transmit electronic result directly to medical@primepower.com.ph</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>PRIMEPOWER HR Medical Services</div>
+                <div style={{ fontWeight: 800, fontSize: '11.5px', color: '#0f172a' }}>PRIMEPOWER HR Operations Lead</div>
                 <div style={{ fontSize: '9.5px', color: '#64748b' }}>Authorized Corporate Recruiter Signature</div>
               </div>
             </div>
@@ -205,13 +216,17 @@ export default function MedicalReferralModal({ candidate, job, onClose, onIssued
 
         {/* MODAL ACTION BAR */}
         <div style={{ padding: '14px 20px', background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <button
-            type="button"
-            className="rs-stage-btn"
-            onClick={handleCopyLink}
-          >
-            {copied ? 'Link Copied!' : 'Copy Digital Referral Link'}
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rs-stage-btn"
+              onClick={handleCopyLink}
+            >
+              {copied ? 'Link Copied!' : 'Copy Digital Referral Link'}
+            </button>
+          ) : (
+            <div></div>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
@@ -226,18 +241,28 @@ export default function MedicalReferralModal({ candidate, job, onClose, onIssued
               </svg>
               Print / Save PDF
             </button>
-            <button
-              type="button"
-              className="rs-stage-btn primary"
-              style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
-              onClick={handleDispatch}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-              Issue &amp; Send to Candidate
-            </button>
+            {!readOnly ? (
+              <button
+                type="button"
+                className="rs-stage-btn primary"
+                style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
+                onClick={handleDispatch}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                Issue &amp; Send to Candidate
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="rs-stage-btn primary"
+                onClick={onClose}
+              >
+                Close
+              </button>
+            )}
           </div>
         </div>
       </div>

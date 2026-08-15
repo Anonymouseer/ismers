@@ -29,12 +29,15 @@ function SortIcon({ direction }) {
 export default function ClientDeploymentProfile({
   clientData,
   deployments = [],
+  newlyDeployedName = null,
+  newCount = 0,
   onBack,
   onOpenSlip,
   onOpenRecord,
   onNewDeployment,
 }) {
   const [selectedJoRef, setSelectedJoRef] = useState('all');
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortKey, setSortKey] = useState('employee');
@@ -111,21 +114,35 @@ export default function ClientDeploymentProfile({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* TOP BACK BUTTON */}
-      <div>
+    <div className="client-profile-workspace" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* LEVEL 2 HEADER: BACK BUTTON + CLIENT HERO */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
           type="button"
-          className="btn"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', fontSize: 11.5, fontWeight: 700 }}
           onClick={onBack}
+          className="btn"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '7px 14px',
+            fontSize: 12,
+            fontWeight: 800,
+            background: 'var(--panel)',
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+          }}
         >
-          ← Back to All Clients
+          <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 14, height: 14 }}>
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          &larr; Back to Client Accounts
         </button>
       </div>
 
-      {/* LEVEL 1: CLIENT HEADER SUMMARY CARD */}
+      {/* CLIENT HERO BANNER */}
       <div
+        className="client-hero"
         style={{
           background: 'var(--panel)',
           border: '1px solid var(--border)',
@@ -165,6 +182,20 @@ export default function ClientDeploymentProfile({
               >
                 ACTIVE CLIENT
               </span>
+              {newCount > 0 && (
+                <span
+                  style={{
+                    padding: '3px 9px',
+                    borderRadius: 10,
+                    fontSize: 10.5,
+                    fontWeight: 800,
+                    background: 'var(--green, #149e6e)',
+                    color: '#fff',
+                  }}
+                >
+                  +{newCount} New Deployments from Recruitment
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 12, color: 'var(--muted-fg)', marginTop: 4 }}>
               <b>Industry:</b> {clientData.industry} &nbsp;·&nbsp; <b>Primary Site:</b> {clientData.site} &nbsp;·&nbsp; <b>Supervisor:</b> {clientData.supervisor} ({clientData.supervisorContact})
@@ -331,26 +362,50 @@ export default function ClientDeploymentProfile({
                   const meta = STATUS_META[status];
                   const read = complianceReadiness(d);
 
+                  const isNewlyDeployed = Boolean(newlyDeployedName && newlyDeployedName === d.employee);
+
                   return (
                     <tr
                       key={d.id}
-                      style={{ borderBottom: '1px solid var(--border-soft)', transition: 'background 0.14s ease', cursor: 'pointer' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--secondary)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      style={{
+                        borderBottom: '1px solid var(--border-soft)',
+                        transition: 'background 0.14s ease',
+                        cursor: 'pointer',
+                        background: isNewlyDeployed ? 'rgba(20, 158, 110, 0.08)' : 'transparent',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = isNewlyDeployed ? 'rgba(20, 158, 110, 0.14)' : 'var(--secondary)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = isNewlyDeployed ? 'rgba(20, 158, 110, 0.08)' : 'transparent')}
                       onClick={() => onOpenRecord(d.id)}
                     >
                       {/* EMPLOYEE */}
                       <td style={{ padding: '13px 18px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: '50%', background: isNewlyDeployed ? 'var(--green, #149e6e)' : 'var(--primary)', color: '#fff', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, flexShrink: 0 }}>
                             {initials(d.employee)}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13 }}>{d.employee}</div>
+                            <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span>{d.employee}</span>
+                              {isNewlyDeployed && (
+                                <span
+                                  style={{
+                                    fontSize: '9.5px',
+                                    fontWeight: 800,
+                                    padding: '2px 7px',
+                                    borderRadius: '8px',
+                                    background: 'var(--green, #149e6e)',
+                                    color: '#fff',
+                                  }}
+                                >
+                                  ✓ Newly Deployed
+                                </span>
+                              )}
+                            </div>
                             <div style={{ fontSize: 11, color: 'var(--muted-fg)', fontFamily: 'monospace' }}>{d.id}</div>
                           </div>
                         </div>
                       </td>
+
 
                       {/* JOB ORDER / ROLE */}
                       <td style={{ padding: '13px 18px' }}>

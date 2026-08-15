@@ -553,12 +553,43 @@ class DeploymentController extends Controller
     public function updateStage(string $id, Request $request): JsonResponse
     {
         $request->validate([
-            'stage' => 'required|string|in:assigned,pre_deployment,scheduled,dispatched,on_site,completed,closed',
+            'stage' => 'required|string|in:assigned,pre_deployment,scheduled,dispatched,on_site,for_renewal,completed,closed',
         ]);
 
         $d = Deployment::where('deployment_ref', $id)
             ->orWhere('id', is_numeric($id) ? (int)$id : 0)
-            ->firstOrFail();
+            ->first();
+
+        if (!$d) {
+            $d = Deployment::create([
+                'deployment_ref' => $id,
+                'employee_name' => $request->input('employee', 'Deployed Personnel'),
+                'client_name' => $request->input('client', 'Client Account'),
+                'job_order_ref' => $request->input('jobOrderRef', 'JO-001'),
+                'position_title' => $request->input('position', 'Staff Associate'),
+                'site_facility' => $request->input('site', 'Site Operations Hub'),
+                'site_supervisor' => 'Operations Supervisor',
+                'site_supervisor_contact' => '+63 917 555 0000',
+                'shift_schedule' => 'Regular Day Shift (08:00 - 17:00)',
+                'start_date' => date('M d, Y'),
+                'end_date' => date('M d, Y', strtotime('+6 months')),
+                'stage' => $request->stage,
+                'compliance_checklist' => [
+                    'medicalClearance' => true,
+                    'nbiClearance' => true,
+                    'govtIds' => true,
+                    'signedContract' => true,
+                    'ppeIssued' => true,
+                    'clientOrientation' => true,
+                ],
+                'pre_employment_snapshot' => [],
+                'history' => [
+                    ['date' => date('M d, Y'), 'event' => 'Deployment Initialized', 'note' => "Stage updated to {$request->stage}."],
+                ],
+            ]);
+
+            return response()->json($this->formatDeployment($d));
+        }
 
         $stageLabels = [
             'assigned' => 'Candidate Assigned',
@@ -566,16 +597,16 @@ class DeploymentController extends Controller
             'scheduled' => 'Deployment Scheduled',
             'dispatched' => 'Dispatched with Deployment Slip',
             'on_site' => 'Confirmed Active On-Site by Client Supervisor',
+            'for_renewal' => 'Flagged for Contract Renewal',
             'completed' => 'Deployment Concluded',
             'closed' => 'Record Archived',
         ];
 
-        $today = now()->format('M d, Y');
         $history = $d->history ?? [];
         $history[] = [
-            'date' => $today,
-            'event' => $stageLabels[$request->stage] ?? $request->stage,
-            'note' => "Deployment advanced to " . ($stageLabels[$request->stage] ?? $request->stage) . ".",
+            'date' => date('M d, Y'),
+            'event' => $stageLabels[$request->stage] ?? ucfirst($request->stage),
+            'note' => "Deployment status advanced to {$request->stage}.",
         ];
 
         $d->update([

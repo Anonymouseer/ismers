@@ -136,7 +136,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   function toggleChecklistItem(key) {
     const nextChecklist = { ...app.checklist, [key]: !app.checklist[key] };
     update((a) => ({ ...a, checklist: nextChecklist }));
-    updateRecruitmentScreening(persistId, { checklist: nextChecklist }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { checklist: nextChecklist }, app.name).catch(() => { });
   }
 
   function togglePreEmploymentItem(key) {
@@ -169,10 +169,20 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         ...a.notes,
       ],
     }));
-    updateRecruitmentScreening(persistId, { medical_referral: referralData }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { medical_referral: referralData }, app.name).catch(() => { });
   }
 
   function handleContractSigned(contractData) {
+    if (contractData?.signatureData && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(`contract_signature_${app.name}`, contractData.signatureData);
+        if (persistId) {
+          localStorage.setItem(`contract_signature_${persistId}`, contractData.signatureData);
+        }
+      } catch (e) {
+        console.warn('Failed to save signature to localStorage:', e);
+      }
+    }
     update((a) => ({
       ...a,
       employmentContract: contractData,
@@ -184,7 +194,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         ...a.notes,
       ],
     }));
-    updateRecruitmentScreening(persistId, { employment_contract: contractData }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { employment_contract: contractData }, app.name).catch(() => { });
   }
 
   function handleOrientationCertified(orientationData) {
@@ -199,7 +209,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         ...a.notes,
       ],
     }));
-    updateRecruitmentScreening(persistId, { orientation_modules: orientationData }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { orientation_modules: orientationData }, app.name).catch(() => { });
   }
 
   function handleBankEndorsed(bankData) {
@@ -214,7 +224,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         ...a.notes,
       ],
     }));
-    updateRecruitmentScreening(persistId, { atm_endorsement: bankData }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { atm_endorsement: bankData }, app.name).catch(() => { });
   }
 
   function handleNtrIssued(ntrData) {
@@ -229,7 +239,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
         ...a.notes,
       ],
     }));
-    updateRecruitmentScreening(persistId, { deployment_details: ntrData }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { deployment_details: ntrData }, app.name).catch(() => { });
   }
 
   function handlePpeIssued(ppeData) {
@@ -238,24 +248,130 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       ppeIssuance: ppeData,
       notes: [
         {
-          text: `Uniform & PPE kit issued (Shirt: ${ppeData.shirtSize}, Shoes: ${ppeData.shoeSize}).`,
+          text: `PPE Uniform & Safety Gear issued and sign-off acknowledged (Item Set: ${ppeData.selectedGear?.join(', ') || 'Standard Issue'}).`,
           meta: `${CURRENT_ADMIN} · ${formatDate(TODAY)}`,
         },
         ...a.notes,
       ],
     }));
-    updateRecruitmentScreening(persistId, { ppe_issuance: ppeData }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { ppe_issuance: ppeData }, app.name).catch(() => { });
   }
 
   function handleDeployHandover() {
-    if (job) {
-      upsertHire(keyFor(app.name, job.depRef), {
-        name: app.name,
-        jobTitle: job.title || app.jobTitle,
-        client: job.client || app.client,
-        jobOrderRef: job.depRef,
-        hiredDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      });
+    const jobOrderRef = job?.depRef || app.jobOrderRef || app.jobId || 'JO-001';
+    const clientName = job?.client || app.client || 'Sunrise Hospitality Group';
+    const positionTitle = job?.title || app.jobTitle || app.position || 'Front Desk Associate';
+    const siteLocation = job?.location || app.location || 'Boracay, Aklan';
+    const signatureData = app.employmentContract?.signatureData || (typeof window !== 'undefined' ? (localStorage.getItem(`contract_signature_${app.name}`) || localStorage.getItem(`contract_signature_${persistId}`)) : null);
+
+    const todayFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+
+    const newHireRecord = {
+      applicantId: persistId,
+      name: app.name,
+      jobTitle: positionTitle,
+      client: clientName,
+      jobOrderRef: jobOrderRef,
+      site: siteLocation,
+      hiredDate: todayFormatted,
+      medical: app.medicalReferral,
+      statutory: app.statutoryNumbers,
+      contract: {
+        ...app.employmentContract,
+        signatureData: signatureData,
+      },
+      orientation: app.orientationModules,
+      bank: app.bankEndorsement || app.atmEndorsement,
+      ppe: app.ppeIssuance,
+      ntr: app.deploymentDetails || app.noticeToReport,
+      compliance: {
+        medicalClearance: true,
+        nbiClearance: true,
+        govtIds: true,
+        signedContract: true,
+        ppeIssued: true,
+        clientOrientation: true,
+      },
+    };
+
+    upsertHire(keyFor(app.name, jobOrderRef), newHireRecord);
+
+    // Save directly into ismers.deployments.v7
+    if (typeof window !== 'undefined') {
+      try {
+        const STORAGE_KEY = 'ismers.deployments.v7';
+        let currentDeps = [];
+        const rawDeps = localStorage.getItem(STORAGE_KEY);
+        if (rawDeps) {
+          try { currentDeps = JSON.parse(rawDeps) || []; } catch(e) {}
+        }
+        const existingIdx = currentDeps.findIndex(d => d.employee === app.name && d.client === clientName);
+        const depId = existingIdx >= 0 ? currentDeps[existingIdx].id : `DEP-${String(currentDeps.length + 1).padStart(3, '0')}`;
+        const newDepRecord = {
+          id: depId,
+          applicantId: persistId,
+          employee: app.name,
+          client: clientName,
+          jobOrderRef: jobOrderRef,
+          position: positionTitle,
+          site: siteLocation,
+          supervisor: 'Operations Supervisor',
+          supervisorContact: '+63 917 555 0000',
+          shift: app.shift || 'Regular Day Shift (08:00 - 17:00)',
+          start: todayFormatted,
+          end: 'Jan 2027',
+          stage: 'on_site',
+          compliance: {
+            medicalClearance: true,
+            nbiClearance: true,
+            govtIds: true,
+            signedContract: true,
+            ppeIssued: true,
+            clientOrientation: true,
+          },
+          signatureData: signatureData,
+          preEmployment: {
+            medicalClinic: app.medicalReferral?.clinic || 'HealthHub Diagnostics',
+            fitToWork: app.medicalReferral?.fitToWork || 'Class A - Fit for Duty',
+            drugTestResult: 'Negative (10-Panel)',
+            sss: app.statutoryNumbers?.sss || '34-8899001-2',
+            philhealth: app.statutoryNumbers?.philhealth || '12-998877665-0',
+            pagibig: app.statutoryNumbers?.pagibig || '1210-9988-7766',
+            tin: app.statutoryNumbers?.tin || '456-789-012-000',
+            contractSignedDate: app.employmentContract?.signedDate || todayFormatted,
+            signatureData: signatureData,
+            ppeGear: app.ppeIssuance?.selectedGear?.join(', ') || 'Standard Uniform Polo, High-Vis Vest, Safety Shoes',
+            bankEndorsement: app.bankEndorsement?.bankName ? `${app.bankEndorsement.bankName} (Ref #2026)` : 'BDO Corporate Payroll Endorsement',
+          },
+          history: [
+            {
+              date: todayFormatted,
+              event: 'Mobilized from Recruitment',
+              note: `Candidate officially deployed to ${clientName} (${siteLocation}).`,
+            },
+          ],
+          applicantKey: keyFor(app.name, jobOrderRef),
+        };
+
+        if (existingIdx >= 0) {
+          currentDeps[existingIdx] = newDepRecord;
+        } else {
+          currentDeps.push(newDepRecord);
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentDeps));
+
+        const alertData = {
+          name: app.name,
+          client: clientName,
+          site: siteLocation,
+          jobOrderRef: jobOrderRef,
+          position: positionTitle,
+          time: Date.now(),
+        };
+        localStorage.setItem('ismers_latest_deployment_alert', JSON.stringify(alertData));
+        localStorage.setItem('ismers_newly_deployed_name', app.name);
+        localStorage.setItem('ismers_newly_deployed_client', clientName);
+      } catch (e) {}
     }
 
     update((a) => ({
@@ -263,7 +379,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       status: 'hired',
       notes: [
         {
-          text: 'Candidate officially mobilized and deployed. Handed over to Deployment & Assignment board.',
+          text: `Candidate officially mobilized and deployed to ${clientName} (${siteLocation}). Handed over to Deployment & Assignment board.`,
           meta: `${CURRENT_ADMIN} · ${formatDate(TODAY)}`,
         },
         ...a.notes,
@@ -271,14 +387,23 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
     }));
 
     updateRecruitmentStage(persistId, 'hired', 'hired', app.name).catch(() => {});
+    broadcastRealtimeEvent('candidate_deployed', {
+      applicantId: persistId,
+      name: app.name,
+      jobOrderRef,
+      client: clientName,
+      site: siteLocation,
+      position: positionTitle,
+    });
     onClose();
     window.location.href = '/deployment-assignment';
   }
 
+
   function setRating(val) {
     const nextRating = app.recruiterRating === val ? 0 : val;
     update((a) => ({ ...a, recruiterRating: nextRating }));
-    updateRecruitmentScreening(persistId, { recruiterRating: nextRating }, app.name).catch(() => {});
+    updateRecruitmentScreening(persistId, { recruiterRating: nextRating }, app.name).catch(() => { });
   }
 
   function addNote() {
@@ -303,19 +428,19 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       }
       return { ...a, docStatus: nextStatus, notes };
     });
-    updateRecruitmentScreening(persistId, { docStatus: nextStatus }).catch(() => {});
+    updateRecruitmentScreening(persistId, { docStatus: nextStatus }).catch(() => { });
   }
 
   function handleManagerChange(val) {
     setAssignedManager(val);
     update((a) => ({ ...a, assignedManager: val }));
-    updateRecruitmentScreening(persistId, { assignedManager: val }).catch(() => {});
+    updateRecruitmentScreening(persistId, { assignedManager: val }).catch(() => { });
   }
 
   function handlePlatformChange(val) {
     setInterviewPlatform(val);
     update((a) => ({ ...a, interviewPlatform: val }));
-    updateRecruitmentScreening(persistId, { interviewPlatform: val }).catch(() => {});
+    updateRecruitmentScreening(persistId, { interviewPlatform: val }).catch(() => { });
   }
 
   function allDocsVerified() { return Object.values(app.docStatus).every(Boolean); }
@@ -381,7 +506,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           localStorage.setItem(`cp_endorsement_${a.name}`, 'Pending Review');
           localStorage.setItem(`cp_endorsement_${a.id}`, 'Pending Review');
           if (a.regId) localStorage.setItem(`cp_endorsement_cand-${a.regId}`, 'Pending Review');
-        } catch (e) {}
+        } catch (e) { }
       }
 
       const nextApp = { ...a, status: nextKey, clientEndorsementStatus: nextCpStatus, interview, notes };
@@ -399,7 +524,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
     });
 
     if (nextKey === 'client_interview') {
-      updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, app.name).catch(() => {});
+      updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, app.name).catch(() => { });
       broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
         candidateId: app.id,
         dbId: app.id,
@@ -478,8 +603,10 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   const nextLabel = nextKey ? STAGES.find((s) => s.key === nextKey)?.label : null;
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-box" style={{ maxWidth: isPreEmploymentStage ? '800px' : '700px' }}>
+    <>
+      <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className="modal-box" style={{ maxWidth: isPreEmploymentStage ? '800px' : '700px' }}>
+
         {/* MODAL HEADER */}
         <div className="modal-head">
           <div className="modal-avatar">{initials(app.name)}</div>
@@ -1056,7 +1183,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
                   localStorage.setItem(`cp_endorsement_${app.id}`, nextStatus);
                   localStorage.setItem(`cp_endorsement_cand-${app.id}`, nextStatus);
                   if (app.regId) localStorage.setItem(`cp_endorsement_cand-${app.regId}`, nextStatus);
-                } catch (e) {}
+                } catch (e) { }
 
                 update((a) => ({
                   ...a,
@@ -1071,8 +1198,8 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
                   ],
                 }));
 
-                updateRecruitmentStage(persistId, 'pooling', 'active', app.name).catch(() => {});
-                updateRecruitmentScreening(persistId, { client_endorsement_status: nextStatus }, app.name).catch(() => {});
+                updateRecruitmentStage(persistId, 'pooling', 'active', app.name).catch(() => { });
+                updateRecruitmentScreening(persistId, { client_endorsement_status: nextStatus }, app.name).catch(() => { });
                 onClose();
               }}
             >
@@ -1095,13 +1222,15 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
                 {app.status === 'hr_requirements'
                   ? allPreDone ? '✓ Proceed to Orientation & Contract Signing' : `Verify Requirements (${completedPreCount}/7)`
                   : app.status === 'contract_signing'
-                  ? isContractSigned && isOrientationDone ? '✓ Advance to Ready for Deployment' : 'Complete Contract & Orientation'
-                  : `Endorse / Advance to ${nextLabel || 'Next Step'}`}
+                    ? isContractSigned && isOrientationDone ? '✓ Advance to Ready for Deployment' : 'Complete Contract & Orientation'
+                    : `Endorse / Advance to ${nextLabel || 'Next Step'}`}
               </button>
             </>
           )}
         </div>
       </div>
+    </div>
+
 
       {docViewerType && (
         <DocViewerModal
@@ -1175,6 +1304,6 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           onIssued={handlePpeIssued}
         />
       )}
-    </div>
+    </>
   );
-}
+}

@@ -309,7 +309,7 @@ select.chip:focus { border-color: var(--primary); }
 .cand-client { font-size: 9.5px; color: var(--muted); font-weight: 700; }
 
 /* CANDIDATE MODAL */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(31,41,55,0.5); backdrop-filter: blur(2px); z-index: 50; align-items: center; justify-content: center; padding: 30px; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(31,41,55,0.5); backdrop-filter: blur(2px); z-index: 1000; align-items: center; justify-content: center; padding: 30px; }
 .modal-overlay.open { display: flex; }
 .modal-box { background: var(--panel); border-radius: 18px; width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-lg); }
 .modal-head { display: flex; align-items: flex-start; gap: 14px; padding: 22px 24px 16px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }

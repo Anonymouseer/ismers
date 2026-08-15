@@ -17,7 +17,7 @@ export default function DeploymentSlipModal({ deployment, open, onClose, onAdvan
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 100,
+        zIndex: 1200,
         background: 'rgba(0,0,0,0.65)',
         backdropFilter: 'blur(3px)',
         display: 'flex',

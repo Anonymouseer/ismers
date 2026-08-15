@@ -1,29 +1,45 @@
 /**
  * ismersBridge.js
  *
- * STUB — this mirrors the window-global `ISMERSBridge` used by the original
- * static ismers-bridge.js (loaded as a <script> in deplyment.html) that lets
- * Recruitment & Selection hand off "hired" candidates to Deployment &
- * Assignment, and lets Deployment push status back the other way.
- *
- * Replace this file's internals with a call into the real shared bridge
- * module (or the Laravel API, e.g. GET /api/v1/scoring/hires) once that
- * subsystem's teammate has it wired up. The public shape below is kept
- * identical to the original script's API so nothing else needs to change:
- *
- *   ISMERSBridge.keyFor(name, jobOrderRef)
- *   ISMERSBridge.getPendingHires()              -> [{ key, name, jobTitle, client, jobOrderRef }]
- *   ISMERSBridge.getHire(key)                    -> { name, client, jobOrderRef } | undefined
- *   ISMERSBridge.linkDeployment(key, depId, stage, hireInfo?)
- *   ISMERSBridge.updateDeploymentStatus(key, { stage, attendanceRate, score })
- *   ISMERSBridge.onChange(callback)               -> subscribe to bridge updates
+ * Real-time synchronization bridge between Recruitment & Selection and
+ * Deployment & Assignment subsystems. Persists pending hires and onboarding
+ * snapshots to localStorage and provides reactive event subscriptions.
  */
 
+const BRIDGE_STORAGE_KEY = 'ismers_bridge_hires_v2';
 const listeners = new Set();
-const hires = new Map(); // key -> { name, client, jobOrderRef, jobTitle, linkedDeploymentId }
+
+function loadStoredHires() {
+  const map = new Map();
+  if (typeof window === 'undefined') return map;
+  try {
+    const raw = localStorage.getItem(BRIDGE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(([k, v]) => map.set(k, v));
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read ISMERSBridge storage:', e);
+  }
+  return map;
+}
+
+function persistStoredHires(map) {
+  if (typeof window === 'undefined') return;
+  try {
+    const serialized = JSON.stringify([...map.entries()]);
+    localStorage.setItem(BRIDGE_STORAGE_KEY, serialized);
+  } catch (e) {
+    console.warn('Could not save ISMERSBridge storage:', e);
+  }
+}
+
+const hires = loadStoredHires();
 
 function keyFor(name, jobOrderRef) {
-  return `${name}__${jobOrderRef}`;
+  return `${name}__${jobOrderRef || 'DEFAULT'}`;
 }
 
 function getPendingHires() {
@@ -34,22 +50,38 @@ function getHire(key) {
   return hires.get(key);
 }
 
+function upsertHire(key, hireInfo) {
+  const existing = hires.get(key) || {};
+  const merged = {
+    ...existing,
+    ...(hireInfo || {}),
+    key,
+  };
+  hires.set(key, merged);
+  persistStoredHires(hires);
+  listeners.forEach((cb) => cb());
+}
+
 function linkDeployment(key, deploymentId, stage, hireInfo) {
   const existing = hires.get(key) || {};
-  hires.set(key, {
+  const merged = {
     ...existing,
     ...(hireInfo || {}),
     key,
     linkedDeploymentId: deploymentId,
     stage,
-  });
+  };
+  hires.set(key, merged);
+  persistStoredHires(hires);
   listeners.forEach((cb) => cb());
 }
 
 function updateDeploymentStatus(key, statusUpdate) {
   const existing = hires.get(key);
   if (!existing) return;
-  hires.set(key, { ...existing, ...statusUpdate });
+  const merged = { ...existing, ...statusUpdate };
+  hires.set(key, merged);
+  persistStoredHires(hires);
   listeners.forEach((cb) => cb());
 }
 
@@ -62,7 +94,9 @@ export const ISMERSBridge = {
   keyFor,
   getPendingHires,
   getHire,
+  upsertHire,
   linkDeployment,
   updateDeploymentStatus,
   onChange,
 };
+

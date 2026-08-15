@@ -15,18 +15,89 @@ import { ISMERSBridge } from '../services/ismersBridge';
 const STORAGE_KEY = 'ismers.deployments.v7';
 
 function loadInitialDeployments() {
+  let list = [];
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        list = parsed;
       }
     }
   } catch {
     // ignore
   }
-  return getDeployments();
+
+  if (!list.length) {
+    list = getDeployments();
+  }
+
+  // Auto-ingest pending bridge hires into deployments list!
+  try {
+    const bridgeRaw = window.localStorage.getItem('ismers_bridge_hires_v2');
+    if (bridgeRaw) {
+      const entries = JSON.parse(bridgeRaw);
+      if (Array.isArray(entries)) {
+        entries.forEach(([key, hire]) => {
+          if (hire && hire.name && !list.some((d) => d.employee === hire.name && d.client === hire.client)) {
+            const id = nextDepId(list);
+            const todayFormatted = TODAY.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+            const newDep = {
+              id,
+              applicantId: hire.applicantId || null,
+              employee: hire.name,
+              client: hire.client || 'Client Operations',
+              jobOrderRef: hire.jobOrderRef || 'JO-001',
+              position: hire.jobTitle || 'Operations Associate',
+              site: hire.site || 'Client Site Facility',
+              supervisor: 'Operations Supervisor',
+              supervisorContact: '+63 917 555 0000',
+              shift: 'Regular Day Shift (08:00 - 17:00)',
+              start: hire.hiredDate || todayFormatted,
+              end: 'Jan 2027',
+              stage: 'on_site',
+              compliance: {
+                medicalClearance: true,
+                nbiClearance: true,
+                govtIds: true,
+                signedContract: true,
+                ppeIssued: true,
+                clientOrientation: true,
+              },
+              signatureData: hire.contract?.signatureData || null,
+              preEmployment: {
+                medicalClinic: hire.medical?.clinic || 'HealthHub Diagnostics',
+                fitToWork: hire.medical?.fitToWork || 'Class A - Fit for Duty',
+                drugTestResult: 'Negative (10-Panel)',
+                sss: hire.statutory?.sss || '34-8899001-2',
+                philhealth: hire.statutory?.philhealth || '12-998877665-0',
+                pagibig: hire.statutory?.pagibig || '1210-9988-7766',
+                tin: hire.statutory?.tin || '456-789-012-000',
+                contractSignedDate: hire.contract?.signedDate || todayFormatted,
+                signatureData: hire.contract?.signatureData || null,
+                ppeGear: hire.ppe?.selectedGear?.join(', ') || 'Standard Uniform Polo, High-Vis Vest, Safety Shoes',
+                bankEndorsement: hire.bank?.bankName ? `${hire.bank.bankName} (Ref #2026)` : 'BDO Corporate Payroll Endorsement',
+              },
+              history: [
+                {
+                  date: todayFormatted,
+                  event: 'Mobilized from Recruitment',
+                  note: `Candidate officially deployed to ${hire.client} (${hire.site || 'Site'}).`,
+                },
+              ],
+              applicantKey: key,
+            };
+            list.push(newDep);
+            ISMERSBridge.linkDeployment(key, id, 'on_site', hire);
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('Error ingesting bridge hires into deployments:', e);
+  }
+
+  return list;
 }
 
 export function useDeploymentAssignmentStore() {
@@ -47,7 +118,16 @@ export function useDeploymentAssignmentStore() {
       try {
         const liveDeployments = await fetchDeploymentsApi();
         if (isMounted && Array.isArray(liveDeployments) && liveDeployments.length > 0) {
-          setDeployments(liveDeployments);
+          setDeployments((prev) => {
+            const merged = [...liveDeployments];
+            // Safely preserve any locally created deployments that are not in backend live list
+            prev.forEach((localD) => {
+              if (!merged.some((m) => m.id === localD.id || (m.employee === localD.employee && m.client === localD.client))) {
+                merged.push(localD);
+              }
+            });
+            return merged;
+          });
         }
       } catch (e) {
         console.warn('Using local cached deployments:', e);
@@ -67,21 +147,26 @@ export function useDeploymentAssignmentStore() {
     }
   }, [deployments]);
 
-  // Register bridge-linked deployments once on mount
+
+  // Subscribe to reactive bridge hires & real-time deployment events
   useEffect(() => {
-    deployments
-      .filter((d) => d.applicantKey)
-      .forEach((d) => {
-        ISMERSBridge.linkDeployment(d.applicantKey, d.id, d.stage, {
-          name: d.employee,
-          jobTitle: d.position,
-          client: d.client,
-          jobOrderRef: d.jobOrderRef,
-          hiredDate: null,
-        });
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const unsubBridge = ISMERSBridge.onChange(() => {
+      setDeployments(loadInitialDeployments());
+    });
+
+    function handleRealtimeDeploy() {
+      setDeployments(loadInitialDeployments());
+    }
+    window.addEventListener('candidate_deployed', handleRealtimeDeploy);
+    window.addEventListener('storage', handleRealtimeDeploy);
+
+    return () => {
+      unsubBridge();
+      window.removeEventListener('candidate_deployed', handleRealtimeDeploy);
+      window.removeEventListener('storage', handleRealtimeDeploy);
+    };
   }, []);
+
 
   const clients = useMemo(
     () => [...new Set(deployments.map((d) => d.client))].sort(),
@@ -216,12 +301,12 @@ export function useDeploymentAssignmentStore() {
         prev.map((d) => {
           if (d.id !== id) return d;
           const currentVal = Boolean(d.compliance && d.compliance[reqKey]);
-          const nextVal = !currentVal;
+          if (currentVal) return d; // Cannot uncheck once verified!
           const next = {
             ...d,
             compliance: {
               ...(d.compliance || {}),
-              [reqKey]: nextVal,
+              [reqKey]: true,
             },
           };
           syncStageToBridge(next);
@@ -243,9 +328,19 @@ export function useDeploymentAssignmentStore() {
         day: '2-digit',
         year: 'numeric',
       });
+      const bridgeHire = applicantKey ? ISMERSBridge.getHire(applicantKey) : null;
+      const initialCompliance = bridgeHire?.compliance || {
+        medicalClearance: Boolean(bridgeHire?.medical),
+        nbiClearance: true,
+        govtIds: Boolean(bridgeHire?.statutory),
+        signedContract: Boolean(bridgeHire?.contract),
+        ppeIssued: Boolean(bridgeHire?.ppe),
+        clientOrientation: Boolean(bridgeHire?.orientation),
+      };
+
       const newDep = {
         id,
-        applicantId: applicantId || null,
+        applicantId: applicantId || bridgeHire?.applicantId || null,
         employee,
         client,
         jobOrderRef,
@@ -257,25 +352,20 @@ export function useDeploymentAssignmentStore() {
         start,
         end,
         stage: 'assigned',
-        compliance: {
-          medicalClearance: false,
-          nbiClearance: false,
-          govtIds: false,
-          signedContract: false,
-          ppeIssued: false,
-          clientOrientation: false,
-        },
+        compliance: initialCompliance,
+        signatureData: bridgeHire?.contract?.signatureData || null,
         preEmployment: {
-          medicalClinic: 'HealthHub Diagnostics',
-          fitToWork: 'Class A - Fit for Duty',
+          medicalClinic: bridgeHire?.medical?.clinic || 'HealthHub Diagnostics',
+          fitToWork: bridgeHire?.medical?.fitToWork || 'Class A - Fit for Duty',
           drugTestResult: 'Negative (10-Panel)',
-          sss: '—',
-          philhealth: '—',
-          pagibig: '—',
-          tin: '—',
-          contractSignedDate: start,
-          ppeGear: 'Standard Safety Gear',
-          bankEndorsement: 'BDO Payroll Endorsement',
+          sss: bridgeHire?.statutory?.sss || '—',
+          philhealth: bridgeHire?.statutory?.philhealth || '—',
+          pagibig: bridgeHire?.statutory?.pagibig || '—',
+          tin: bridgeHire?.statutory?.tin || '—',
+          contractSignedDate: bridgeHire?.contract?.signedDate || start,
+          signatureData: bridgeHire?.contract?.signatureData || null,
+          ppeGear: bridgeHire?.ppe?.selectedGear?.join(', ') || 'Standard Safety Gear',
+          bankEndorsement: bridgeHire?.bank?.bankName ? `${bridgeHire.bank.bankName} (${bridgeHire.bank.refCode || 'Ref #2026'})` : 'BDO Payroll Endorsement',
         },
         history: [
           {
@@ -289,9 +379,10 @@ export function useDeploymentAssignmentStore() {
 
       setDeployments((prev) => [...prev, newDep]);
       if (applicantKey) {
-        ISMERSBridge.linkDeployment(applicantKey, newDep.id, newDep.stage);
+        ISMERSBridge.linkDeployment(applicantKey, newDep.id, newDep.stage, bridgeHire);
       }
       openDetail(id);
+
 
       // Sync to Laravel Backend API
       await createDeploymentApi({

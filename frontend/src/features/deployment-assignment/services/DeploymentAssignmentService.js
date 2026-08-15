@@ -70,22 +70,38 @@ export const STAGE_INDEX = {
 };
 
 // Job orders referenced by deployments
+// Job orders referenced by deployments across all client accounts
 export const JOB_ORDER_OPTIONS = [
-  { ref: 'JO-001', client: 'ABC Logistics', title: 'Warehouse Associate', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Mario Santos (Operations Mgr)' },
+  { ref: 'JO-001', client: 'ABC Logistics', title: 'Warehouse Associate', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Karla Reyes (Account Manager)' },
   { ref: 'JO-002', client: 'ABC Logistics', title: 'Forklift Operator', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Mario Santos (Operations Mgr)' },
-  { ref: 'JO-003', client: 'Nova Retail Group', title: 'Visual Merchandiser', site: 'SM Megamall, Mandaluyong', supervisor: 'Karen David (Store Mgr)' },
-  { ref: 'JO-004', client: 'Nova Retail Group', title: 'Store Associate', site: 'Ayala Malls Manila Bay, Paranaque', supervisor: 'Karen David (Store Mgr)' },
-  { ref: 'JO-005', client: 'Meridian BPO Solutions', title: 'Customer Service Representative', site: 'Cyberpark Tower 1, Cubao, Quezon City', supervisor: 'Arnel Cruz (Team Lead)' },
-  { ref: 'JO-006', client: 'Meridian BPO Solutions', title: 'Technical Support Specialist', site: 'Cyberpark Tower 1, Cubao, Quezon City', supervisor: 'Arnel Cruz (Team Lead)' },
-  { ref: 'JO-007', client: 'Golden Harvest Agri Corp', title: 'Farm Technician', site: 'San Ildefonso Plantation Site, Bulacan', supervisor: 'Danilo Aquino (Farm Supervisor)' },
-  { ref: 'JO-008', client: 'CarePlus Health Staffing', title: 'Home Care Aide', site: 'St. Luke’s Medical Extension Site, BGC', supervisor: 'Dr. Elena Reyes (Director)' },
-  { ref: 'JO-009', client: 'Swift Freight Logistics', title: 'Delivery Driver', site: 'North Harbor Hub, Port Area, Manila', supervisor: 'Ramon Dela Cruz (Logistics Head)' },
-  { ref: 'JO-010', client: 'Summit Manufacturing Inc.', title: 'Production Line Worker', site: 'Light Industry & Science Park, Laguna', supervisor: 'Engr. Victor Tan (Plant Head)' },
-  { ref: 'JO-011', client: 'Swift Freight Logistics', title: 'Warehouse Supervisor', site: 'North Harbor Hub, Port Area, Manila', supervisor: 'Ramon Dela Cruz (Logistics Head)' },
-  { ref: 'JO-012', client: 'Northline BPO', title: 'Customer Service Rep', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano (Operations)' },
-  { ref: 'JO-013', client: 'Northline BPO', title: 'Technical Support Agent', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano (Operations)' },
-  { ref: 'JO-014', client: 'Delta Manufacturing', title: 'Machine Operator', site: 'Caloocan Industrial Estate, Metro Manila', supervisor: 'Manuel Sy (Production Supv)' },
-  { ref: 'JO-015', client: 'Seda Vertis North', title: 'Front Desk Associate', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim (Hotel GM)' },
+  { ref: 'JO-003', client: 'Vikings Luxury Buffet', title: 'F&B Service Crew', site: 'SM Mall of Asia, Seaside Blvd, Pasay City', supervisor: 'Marco Santos (Executive Chef)' },
+  { ref: 'JO-004', client: 'City Garden Hotel', title: 'Housekeeping Attendant', site: 'P. Burgos cor. Makati Ave, Makati City', supervisor: 'Dennis Ocampo (Hotel Manager)' },
+  { ref: 'JO-005', client: 'City Garden Hotel', title: 'Front Desk Associate', site: 'P. Burgos cor. Makati Ave, Makati City', supervisor: 'Dennis Ocampo (Hotel Manager)' },
+  { ref: 'JO-006', client: 'Y2 Hotel Residence', title: 'Cook / Kitchen Staff', site: 'Santiago cor. Valdez St, Makati City', supervisor: 'Jasmine Uy (GM)' },
+  { ref: 'JO-007', client: 'Northline BPO', title: 'Customer Service Rep', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano (Operations)' },
+  { ref: 'JO-008', client: 'Northline BPO', title: 'Technical Support Agent', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano (Operations)' },
+  { ref: 'JO-009', client: 'Delta Manufacturing', title: 'Machine Operator', site: 'Cabuyao Industrial Estate, Laguna', supervisor: 'Manuel Sy (Production Supv)' },
+  { ref: 'JO-010', client: 'Delta Manufacturing', title: 'Packaging Associate', site: 'Caloocan Industrial Estate, Metro Manila', supervisor: 'Manuel Sy (Production Supv)' },
+  { ref: 'JO-011', client: 'Seda Vertis North', title: 'Housekeeping Supervisor', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim (Hotel GM)' },
+  { ref: 'JO-012', client: 'Seda Vertis North', title: 'Front Desk Associate', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim (Hotel GM)' },
+  { ref: 'JO-013', client: 'Sunrise Hospitality Group', title: 'Front Desk Associate', site: 'Boracay, Aklan', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-014', client: 'Sunrise Hospitality Group', title: 'Housekeeping Staff', site: 'Boracay, Aklan', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-015', client: 'Sunrise Hospitality Group', title: 'Food & Beverage Server', site: 'Boracay, Aklan', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-016', client: 'Coastal Retail Group', title: 'Sales Associate', site: 'Ayala Center, Makati City', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-017', client: 'Coastal Retail Group', title: 'Store Cashier', site: 'Ayala Malls Manila Bay, Paranaque', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-018', client: 'Prime Realty Corp', title: 'Property Administrator', site: 'BGC, Taguig City', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-019', client: 'Prime Realty Corp', title: 'Front Desk Officer', site: 'BGC, Taguig City', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-020', client: 'Metro Health Diagnostics', title: 'Medical Technologist', site: 'Quezon City, NCR', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-021', client: 'Metro Health Diagnostics', title: 'Patient Service Representative', site: 'Quezon City, NCR', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-022', client: 'GreenFields Agri Export', title: 'Packing Associate', site: 'Sto. Tomas, Batangas', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-023', client: 'GreenFields Agri Export', title: 'QA Inspector (Agri)', site: 'Sto. Tomas, Batangas', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-024', client: 'Apex Construction Builders', title: 'Safety Officer', site: 'Imus, Cavite', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-025', client: 'Apex Construction Builders', title: 'Heavy Equipment Operator', site: 'Imus, Cavite', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-026', client: 'Everwell Health Group', title: 'Home Care Aide', site: 'St. Luke’s Medical Extension Site, BGC', supervisor: 'Dennis Ocampo (Account Manager)' },
+  { ref: 'JO-027', client: 'Ironclad Freight Co.', title: 'Delivery Driver', site: 'North Harbor Hub, Port Area, Manila', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-028', client: 'Vantage Tech Solutions', title: 'IT Support Specialist', site: 'Cyberpark Tower 1, Cubao, QC', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-029', client: 'Nordic Freight Co.', title: 'Freight Logistics Associate', site: 'North Harbor Port, Manila', supervisor: 'Karla Reyes (Account Manager)' },
+  { ref: 'JO-030', client: 'Coastline Retail Group', title: 'Visual Merchandiser', site: 'SM Megamall, Mandaluyong', supervisor: 'Jasmine Uy (Account Manager)' },
 ];
 
 // ---- MOCK DATA (Primepower Client Deployments Fallback) ----
@@ -538,3 +554,28 @@ export function renderStageActionsText(d) {
       return { note: '', action: null };
   }
 }
+
+export function attendanceRate(d) {
+  if (!d) return 100;
+  const att = d.attendance || {};
+  const present = att.present ?? 21;
+  const late = att.late ?? 1;
+  const total = present + late || 22;
+  const rate = Math.round((present / total) * 100);
+  return isNaN(rate) ? 96 : rate;
+}
+
+export function countdownLabel(endDateStr) {
+  if (!endDateStr) {
+    return { text: 'Active Term', color: 'var(--green)', soft: 'var(--green-soft)', days: 90 };
+  }
+  const days = daysLeft(endDateStr);
+  if (days < 0) {
+    return { text: `Term Ended (${Math.abs(days)}d ago)`, color: 'var(--red)', soft: 'var(--red-soft)', days };
+  }
+  if (days <= 30) {
+    return { text: `${days}d Remaining (Renewal Window)`, color: 'var(--amber)', soft: 'var(--amber-soft)', days };
+  }
+  return { text: `${days}d Remaining`, color: 'var(--green)', soft: 'var(--green-soft)', days };
+}
+

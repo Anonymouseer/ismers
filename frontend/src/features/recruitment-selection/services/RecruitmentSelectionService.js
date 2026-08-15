@@ -14,20 +14,20 @@
 // subsystem's service file exists.
 
 import { APPLICATIONS, PIPELINE_ORDER } from '../data/mockApplications';
-
-const hireDeploymentMock = new Map();
+import { ISMERSBridge } from '../../deployment-assignment/services/ismersBridge';
 
 export function keyFor(name, depRef) {
-  return `${name}::${depRef}`;
+  return ISMERSBridge.keyFor(name, depRef);
 }
 
 export function getHire(key) {
-  return hireDeploymentMock.get(key) || null;
+  return ISMERSBridge.getHire(key) || null;
 }
 
 export function upsertHire(key, data) {
-  hireDeploymentMock.set(key, { ...hireDeploymentMock.get(key), ...data });
+  ISMERSBridge.upsertHire(key, data);
 }
+
 
 const STAGE_CACHE_KEY = 'ismers_recruitment_stages_v5';
 const APPS_CACHE_KEY = 'ismers_recruitment_apps_cache_v5';

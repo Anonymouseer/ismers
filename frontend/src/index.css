@@ -255,3 +255,9 @@ svg.icon {
   scrollbar-width: thin;
   scrollbar-color: var(--primary) transparent;
 }
+
+/* GLOBAL MODAL STACKING & OVERLAY RULES */
+.modal-overlay {
+  z-index: 1000;
+}
+

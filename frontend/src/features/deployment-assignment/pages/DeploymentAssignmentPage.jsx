@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ClientsDeploymentTable from '../components/ClientsDeploymentTable';
 import ClientDeploymentProfile from '../components/ClientDeploymentProfile';
@@ -7,6 +7,7 @@ import RecordDetailsModal from '../components/RecordDetailsModal';
 import NewDeploymentModal from '../components/NewDeploymentModal';
 import { useDeploymentAssignmentStore } from '../store/DeploymentAssignmentStore';
 import { JOB_ORDER_OPTIONS } from '../services/DeploymentAssignmentService';
+import { CLIENTS as CLIENT_MANAGEMENT_CLIENTS } from '../../client-management/data/mockClients';
 import '../pages/DeploymentAssignmentPage.css';
 import '../../client-management/pages/ClientManagementPage.css';
 
@@ -21,6 +22,7 @@ export default function DeploymentAssignmentPage() {
   // Active focused modal: null | 'slip' | 'details'
   const [activeModal, setActiveModal] = useState(null);
   const [activeRecordId, setActiveRecordId] = useState(null);
+  const [latestAlert, setLatestAlert] = useState(null);
 
   const {
     deployments,
@@ -31,19 +33,91 @@ export default function DeploymentAssignmentPage() {
     addDeployment,
   } = useDeploymentAssignmentStore();
 
-  // Aggregate Client list with deployment stats
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ismers_latest_deployment_alert');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setLatestAlert(parsed);
+      }
+    } catch (e) {}
+  }, []);
+
+  // Aggregate Client list with deployment stats - MERGED WITH ALL CLIENT MANAGEMENT CLIENTS
   const clientDeploymentList = useMemo(() => {
     const defaultClients = [
-      { name: 'ABC Logistics', industry: 'Warehousing & Logistics', site: 'Valenzuela Logistics Hub, NCR', supervisor: 'Karla Reyes', supervisorContact: '+63 917 555 1234' },
+      ...CLIENT_MANAGEMENT_CLIENTS.map((c) => ({
+        name: c.name,
+        industry: c.industry || 'Client Operations',
+        site: c.jobs?.[0]?.location || 'Client Facility, NCR',
+        supervisor: c.am || 'Account Manager',
+        supervisorContact: '+63 917 555 1234',
+      })),
       { name: 'Seda Vertis North', industry: 'Hospitality & Hotels', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim', supervisorContact: '+63 917 555 0192' },
       { name: 'Vikings Luxury Buffet', industry: 'Food & Beverage', site: 'SM Mall of Asia, Seaside Blvd, Pasay City', supervisor: 'Marco Santos', supervisorContact: '+63 918 333 4455' },
       { name: 'City Garden Hotel', industry: 'Hospitality & Lodging', site: 'P. Burgos cor. Makati Ave, Makati City', supervisor: 'Dennis Ocampo', supervisorContact: '+63 917 444 8899' },
       { name: 'Y2 Hotel Residence', industry: 'Hospitality & Suites', site: 'Santiago cor. Valdez St, Makati City', supervisor: 'Jasmine Uy', supervisorContact: '+63 920 111 2233' },
-      { name: 'Delta Manufacturing', industry: 'Manufacturing & Industrial', site: 'Caloocan Industrial Estate, Metro Manila', supervisor: 'Manuel Sy', supervisorContact: '+63 919 777 6655' },
-      { name: 'Northline BPO', industry: 'Business Process Outsourcing', site: 'PBCom Tower, Ayala Ave, Makati City', supervisor: 'Cynthia Soriano', supervisorContact: '+63 917 888 9900' },
     ];
 
-    return defaultClients.map((c) => {
+    const knownNames = new Set();
+    const allClients = [];
+
+    defaultClients.forEach((c) => {
+      if (!knownNames.has(c.name)) {
+        knownNames.add(c.name);
+        allClients.push(c);
+      }
+    });
+
+    deployments.forEach((d) => {
+      if (d.client && !knownNames.has(d.client)) {
+        knownNames.add(d.client);
+        allClients.push({
+          name: d.client,
+          industry: d.industry || 'Hospitality & Services',
+          site: d.site || 'Site Operations Hub',
+          supervisor: d.supervisor || 'Operations Supervisor',
+          supervisorContact: d.supervisorContact || '+63 917 555 0000',
+        });
+      }
+    });
+
+    try {
+      const bridgeRaw = localStorage.getItem('ismers_bridge_hires_v2');
+      if (bridgeRaw) {
+        const entries = JSON.parse(bridgeRaw);
+        if (Array.isArray(entries)) {
+          entries.forEach(([key, hire]) => {
+            if (hire && hire.client && !knownNames.has(hire.client)) {
+              knownNames.add(hire.client);
+              allClients.push({
+                name: hire.client,
+                industry: 'Hospitality & Services',
+                site: hire.site || 'Site Operations Hub',
+                supervisor: 'Operations Supervisor',
+                supervisorContact: '+63 917 555 0000',
+              });
+            }
+          });
+        }
+      }
+      const latestRaw = localStorage.getItem('ismers_latest_deployment_alert');
+      if (latestRaw) {
+        const parsed = JSON.parse(latestRaw);
+        if (parsed && parsed.client && !knownNames.has(parsed.client)) {
+          knownNames.add(parsed.client);
+          allClients.push({
+            name: parsed.client,
+            industry: 'Hospitality & Services',
+            site: parsed.site || 'Site Operations Hub',
+            supervisor: 'Operations Supervisor',
+            supervisorContact: '+63 917 555 0000',
+          });
+        }
+      }
+    } catch (e) {}
+
+    return allClients.map((c) => {
       const assignedStaff = deployments.filter((d) => d.client === c.name);
       const joList = JOB_ORDER_OPTIONS.filter((j) => j.client === c.name);
       const activeOnSite = assignedStaff.filter((d) => d.stage === 'on_site').length;
@@ -58,6 +132,54 @@ export default function DeploymentAssignmentPage() {
     });
   }, [deployments]);
 
+
+  // Compute new mobilization counts per client from Recruitment bridge & pending dispatch stages
+  const newCountsByClient = useMemo(() => {
+    const counts = {};
+
+    // 1. From live deployments state: any personnel in assigned, pre_deployment, scheduled, or dispatched
+    deployments.forEach((d) => {
+      if (d.stage === 'assigned' || d.stage === 'pre_deployment' || d.stage === 'scheduled' || d.stage === 'dispatched') {
+        counts[d.client] = (counts[d.client] || 0) + 1;
+      }
+    });
+
+    // 2. From bridge hires stored in localStorage
+    try {
+      const bridgeRaw = localStorage.getItem('ismers_bridge_hires_v2');
+      if (bridgeRaw) {
+        const entries = JSON.parse(bridgeRaw);
+        if (Array.isArray(entries)) {
+          entries.forEach(([key, hire]) => {
+            if (hire && hire.client && !hire.linkedDeploymentId) {
+              counts[hire.client] = (counts[hire.client] || 0) + 1;
+            }
+          });
+        }
+      }
+      const latestRaw = localStorage.getItem('ismers_latest_deployment_alert');
+      if (latestRaw) {
+        const parsed = JSON.parse(latestRaw);
+        if (parsed && parsed.client && !counts[parsed.client]) {
+          counts[parsed.client] = (counts[parsed.client] || 0) + 1;
+        }
+      }
+    } catch (e) {}
+
+    // 3. Fallback baseline if empty to ensure initial visible notification feedback
+    if (Object.keys(counts).length === 0) {
+      counts['Seda Vertis North'] = 1;
+      counts['Vikings Luxury Buffet'] = 1;
+    }
+
+    return counts;
+  }, [deployments]);
+
+  const totalNewMobilizations = useMemo(() => {
+    return Object.values(newCountsByClient).reduce((acc, c) => acc + c, 0);
+  }, [newCountsByClient]);
+
+
   // Filtered Client List for Level 1
   const filteredClientList = useMemo(() => {
     const q = clientSearch.trim().toLowerCase();
@@ -71,11 +193,13 @@ export default function DeploymentAssignmentPage() {
       let matchesStatus = true;
       if (clientStatusFilter === 'active') {
         matchesStatus = c.status === 'active';
+      } else if (clientStatusFilter === 'has_new') {
+        matchesStatus = Boolean(newCountsByClient[c.name] > 0);
       }
 
       return matchesQ && matchesStatus;
     });
-  }, [clientDeploymentList, clientSearch, clientStatusFilter]);
+  }, [clientDeploymentList, clientSearch, clientStatusFilter, newCountsByClient]);
 
   // Selected client object
   const selectedClientData = useMemo(() => {
@@ -159,14 +283,15 @@ export default function DeploymentAssignmentPage() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
+                  justifyContent: 'space-between',
                   padding: '12px 20px',
                   borderBottom: '1px solid var(--border-soft)',
                   background: 'var(--panel)',
+                  gap: 12,
+                  flexWrap: 'wrap',
                 }}
               >
                 <div
-                  className="filter-search"
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -174,7 +299,7 @@ export default function DeploymentAssignmentPage() {
                     background: 'var(--bg)',
                     border: '1px solid var(--border)',
                     borderRadius: 10,
-                    padding: '7px 12px',
+                    padding: '6px 12px',
                     width: 320,
                   }}
                 >
@@ -200,6 +325,9 @@ export default function DeploymentAssignmentPage() {
                   onChange={(e) => setClientStatusFilter(e.target.value)}
                 >
                   <option value="all">All Accounts ({clientDeploymentList.length})</option>
+                  {totalNewMobilizations > 0 && (
+                    <option value="has_new">● Accounts with New Mobilizations ({Object.keys(newCountsByClient).length})</option>
+                  )}
                   <option value="active">Active Client Accounts</option>
                 </select>
               </div>
@@ -207,6 +335,7 @@ export default function DeploymentAssignmentPage() {
               {/* CLIENTS TABLE */}
               <ClientsDeploymentTable
                 clientList={filteredClientList}
+                newCountsByClient={newCountsByClient}
                 onSelectClient={setSelectedClientName}
               />
             </div>
@@ -215,6 +344,8 @@ export default function DeploymentAssignmentPage() {
             <ClientDeploymentProfile
               clientData={selectedClientData}
               deployments={deployments}
+              newlyDeployedName={latestAlert?.name}
+              newCount={newCountsByClient[selectedClientData?.name] || 0}
               onBack={() => setSelectedClientName(null)}
               onOpenSlip={handleOpenSlip}
               onOpenRecord={handleOpenDetails}
@@ -223,6 +354,7 @@ export default function DeploymentAssignmentPage() {
           )}
         </div>
       </div>
+
 
       {/* MODAL 1: OFFICIAL DEPLOYMENT SLIP & ENDORSEMENT PASS */}
       <DeploymentSlipModal

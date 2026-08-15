@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 
-export default function NoticeToReportModal({ candidate, job, onClose, onIssued }) {
+export default function NoticeToReportModal({ candidate, job, onClose, onIssued, readOnly = false }) {
   const defaultSite = job?.client === 'Metro Health Diagnostics'
     ? 'Metro Health Diagnostics Manila Hub, Taft Ave, Malate, Manila'
     : job?.client === 'ABC Logistics'
-    ? 'ABC Logistics Hub, Valenzuela Logistics Industrial Park'
-    : job?.client === 'Vikings Luxury Buffet'
-    ? 'Vikings SM Mall of Asia, Seaside Blvd, Pasay City'
-    : 'Client Operations Site & Facilities, NCR';
+      ? 'ABC Logistics Hub, Valenzuela Logistics Industrial Park'
+      : job?.client === 'Vikings Luxury Buffet'
+        ? 'Vikings SM Mall of Asia, Seaside Blvd, Pasay City'
+        : 'Client Operations Site & Facilities, NCR';
 
   const [siteAddress, setSiteAddress] = useState(candidate?.deploymentDetails?.siteAddress || defaultSite);
   const [reportingDate, setReportingDate] = useState(candidate?.deploymentDetails?.reportingDate || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
@@ -54,7 +54,7 @@ export default function NoticeToReportModal({ candidate, job, onClose, onIssued 
   };
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box" style={{ maxWidth: '820px' }}>
         {/* HEADER */}
         <div className="modal-head" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -83,56 +83,58 @@ export default function NoticeToReportModal({ candidate, job, onClose, onIssued 
         )}
 
         <div className="modal-scroll" style={{ padding: '20px' }}>
-          {/* CONTROLS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
-            <div>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Reporting Date &amp; Call Time</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-                <input
-                  type="date"
-                  value={reportingDate}
-                  onChange={(e) => setReportingDate(e.target.value)}
-                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-                />
+          {/* EDITABLE CONTROLS (ONLY IN RECRUITMENT EDIT MODE) */}
+          {!readOnly && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '18px', background: 'var(--bg)', padding: '14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Reporting Date &amp; Call Time</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
+                  <input
+                    type="date"
+                    value={reportingDate}
+                    onChange={(e) => setReportingDate(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                  />
+                  <input
+                    type="text"
+                    value={callTime}
+                    onChange={(e) => setCallTime(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Onsite Client Supervisor &amp; Phone</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', marginTop: '4px' }}>
+                  <input
+                    type="text"
+                    value={onsiteSupervisor}
+                    onChange={(e) => setOnsiteSupervisor(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                  />
+                  <input
+                    type="text"
+                    value={supervisorPhone}
+                    onChange={(e) => setSupervisorPhone(e.target.value)}
+                    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Site Deployment Facility Address</label>
                 <input
                   type="text"
-                  value={callTime}
-                  onChange={(e) => setCallTime(e.target.value)}
-                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
+                  value={siteAddress}
+                  onChange={(e) => setSiteAddress(e.target.value)}
+                  style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
                 />
               </div>
             </div>
+          )}
 
-            <div>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Onsite Client Supervisor &amp; Phone</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', marginTop: '4px' }}>
-                <input
-                  type="text"
-                  value={onsiteSupervisor}
-                  onChange={(e) => setOnsiteSupervisor(e.target.value)}
-                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-                />
-                <input
-                  type="text"
-                  value={supervisorPhone}
-                  onChange={(e) => setSupervisorPhone(e.target.value)}
-                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-                />
-              </div>
-            </div>
-
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' }}>Site Deployment Facility Address</label>
-              <input
-                type="text"
-                value={siteAddress}
-                onChange={(e) => setSiteAddress(e.target.value)}
-                style={{ width: '100%', marginTop: '4px', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--panel)', color: 'var(--text)', fontSize: '11px', fontWeight: 600, outline: 'none' }}
-              />
-            </div>
-          </div>
-
-          {/* OFFICIAL NOTICE TO REPORT DIRECTIVE (PRINTABLE) */}
+          {/* OFFICIAL NOTICE TO REPORT DIRECTIVE (DIGITAL PRINT VIEW) */}
           <div className="rs-printable-ntr" style={{ background: '#ffffff', color: '#111827', padding: '26px', borderRadius: '12px', border: '2px solid #e5e7eb', boxShadow: '0 4px 16px rgba(0,0,0,0.06)', fontFamily: 'system-ui, sans-serif' }}>
             {/* HEADER */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '12px', marginBottom: '16px' }}>
@@ -200,17 +202,20 @@ export default function NoticeToReportModal({ candidate, job, onClose, onIssued 
               </ul>
             </div>
 
-            {/* SCANNER FOOTER */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+            {/* SIGNATURE AUTHORIZATION */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px', borderTop: '1px dashed #cbd5e1', paddingTop: '16px', marginTop: '16px' }}>
               <div>
-                <div style={{ fontFamily: 'monospace', letterSpacing: '3px', fontSize: '13px', fontWeight: 800, color: '#334155' }}>
-                  |||||| || ||||| |||| |||||| |||||
-                </div>
-                <div style={{ fontSize: '9.5px', color: '#64748b' }}>DOLE DO-174 Mobilization Pass: {ntrCode}</div>
+                <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Issued &amp; Certified By:</div>
+                <div style={{ marginTop: '12px', fontWeight: 800, fontSize: '12px', color: '#0f172a' }}>HR Deployment Operations Lead</div>
+                <div style={{ fontSize: '10.5px', color: '#64748b' }}>PRIMEPOWER MANPOWER SERVICES INC.</div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>PRIMEPOWER Deployment Services</div>
-                <div style={{ fontSize: '9.5px', color: '#64748b' }}>Authorized Deployment Area Coordinator</div>
+
+              <div>
+                <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Received &amp; Acknowledged By:</div>
+                <div style={{ marginTop: '12px', fontWeight: 800, fontSize: '12px', color: '#0f172a', borderBottom: '1px solid #94a3b8', paddingBottom: '2px', display: 'inline-block', minWidth: '180px' }}>
+                  {candidate.name}
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>Deployed Employee Signature Over Printed Name</div>
               </div>
             </div>
           </div>
@@ -231,18 +236,28 @@ export default function NoticeToReportModal({ candidate, job, onClose, onIssued 
             Print Notice to Report PDF
           </button>
 
-          <button
-            type="button"
-            className="rs-stage-btn primary"
-            style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
-            onClick={handleDispatch}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-              <line x1="22" y1="2" x2="11" y2="13" />
-              <polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-            Issue &amp; Send to Candidate (SMS/Email)
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
+              onClick={handleDispatch}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+              Issue &amp; Send to Candidate (SMS/Email)
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
     </div>

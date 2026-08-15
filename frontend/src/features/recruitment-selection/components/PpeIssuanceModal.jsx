@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function PpeIssuanceModal({ candidate, job, onClose, onIssued }) {
+export default function PpeIssuanceModal({ candidate, job, onClose, onIssued, readOnly = false }) {
   const [items, setItems] = useState(
     candidate?.ppeIssuance || {
       uniformShirt: true,
@@ -26,10 +26,17 @@ export default function PpeIssuanceModal({ candidate, job, onClose, onIssued }) 
   if (!candidate) return null;
 
   const toggleItem = (key) => {
+    if (readOnly) return;
+    // Checked items cannot be unchecked
+    if (items[key]) return;
     setItems((prev) => ({
       ...prev,
-      [key]: !prev[key],
+      [key]: true,
     }));
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const handleSave = () => {
@@ -51,7 +58,7 @@ export default function PpeIssuanceModal({ candidate, job, onClose, onIssued }) 
   };
 
   return (
-    <div className="modal-overlay open" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal-overlay open" style={{ zIndex: 1200 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box" style={{ maxWidth: '680px' }}>
         {/* HEADER */}
         <div className="modal-head" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -83,53 +90,65 @@ export default function PpeIssuanceModal({ candidate, job, onClose, onIssued }) 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {/* 1. UNIFORM POLO SHIRTS */}
             <div style={{ background: 'var(--panel)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => toggleItem('uniformShirt')}>
-                <input type="checkbox" checked={Boolean(items.uniformShirt)} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: readOnly ? 'default' : 'pointer' }} onClick={() => toggleItem('uniformShirt')}>
+                <input type="checkbox" checked={Boolean(items.uniformShirt)} disabled={Boolean(items.uniformShirt) || readOnly} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)' }}>PRIMEPOWER Company Uniform Polo (2 Sets)</div>
                   <div style={{ fontSize: '10.5px', color: 'var(--muted)' }}>Standard branded company polo shirts</div>
                 </div>
               </div>
-              <select
-                value={items.shirtSize}
-                onChange={(e) => setItems((p) => ({ ...p, shirtSize: e.target.value }))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11px', outline: 'none' }}
-              >
-                <option value="Small (S)">Size: Small (S)</option>
-                <option value="Medium (M)">Size: Medium (M)</option>
-                <option value="Large (L)">Size: Large (L)</option>
-                <option value="Extra Large (XL)">Size: Extra Large (XL)</option>
-                <option value="2X Large (2XL)">Size: 2X Large (2XL)</option>
-              </select>
+              {readOnly ? (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', background: 'var(--bg)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                  {items.shirtSize || 'Size: Large (L)'}
+                </span>
+              ) : (
+                <select
+                  value={items.shirtSize}
+                  onChange={(e) => setItems((p) => ({ ...p, shirtSize: e.target.value }))}
+                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11px', outline: 'none' }}
+                >
+                  <option value="Small (S)">Size: Small (S)</option>
+                  <option value="Medium (M)">Size: Medium (M)</option>
+                  <option value="Large (L)">Size: Large (L)</option>
+                  <option value="Extra Large (XL)">Size: Extra Large (XL)</option>
+                  <option value="2X Large (2XL)">Size: 2X Large (2XL)</option>
+                </select>
+              )}
             </div>
 
             {/* 2. STEEL-TOE SAFETY SHOES */}
             <div style={{ background: 'var(--panel)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => toggleItem('safetyShoes')}>
-                <input type="checkbox" checked={Boolean(items.safetyShoes)} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: readOnly ? 'default' : 'pointer' }} onClick={() => toggleItem('safetyShoes')}>
+                <input type="checkbox" checked={Boolean(items.safetyShoes)} disabled={Boolean(items.safetyShoes) || readOnly} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)' }}>Heavy-Duty Steel-Toe Safety Shoes</div>
                   <div style={{ fontSize: '10.5px', color: 'var(--muted)' }}>OSHS-compliant impact &amp; puncture-resistant footwear</div>
                 </div>
               </div>
-              <select
-                value={items.shoeSize}
-                onChange={(e) => setItems((p) => ({ ...p, shoeSize: e.target.value }))}
-                style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11px', outline: 'none' }}
-              >
-                <option value="Size 39 (US 6.5)">Size 39 (US 6.5)</option>
-                <option value="Size 40 (US 7.5)">Size 40 (US 7.5)</option>
-                <option value="Size 41 (US 8)">Size 41 (US 8)</option>
-                <option value="Size 42 (US 9)">Size 42 (US 9)</option>
-                <option value="Size 43 (US 10)">Size 43 (US 10)</option>
-                <option value="Size 44 (US 11)">Size 44 (US 11)</option>
-              </select>
+              {readOnly ? (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary)', background: 'var(--bg)', padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                  {items.shoeSize || 'Size 42 (US 9)'}
+                </span>
+              ) : (
+                <select
+                  value={items.shoeSize}
+                  onChange={(e) => setItems((p) => ({ ...p, shoeSize: e.target.value }))}
+                  style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: '11px', outline: 'none' }}
+                >
+                  <option value="Size 39 (US 6.5)">Size 39 (US 6.5)</option>
+                  <option value="Size 40 (US 7.5)">Size 40 (US 7.5)</option>
+                  <option value="Size 41 (US 8)">Size 41 (US 8)</option>
+                  <option value="Size 42 (US 9)">Size 42 (US 9)</option>
+                  <option value="Size 43 (US 10)">Size 43 (US 10)</option>
+                  <option value="Size 44 (US 11)">Size 44 (US 11)</option>
+                </select>
+              )}
             </div>
 
             {/* 3. HIGH-VIS SAFETY VEST */}
-            <div style={{ background: 'var(--panel)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', cursor: 'pointer' }} onClick={() => toggleItem('safetyVest')}>
+            <div style={{ background: 'var(--panel)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', cursor: readOnly ? 'default' : 'pointer' }} onClick={() => toggleItem('safetyVest')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input type="checkbox" checked={Boolean(items.safetyVest)} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                <input type="checkbox" checked={Boolean(items.safetyVest)} disabled={Boolean(items.safetyVest) || readOnly} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)' }}>High-Visibility Reflectorized Safety Vest</div>
                   <div style={{ fontSize: '10.5px', color: 'var(--muted)' }}>Fluorescent safety vest for warehouse &amp; site visibility</div>
@@ -139,9 +158,9 @@ export default function PpeIssuanceModal({ candidate, job, onClose, onIssued }) 
             </div>
 
             {/* 4. COMPANY ID BADGE & LANYARD */}
-            <div style={{ background: 'var(--panel)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', cursor: 'pointer' }} onClick={() => toggleItem('idBadge')}>
+            <div style={{ background: 'var(--panel)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', cursor: readOnly ? 'default' : 'pointer' }} onClick={() => toggleItem('idBadge')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <input type="checkbox" checked={Boolean(items.idBadge)} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
+                <input type="checkbox" checked={Boolean(items.idBadge)} disabled={Boolean(items.idBadge) || readOnly} onChange={() => {}} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
                 <div>
                   <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)' }}>Company ID Security Badge &amp; Breakaway Lanyard</div>
                   <div style={{ fontSize: '10.5px', color: 'var(--muted)' }}>Official photo ID with barcode and emergency hotline</div>
@@ -154,22 +173,39 @@ export default function PpeIssuanceModal({ candidate, job, onClose, onIssued }) 
 
         {/* FOOTER */}
         <div style={{ padding: '14px 20px', background: 'var(--panel)', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <button type="button" className="rs-stage-btn" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="rs-stage-btn primary"
-            style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
-            onClick={handleSave}
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
-              <polyline points="20 6 9 17 4 12" />
+          <button type="button" className="rs-stage-btn" onClick={handlePrint}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
             </svg>
-            Sign Off PPE Issuance
+            Print PPE Sign-Off PDF
           </button>
+
+          {!readOnly ? (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              style={{ background: 'var(--green, #149e6e)', color: '#fff', borderColor: 'var(--green, #149e6e)' }}
+              onClick={handleSave}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', marginRight: '5px' }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Sign Off PPE Issuance
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="rs-stage-btn primary"
+              onClick={onClose}
+            >
+              Close
+            </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
