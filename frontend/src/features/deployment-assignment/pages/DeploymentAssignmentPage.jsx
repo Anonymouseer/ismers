@@ -43,79 +43,17 @@ export default function DeploymentAssignmentPage() {
     } catch (e) {}
   }, []);
 
-  // Aggregate Client list with deployment stats - MERGED WITH ALL CLIENT MANAGEMENT CLIENTS
+  // Aggregate Client list with deployment stats - EXACTLY SYNCHRONIZED WITH CLIENT MANAGEMENT CLIENTS
   const clientDeploymentList = useMemo(() => {
-    const defaultClients = [
-      ...CLIENT_MANAGEMENT_CLIENTS.map((c) => ({
-        name: c.name,
-        industry: c.industry || 'Client Operations',
-        site: c.jobs?.[0]?.location || 'Client Facility, NCR',
-        supervisor: c.am || 'Account Manager',
-        supervisorContact: '+63 917 555 1234',
-      })),
-      { name: 'Seda Vertis North', industry: 'Hospitality & Hotels', site: 'Vertis North, Astra cor. Lux Drive, QC', supervisor: 'Cecille Lim', supervisorContact: '+63 917 555 0192' },
-      { name: 'Vikings Luxury Buffet', industry: 'Food & Beverage', site: 'SM Mall of Asia, Seaside Blvd, Pasay City', supervisor: 'Marco Santos', supervisorContact: '+63 918 333 4455' },
-      { name: 'City Garden Hotel', industry: 'Hospitality & Lodging', site: 'P. Burgos cor. Makati Ave, Makati City', supervisor: 'Dennis Ocampo', supervisorContact: '+63 917 444 8899' },
-      { name: 'Y2 Hotel Residence', industry: 'Hospitality & Suites', site: 'Santiago cor. Valdez St, Makati City', supervisor: 'Jasmine Uy', supervisorContact: '+63 920 111 2233' },
-    ];
-
-    const knownNames = new Set();
-    const allClients = [];
-
-    defaultClients.forEach((c) => {
-      if (!knownNames.has(c.name)) {
-        knownNames.add(c.name);
-        allClients.push(c);
-      }
-    });
-
-    deployments.forEach((d) => {
-      if (d.client && !knownNames.has(d.client)) {
-        knownNames.add(d.client);
-        allClients.push({
-          name: d.client,
-          industry: d.industry || 'Hospitality & Services',
-          site: d.site || 'Site Operations Hub',
-          supervisor: d.supervisor || 'Operations Supervisor',
-          supervisorContact: d.supervisorContact || '+63 917 555 0000',
-        });
-      }
-    });
-
-    try {
-      const bridgeRaw = localStorage.getItem('ismers_bridge_hires_v2');
-      if (bridgeRaw) {
-        const entries = JSON.parse(bridgeRaw);
-        if (Array.isArray(entries)) {
-          entries.forEach(([key, hire]) => {
-            if (hire && hire.client && !knownNames.has(hire.client)) {
-              knownNames.add(hire.client);
-              allClients.push({
-                name: hire.client,
-                industry: 'Hospitality & Services',
-                site: hire.site || 'Site Operations Hub',
-                supervisor: 'Operations Supervisor',
-                supervisorContact: '+63 917 555 0000',
-              });
-            }
-          });
-        }
-      }
-      const latestRaw = localStorage.getItem('ismers_latest_deployment_alert');
-      if (latestRaw) {
-        const parsed = JSON.parse(latestRaw);
-        if (parsed && parsed.client && !knownNames.has(parsed.client)) {
-          knownNames.add(parsed.client);
-          allClients.push({
-            name: parsed.client,
-            industry: 'Hospitality & Services',
-            site: parsed.site || 'Site Operations Hub',
-            supervisor: 'Operations Supervisor',
-            supervisorContact: '+63 917 555 0000',
-          });
-        }
-      }
-    } catch (e) {}
+    const allClients = CLIENT_MANAGEMENT_CLIENTS.map((c) => ({
+      name: c.name,
+      industry: c.industry || 'Client Operations',
+      site: c.jobs?.[0]?.location || c.site || 'Metro Manila, NCR',
+      supervisor: c.am || 'Karla Reyes',
+      supervisorContact: '+63 917 555 1234',
+      status: c.status || 'active',
+      jobs: c.jobs || [],
+    }));
 
     return allClients.map((c) => {
       const clientNameNorm = (c.name || '').trim().toLowerCase();
