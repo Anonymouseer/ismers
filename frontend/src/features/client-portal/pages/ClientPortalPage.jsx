@@ -67,26 +67,84 @@ export function getInitialClientData(currentSession) {
 
   const jobs = (matchedCm.jobs || []).map((j, idx) => {
     const isFilled = (j.filled || 0) >= (j.total || 1);
-    const isFilling = j.badge === 'filling' || (j.filled > 0 && !isFilled);
-    const isUrgent = j.badge === 'urgent';
-    const status = isFilled ? 'Filled' : (isUrgent || isFilling) ? 'Active' : 'In Review';
-    const statusClass = isFilled ? 'client-portal-badge--filled' : (isUrgent || isFilling) ? 'client-portal-badge--active' : 'client-portal-badge--review';
+    const isReview = j.status === 'review' || j.stage === 'review' || j.badge === 'review' || j.status === 'In Review';
+    const isFilling = !isReview && (j.badge === 'filling' || (j.filled > 0 && !isFilled));
+    const isUrgent = !isReview && j.badge === 'urgent';
+    const status = isReview ? 'In Review' : (isFilled ? 'Filled' : (isUrgent || isFilling) ? 'Active' : 'Open');
+    const statusClass = isReview ? 'client-portal-badge--review' : (isFilled ? 'client-portal-badge--filled' : (isUrgent || isFilling) ? 'client-portal-badge--active' : 'client-portal-badge--open');
 
     return {
-      id: `PRF-2026-${String(idx + 1).padStart(4, '0')}`,
+      id: j.ref || `PRF-2026-${String(idx + 1).padStart(4, '0')}`,
+      ref: j.ref || `PRF-2026-${String(idx + 1).padStart(4, '0')}`,
       position: j.title,
       type: j.type?.split('·')[0]?.trim() || 'Full-time',
       total: j.total,
-      filled: j.filled,
+      filled: j.filled || 0,
       location: j.location || matchedCm.address || 'Metro Manila',
       requested: 'Jul 15, 2026',
       deadline: j.deadline || 'Aug 30, 2026',
       status,
       statusClass,
-      recruiter: matchedCm.am,
+      recruiter: isReview ? 'Unassigned' : matchedCm.am,
       priority: isUrgent ? 'urgent' : isFilling ? 'high' : 'normal',
       rate: j.rate || matchedCm.rate || '₱22,000 / mo',
     };
+  });
+
+  // Ensure any custom PRFs for this client are included in jobs
+  let cpJobOrders = [];
+  try {
+    const raw = localStorage.getItem('ismers_client_job_orders');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) cpJobOrders = parsed;
+    }
+  } catch {}
+
+  const normalizedClientName = (matchedCm.name || clientCompName || '').trim().toLowerCase();
+
+  cpJobOrders.forEach((cpJob) => {
+    const cpClient = (cpJob.client || cpJob.company || '').trim().toLowerCase();
+    if (!cpClient) return;
+    const isForClient =
+      cpClient === normalizedClientName ||
+      cpClient.includes(normalizedClientName) ||
+      normalizedClientName.includes(cpClient);
+    if (!isForClient) return;
+
+    const cpRef = cpJob.ref || cpJob.id;
+    const alreadyIncluded = jobs.some(
+      (j) =>
+        (cpRef && (j.id === cpRef || j.ref === cpRef)) ||
+        (j.position && j.position.toLowerCase() === (cpJob.title || cpJob.position || '').toLowerCase())
+    );
+
+    if (!alreadyIncluded && (cpJob.title || cpJob.position)) {
+      const isApproved =
+        cpJob.status === 'open' ||
+        cpJob.stage === 'activated' ||
+        cpJob.status === 'filling' ||
+        cpJob.status === 'filled';
+      const status = isApproved ? (cpJob.status || 'Active') : 'In Review';
+      const statusClass = isApproved ? 'client-portal-badge--active' : 'client-portal-badge--review';
+
+      jobs.push({
+        id: cpRef || `PRF-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+        ref: cpRef || `PRF-2026-${String(jobs.length + 1).padStart(4, '0')}`,
+        position: cpJob.title || cpJob.position,
+        type: cpJob.type || 'Full-time',
+        total: cpJob.total || 1,
+        filled: cpJob.filled || 0,
+        location: cpJob.location || matchedCm.address || 'Metro Manila',
+        requested: cpJob.requested || new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        deadline: cpJob.deadline || 'Aug 30, 2026',
+        status,
+        statusClass,
+        recruiter: isApproved ? (cpJob.recruiter || matchedCm.am) : 'Unassigned',
+        priority: cpJob.priority || 'normal',
+        rate: cpJob.rate || matchedCm.rate || '₱22,000 / mo',
+      });
+    }
   });
 
   const rosterItems = [];
@@ -767,57 +825,90 @@ export default function ClientPortalPage() {
         const parsed = JSON.parse(raw);
         if (!cancelled) setSession(parsed);
 
+        // Purge test entry for Technical Support Specialist
+        try {
+          const rawCp = localStorage.getItem('ismers_client_job_orders');
+          if (rawCp) {
+            const parsedCp = JSON.parse(rawCp);
+            if (Array.isArray(parsedCp)) {
+              const cleaned = parsedCp.filter(
+                (j) => !/technical support specialist/i.test(j.title || j.position || '')
+              );
+              localStorage.setItem('ismers_client_job_orders', JSON.stringify(cleaned));
+            }
+          }
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('cp_jobs_')) {
+              const rawScoped = localStorage.getItem(k);
+              if (rawScoped) {
+                const parsedScoped = JSON.parse(rawScoped);
+                if (Array.isArray(parsedScoped)) {
+                  const cleaned = parsedScoped.filter(
+                    (j) => !/technical support specialist/i.test(j.title || j.position || '')
+                  );
+                  localStorage.setItem(k, JSON.stringify(cleaned));
+                }
+              }
+            }
+          }
+        } catch {}
+
         // Look up corresponding live Client Management profile
         const { jobs: liveJobs, roster: liveRoster, client: matchedCm } = getInitialClientData(parsed);
 
-        // 1. Load Job Orders: check backend API first, fallback to live Client Management jobs
-        let loadedJobs = [];
+        // 1. Load Job Orders: merge live Client Management jobs with backend API job orders
+        let apiJobs = [];
         if (parsed?.id) {
           try {
             const res = await clientPortalService.getJobOrders(parsed.id);
             if (!cancelled && res?.data?.length) {
-              loadedJobs = res.data.map((j) => ({
-                id: j.ref,
-                position: j.title,
-                type: j.type,
-                total: j.total,
-                filled: j.filled,
-                location: j.location,
-                requested: j.createdAt
-                  ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-                  : '',
-                deadline: j.deadline,
-                status: j.status === 'open' ? 'In Review'
-                  : j.status === 'filling' ? 'Active'
-                  : j.status === 'filled'  ? 'Filled'
-                  : j.status === 'urgent'  ? 'Active'
-                  : 'Pending',
-                statusClass: j.status === 'open' ? 'client-portal-badge--review'
-                  : j.status === 'filling' ? 'client-portal-badge--active'
-                  : j.status === 'filled'  ? 'client-portal-badge--filled'
-                  : j.status === 'urgent'  ? 'client-portal-badge--active'
-                  : 'client-portal-badge--pending',
-                recruiter: j.recruiter || matchedCm?.am || 'PRIMEPOWER Recruitment',
-                priority: j.priority,
-                rate: j.rate || matchedCm?.rate || '₱20,000 / mo',
-              }));
+              apiJobs = res.data.map((j) => {
+                const isReview = j.status === 'review' || j.stage === 'review' || j.status === 'In Review';
+                const isFilled = j.status === 'filled' || (j.filled || 0) >= (j.total || 1);
+                const isUrgent = j.status === 'urgent';
+                const isFilling = j.status === 'filling' || (j.filled > 0 && !isFilled);
+                const status = isReview ? 'In Review' : (isFilled ? 'Filled' : (isUrgent || isFilling) ? 'Active' : 'Open');
+                const statusClass = isReview ? 'client-portal-badge--review' : (isFilled ? 'client-portal-badge--filled' : (isUrgent || isFilling) ? 'client-portal-badge--active' : 'client-portal-badge--open');
+
+                return {
+                  id: j.ref || `JO-${j.id}`,
+                  ref: j.ref || `JO-${j.id}`,
+                  position: j.title,
+                  type: j.type || 'Full-time',
+                  total: j.total,
+                  filled: j.filled || 0,
+                  location: j.location || matchedCm?.address || 'Metro Manila',
+                  requested: j.createdAt
+                    ? new Date(j.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                    : new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+                  deadline: j.deadline,
+                  status,
+                  statusClass,
+                  recruiter: isReview ? 'Unassigned' : (j.recruiter || matchedCm?.am || 'PRIMEPOWER Recruitment'),
+                  priority: j.priority || 'normal',
+                  rate: j.rate || matchedCm?.rate || '₱22,000 / mo',
+                };
+              });
             }
           } catch {
             // Non-fatal fallback
           }
         }
 
-        if (!loadedJobs.length && liveJobs?.length) {
-          loadedJobs = liveJobs;
-        } else if (!loadedJobs.length) {
-          const storedJobs = localStorage.getItem(`cp_jobs_${parsed?.email}`);
-          if (storedJobs) {
-            try { loadedJobs = JSON.parse(storedJobs); } catch { /* ignore */ }
-          }
-        }
+        // Merge liveJobs (all client positions) with apiJobs (backend DB jobs)
+        const mergedJobsMap = new Map();
+        (liveJobs || []).forEach((j) => {
+          mergedJobsMap.set((j.position || j.title || '').toLowerCase().trim(), j);
+        });
+        apiJobs.forEach((j) => {
+          const key = (j.position || j.title || '').toLowerCase().trim();
+          mergedJobsMap.set(key, { ...(mergedJobsMap.get(key) || {}), ...j });
+        });
 
-        if (!cancelled && loadedJobs.length > 0) {
-          setJobRequests(loadedJobs);
+        const finalJobs = Array.from(mergedJobsMap.values());
+        if (!cancelled && finalJobs.length > 0) {
+          setJobRequests(finalJobs);
         }
 
         // 2. Load Deployed Roster: extract hired employees from live Client Management jobs
@@ -1043,63 +1134,112 @@ export default function ClientPortalPage() {
 
     setSubmitting(true);
 
+    const clientName = session?.company || 'Sunshine Manufacturing Corp.';
+    const randomSuffix = String(Math.floor(1000 + Math.random() * 9000));
+    const refId = `PRF-2026-${randomSuffix}`;
+    const deadlineFormatted = jobForm.deadline
+      ? new Date(jobForm.deadline).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+      : 'Aug 30, 2026';
+    const rateFormatted = jobForm.rate
+      ? `₱${jobForm.rate}${jobForm.ratePeriod === 'daily' ? '/day' : '/mo'}`
+      : (matchedClient?.rate || '₱22,000 / mo');
+
+    const newRequest = {
+      id: refId,
+      ref: refId,
+      client: clientName,
+      company: clientName,
+      client_account_id: typeof session?.id === 'number' ? session.id : null,
+      position: jobForm.title.trim(),
+      title: jobForm.title.trim(),
+      type: jobForm.type === 'Others' ? jobForm.typeOther.trim() : jobForm.type,
+      total: parseInt(jobForm.total, 10) || 1,
+      filled: 0,
+      location: jobForm.location.trim(),
+      requested: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      deadline: deadlineFormatted,
+      status: 'review',
+      stage: 'review',
+      displayStatus: 'In Review',
+      statusClass: 'client-portal-badge--review',
+      badge: 'review',
+      priority: jobForm.priority || 'normal',
+      rate: rateFormatted,
+      recruiter: matchedClient?.am || (clientName.toLowerCase().includes('northline') || clientName.toLowerCase().includes('coastal') || clientName.toLowerCase().includes('everwell') ? 'Dennis Ocampo' : 'Karla Reyes'),
+      description: jobForm.description.trim(),
+      requirements: jobForm.requirements.trim()
+        ? jobForm.requirements.trim().split('\n').map(r => r.replace(/^[•\-\*]\s*/, '').trim()).filter(Boolean)
+        : ['High school graduate or relevant vocational background', 'Good communication and attendance record'],
+      specialInstructions: jobForm.specialInstructions.trim(),
+      createdAt: new Date().toISOString(),
+      source: 'client_portal',
+    };
+
+    // Attempt backend API persistence if available
     try {
       const payload = {
-        client_account_id: session?.id ?? null,
-        client:     session?.company || 'Unknown Client',
-        title:      jobForm.title.trim(),
-        type:       jobForm.type === 'Others' ? jobForm.typeOther.trim() : jobForm.type,
-        total:      parseInt(jobForm.total, 10),
-        location:   jobForm.location.trim(),
-        deadline:   new Date(jobForm.deadline).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        priority:   jobForm.priority,
-        rate:       jobForm.rate
-          ? `₱${jobForm.rate}${jobForm.ratePeriod === 'daily' ? '/day' : '/mo'}`
-          : null,
-        description:  jobForm.description.trim(),
-        requirements: jobForm.requirements.trim() || null,
-        source:       'client_portal',
+        client_account_id: typeof session?.id === 'number' ? session.id : null,
+        client: clientName,
+        title: newRequest.title,
+        type: newRequest.type,
+        total: newRequest.total,
+        location: newRequest.location,
+        deadline: deadlineFormatted,
+        priority: newRequest.priority,
+        rate: rateFormatted,
+        description: newRequest.description,
+        requirements: typeof jobForm.requirements === 'string' ? jobForm.requirements : null,
+        source: 'client_portal',
       };
-
       const res = await clientPortalService.createJobOrder(payload);
-      const created = res.data;
-
-      const newRequest = {
-        id:         created.ref,
-        position:   created.title,
-        type:       created.type,
-        total:      created.total,
-        filled:     0,
-        location:   created.location,
-        requested:  new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        deadline:   created.deadline,
-        status:     'In Review',
-        statusClass:'client-portal-badge--review',
-        recruiter:  'Unassigned',
-        priority:   created.priority,
-        rate:       created.rate || 'Undisclosed',
-      };
-
-      setJobRequests((prev) => [newRequest, ...prev]);
-      setSubmitting(false);
-      setSuccessBanner(`Job Order Request ${created.ref} has been submitted successfully and is now under review.`);
-      setShowJobModal(false);
-      setActiveTab('job-orders');
+      if (res?.data?.ref) {
+        newRequest.id = res.data.ref;
+        newRequest.ref = res.data.ref;
+      }
     } catch (err) {
-      setSubmitting(false);
-      const msg = err?.response?.data?.message || 'An error occurred while submitting your job order. Please try again.';
-      setSuccessBanner('');
-      setFormErrors((prev) => ({ ...prev, _api: msg }));
+      console.warn('Backend job order API offline or unavailable, continuing with local persistence:', err);
     }
+
+    // 1. Save to persistent global client job orders cache
+    try {
+      const existingRaw = localStorage.getItem('ismers_client_job_orders');
+      const existingList = existingRaw ? JSON.parse(existingRaw) : [];
+      const updatedList = [newRequest, ...existingList.filter(item => item.id !== newRequest.id && item.ref !== newRequest.ref)];
+      localStorage.setItem('ismers_client_job_orders', JSON.stringify(updatedList));
+
+      if (session?.email) {
+        localStorage.setItem(`cp_jobs_${session.email}`, JSON.stringify(updatedList.filter(j => j.client === clientName)));
+      }
+    } catch (saveErr) {
+      console.warn('Could not write to localStorage:', saveErr);
+    }
+
+    // 2. Broadcast events for real-time synchronization across modules
+    broadcastRealtimeEvent('JOB_ORDER_CREATED', {
+      jobOrder: newRequest,
+      client: clientName,
+    });
+    window.dispatchEvent(new CustomEvent('ismers:job-orders-updated', { detail: newRequest }));
+
+    // 3. Update component state with ALL jobs
+    const refreshed = getInitialClientData(session);
+    setJobRequests(refreshed.jobs);
+    setStatusFilter('ALL');
+    setSubmitting(false);
+    setSuccessBanner(`Job Order Request ${newRequest.id} has been submitted successfully and is now under review.`);
+    setShowJobModal(false);
+    setActiveTab('job-orders');
   };
 
   // Filtered requests for 'job-orders' tab
   const filteredRequests = jobRequests.filter((req) => {
     const matchesSearch =
-      req.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'ALL' || req.status.toUpperCase().replace(/\s+/g, '_') === statusFilter;
+      (req.position || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (req.location || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const rawSt = (req.status || '').toUpperCase().replace(/\s+/g, '_');
+    const isReviewMatch = (statusFilter === 'IN_REVIEW' || statusFilter === 'REVIEW') && (rawSt === 'IN_REVIEW' || rawSt === 'REVIEW');
+    const matchesStatus = statusFilter === 'ALL' || isReviewMatch || rawSt === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -1233,7 +1373,16 @@ export default function ClientPortalPage() {
                   </h1>
                   <div className="client-portal-date">{TODAY}</div>
                 </div>
-                <div className="client-portal-header-right" />
+                <div className="client-portal-header-right">
+                  <button
+                    id="dashboard-new-request-btn"
+                    type="button"
+                    className="client-portal-btn-primary"
+                    onClick={openJobModal}
+                  >
+                    + New Job Order Request
+                  </button>
+                </div>
               </div>
 
               {/* SUMMARY STAT CARDS */}

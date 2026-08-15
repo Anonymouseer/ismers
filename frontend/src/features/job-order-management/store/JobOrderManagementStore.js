@@ -1,9 +1,9 @@
 // JobOrderManagementStore.js
-// Holds all Job Order Management page state + mutations. Wraps
-// JobOrderManagementService so swapping mock data for the real
-// /api/v1/job-orders endpoints later only touches the service file.
+// Holds all Job Order Management page state + mutations.
+// Synchronizes with canonical clients, live deployments, and client portal PRFs.
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import JobOrderManagementService, {
   STATUS_ORDER,
   STATUS_META,
@@ -11,24 +11,48 @@ import JobOrderManagementService, {
   nowStamp,
   recomputeStatus,
   assignDefaults,
+  buildSynchronizedJobOrders,
 } from '../services/JobOrderManagementService';
+import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 
 function logActivity(job, text, type = 'system') {
   return {
     ...job,
-    activityLog: [{ date: nowStamp(), text, type }, ...job.activityLog],
+    activityLog: [{ date: nowStamp(), text, type }, ...(job.activityLog || [])],
   };
 }
 
 export default function useJobOrderManagementStore() {
-  const [jobOrders, setJobOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlStatus = searchParams.get('status') || 'all';
+
+  const [jobOrders, setJobOrders] = useState(buildSynchronizedJobOrders);
+  const [loading, setLoading] = useState(false);
 
   // controls
   const [search, setSearch] = useState('');
   const [clientFilter, setClientFilter] = useState('all');
   const [sortMode, setSortMode] = useState('deadline');
-  const [activeStatus, setActiveStatus] = useState('all');
+  const [activeStatus, setActiveStatusState] = useState(urlStatus);
+
+  // Sync state with URL parameter changes
+  useEffect(() => {
+    const s = searchParams.get('status') || 'all';
+    setActiveStatusState(s);
+  }, [searchParams]);
+
+  const setActiveStatus = useCallback((status) => {
+    setActiveStatusState(status);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (status === 'all') {
+        next.delete('status');
+      } else {
+        next.set('status', status);
+      }
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   // bulk select
   const [selectMode, setSelectMode] = useState(false);
@@ -40,22 +64,51 @@ export default function useJobOrderManagementStore() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create');
 
-  useEffect(() => {
-    let alive = true;
-    JobOrderManagementService.getAll()
-      .then((res) => {
-        if (!alive) return;
-        // Real API returns axios response: { data: [...] }
-        // Apply assignDefaults to fill in stage, recruiter, activityLog etc.
-        const raw = Array.isArray(res) ? res : (res?.data ?? []);
-        setJobOrders(raw.map(assignDefaults));
-        setLoading(false);
-      })
-      .catch(() => {
-        if (alive) setLoading(false);
-      });
-    return () => { alive = false; };
+  // Reload synchronized data
+  const reloadData = useCallback(() => {
+    setJobOrders(buildSynchronizedJobOrders());
   }, []);
+
+  useEffect(() => {
+    // 1. Listen to storage events across tabs
+    const handleStorage = (e) => {
+      if (
+        !e ||
+        !e.key ||
+        e.key === 'ismers_client_job_orders' ||
+        e.key.startsWith('ismers.deployments') ||
+        e.key === 'ismers_bridge_hires_v2' ||
+        e.key === 'ismers_sync_beacon'
+      ) {
+        reloadData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('ismers:job-orders-updated', reloadData);
+    window.addEventListener('ismers:deployments-updated', reloadData);
+
+    // 2. Listen to real-time pub/sub events
+    const unsubscribeRealtime = subscribeRealtimeEvents((msg) => {
+      if (
+        msg.type === 'JOB_ORDER_CREATED' ||
+        msg.type === 'JOB_ORDER_APPROVED' ||
+        msg.type === 'DEPLOYMENT_CHANGED' ||
+        msg.type === 'EMPLOYEE_DEPLOYED' ||
+        msg.type === 'STAGE_CHANGED' ||
+        msg.type === 'candidate_deployed'
+      ) {
+        reloadData();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('ismers:job-orders-updated', reloadData);
+      window.removeEventListener('ismers:deployments-updated', reloadData);
+      unsubscribeRealtime();
+    };
+  }, [reloadData]);
 
   const getJob = useCallback((ref) => jobOrders.find((j) => j.ref === ref), [jobOrders]);
 
@@ -65,14 +118,19 @@ export default function useJobOrderManagementStore() {
 
   // ---- clients for the filter dropdown ----
   const clients = useMemo(
-    () => [...new Set(jobOrders.map((j) => j.client))].sort(),
+    () => [...new Set(jobOrders.map((j) => j.client))].filter(Boolean).sort(),
     [jobOrders]
   );
 
   // ---- filtering / sorting / stats ----
   const matchesFilters = useCallback((j) => {
     const q = search.trim().toLowerCase();
-    const matchesQ = !q || j.title.toLowerCase().includes(q) || j.client.toLowerCase().includes(q) || j.location.toLowerCase().includes(q);
+    const matchesQ =
+      !q ||
+      (j.title || '').toLowerCase().includes(q) ||
+      (j.client || '').toLowerCase().includes(q) ||
+      (j.location || '').toLowerCase().includes(q) ||
+      (j.ref || '').toLowerCase().includes(q);
     const matchesClient = clientFilter === 'all' || j.client === clientFilter;
     return matchesQ && matchesClient;
   }, [search, clientFilter]);
@@ -80,28 +138,51 @@ export default function useJobOrderManagementStore() {
   const sortJobs = useCallback((list) => {
     const arr = [...list];
     if (sortMode === 'deadline') arr.sort((a, b) => daysLeft(a.deadline) - daysLeft(b.deadline));
-    else if (sortMode === 'priority') { const rank = { high: 0, medium: 1, normal: 2 }; arr.sort((a, b) => rank[a.priority] - rank[b.priority]); }
-    else if (sortMode === 'fill') arr.sort((a, b) => (b.filled / b.total) - (a.filled / a.total));
-    else if (sortMode === 'newest') arr.sort((a, b) => b.ref.localeCompare(a.ref));
+    else if (sortMode === 'priority') {
+      const rank = { urgent: 0, high: 1, medium: 2, normal: 3 };
+      arr.sort((a, b) => (rank[a.priority] ?? 4) - (rank[b.priority] ?? 4));
+    }
+    else if (sortMode === 'fill') arr.sort((a, b) => (b.filled / (b.total || 1)) - (a.filled / (a.total || 1)));
+    else if (sortMode === 'newest') arr.sort((a, b) => (b.ref || '').localeCompare(a.ref || ''));
     return arr;
   }, [sortMode]);
+
+  const filteredJobOrders = useMemo(() => {
+    const list = jobOrders.filter((j) => {
+      const matchesSearch = matchesFilters(j);
+      const matchesStatus = activeStatus === 'all' || j.status === activeStatus;
+      return matchesSearch && matchesStatus;
+    });
+    return sortJobs(list);
+  }, [jobOrders, matchesFilters, activeStatus, sortJobs]);
 
   const columns = useMemo(() => {
     return STATUS_ORDER.map((status) => {
       const items = sortJobs(jobOrders.filter((j) => j.status === status && matchesFilters(j)));
-      return { status, meta: STATUS_META[status], items, hidden: activeStatus !== 'all' && activeStatus !== status };
+      return {
+        status,
+        meta: STATUS_META[status],
+        items,
+        hidden: activeStatus !== 'all' && activeStatus !== status,
+      };
     });
   }, [jobOrders, sortJobs, matchesFilters, activeStatus]);
 
   const stats = useMemo(() => {
     const total = jobOrders.length;
-    const openPositions = jobOrders.reduce((s, j) => s + (j.total - j.filled), 0);
-    const filledPositions = jobOrders.reduce((s, j) => s + j.filled, 0);
+    const openPositions = jobOrders.reduce((s, j) => s + Math.max(0, (j.total || 0) - (j.filled || 0)), 0);
+    const filledPositions = jobOrders.reduce((s, j) => s + (j.filled || 0), 0);
     const urgentCount = jobOrders.filter((j) => j.status === 'urgent').length;
-    const totalSlots = jobOrders.reduce((s, j) => s + j.total, 0);
+    const reviewCount = jobOrders.filter((j) => j.status === 'review').length;
+    const totalSlots = jobOrders.reduce((s, j) => s + (j.total || 0), 0);
     const fillRate = totalSlots ? Math.round((filledPositions / totalSlots) * 100) : 0;
     return {
-      total, openPositions, filledPositions, urgentCount, fillRate,
+      total,
+      openPositions,
+      filledPositions,
+      urgentCount,
+      reviewCount,
+      fillRate,
       clientCount: new Set(jobOrders.map((j) => j.client)).size,
     };
   }, [jobOrders]);
@@ -126,7 +207,6 @@ export default function useJobOrderManagementStore() {
           return logActivity(merged, 'Job order details updated.');
         });
       } catch {
-        // Optimistic local update on network failure
         updateJob(currentRef, (j) => {
           const merged = { ...j, ...formValues };
           recomputeStatus(merged);
@@ -142,23 +222,33 @@ export default function useJobOrderManagementStore() {
         status: formValues.filled >= formValues.total ? 'filled' : (formValues.filled > 0 ? 'filling' : 'open'),
         source: 'internal',
       };
-      const res = await JobOrderManagementService.create(payload, jobOrders);
-      const raw = Array.isArray(res) ? res : (res?.data ?? res);
-      const newJob = assignDefaults(raw);
-      const withLog = logActivity(newJob, 'Job order created.');
-      setJobOrders((prev) => [...prev, withLog]);
-      setModalOpen(false);
-      setCurrentRef(withLog.ref);
-      setDrawerOpen(true);
+      try {
+        const res = await JobOrderManagementService.create(payload);
+        const raw = Array.isArray(res) ? res : (res?.data ?? res);
+        const newJob = assignDefaults(raw);
+        const withLog = logActivity(newJob, 'Job order created.');
+        setJobOrders((prev) => [withLog, ...prev]);
+        setModalOpen(false);
+        setCurrentRef(withLog.ref);
+        setDrawerOpen(true);
+      } catch {
+        const newJob = assignDefaults({
+          ref: `JO-2026-${Math.floor(100 + Math.random() * 900)}`,
+          ...payload,
+        });
+        const withLog = logActivity(newJob, 'Job order created locally.');
+        setJobOrders((prev) => [withLog, ...prev]);
+        setModalOpen(false);
+        setCurrentRef(withLog.ref);
+        setDrawerOpen(true);
+      }
     }
-  }, [modalMode, currentRef, updateJob, jobOrders]);
+  }, [modalMode, currentRef, updateJob]);
 
   const deleteJob = useCallback(async (ref) => {
     try {
       await JobOrderManagementService.remove(ref);
-    } catch {
-      // Continue with local state removal even if API call fails
-    }
+    } catch {}
     setJobOrders((prev) => prev.filter((j) => j.ref !== ref));
     setDrawerOpen(false);
   }, []);
@@ -168,10 +258,83 @@ export default function useJobOrderManagementStore() {
     updateJob(ref, (j) => logActivity({ ...j, stage }, note));
   }, [updateJob]);
 
+  // HR Manager Approval of Client Portal requests
+  const approveAndOpen = useCallback((ref) => {
+    updateJob(ref, (j) => {
+      const clientNorm = (j.client || '').toLowerCase().trim();
+      const resolvedRecruiter = (j.recruiter && !j.recruiter.toLowerCase().includes('unassigned'))
+        ? j.recruiter
+        : (clientNorm.includes('northline') || clientNorm.includes('coastal') || clientNorm.includes('everwell') ? 'Dennis Ocampo' : 'Karla Reyes');
+
+      const updated = {
+        ...j,
+        status: 'open',
+        stage: 'activated',
+        statusClass: 'client-portal-badge--active',
+        badge: 'open',
+        recruiter: resolvedRecruiter,
+      };
+
+      // 1. Persist status change to ismers_client_job_orders
+      try {
+        const raw = localStorage.getItem('ismers_client_job_orders');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const idx = list.findIndex((item) => (item.ref || item.id) === ref);
+          if (idx >= 0) {
+            list[idx] = {
+              ...list[idx],
+              status: 'open',
+              stage: 'activated',
+              badge: 'open',
+              displayStatus: 'Active',
+              recruiter: resolvedRecruiter,
+            };
+            localStorage.setItem('ismers_client_job_orders', JSON.stringify(list));
+          }
+        }
+      } catch (err) {
+        console.warn('Could not update job order in storage:', err);
+      }
+
+      // 2. Persist to scoped cp_jobs_ keys
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('cp_jobs_')) {
+            const rawScoped = localStorage.getItem(k);
+            if (rawScoped) {
+              const listScoped = JSON.parse(rawScoped);
+              if (Array.isArray(listScoped)) {
+                const sIdx = listScoped.findIndex((item) => (item.ref || item.id) === ref);
+                if (sIdx >= 0) {
+                  listScoped[sIdx] = {
+                    ...listScoped[sIdx],
+                    status: 'open',
+                    stage: 'activated',
+                    badge: 'open',
+                    displayStatus: 'Active',
+                    recruiter: resolvedRecruiter,
+                  };
+                  localStorage.setItem(k, JSON.stringify(listScoped));
+                }
+              }
+            }
+          }
+        }
+      } catch {}
+
+      broadcastRealtimeEvent('JOB_ORDER_APPROVED', { ref, jobOrder: updated });
+      window.dispatchEvent(new CustomEvent('ismers:job-orders-updated', { detail: updated }));
+
+      return logActivity(updated, 'Job order approved by HR Manager and activated.');
+    });
+  }, [updateJob]);
+
   const stageCheckStaff = useCallback((ref) => {
     updateJob(ref, (j) => {
-      const stage = j.total <= 5 ? 'deploying' : 'recruiting';
-      const note = stage === 'deploying' ? 'Enough bench staff available — deploying directly.' : 'Not enough bench staff — request sent to Recruitment & Selection.';
+      const stage = (j.total || 1) <= 5 ? 'deploying' : 'recruiting';
+      const note = stage === 'deploying' ? 'Available bench personnel identified — deploying directly.' : 'Bench personnel insufficient — staffing requisition sent to Recruitment & Selection.';
       return logActivity({ ...j, stage }, note);
     });
   }, [updateJob]);
@@ -180,21 +343,39 @@ export default function useJobOrderManagementStore() {
     updateJob(ref, (j) => {
       const updated = { ...j, filled: j.total, stage: 'assigned' };
       recomputeStatus(updated);
-      return logActivity(updated, 'Employees assigned to job order.');
+      return logActivity(updated, 'Candidate personnel assigned to job order.');
     });
   }, [updateJob]);
 
   const stageActions = {
+    approveAndOpen,
     stageApprove: (ref) => setStage(ref, 'approved', 'Approved by manager.'),
-    stageReject: (ref) => setStage(ref, 'rejected', 'Rejected by manager.'),
+    stageReject: (ref) => {
+      updateJob(ref, (j) => {
+        const updated = { ...j, status: 'review', stage: 'rejected' };
+        // Update localStorage
+        try {
+          const raw = localStorage.getItem('ismers_client_job_orders');
+          if (raw) {
+            const list = JSON.parse(raw);
+            const idx = list.findIndex((item) => (item.ref || item.id) === ref);
+            if (idx >= 0) {
+              list[idx] = { ...list[idx], status: 'Rejected', stage: 'rejected' };
+              localStorage.setItem('ismers_client_job_orders', JSON.stringify(list));
+            }
+          }
+        } catch {}
+        return logActivity(updated, 'Rejected by HR Manager.');
+      });
+    },
     stageRevise: (ref) => setStage(ref, 'created', 'Revised and resubmitted for review.'),
     stageActivate: (ref) => setStage(ref, 'activated', 'Job order activated.'),
     stageCheckStaff,
     stageAssign,
     stageSchedule: (ref) => setStage(ref, 'scheduled', 'Deployment schedule created.'),
-    stageReport: (ref) => setStage(ref, 'reporting', 'Employees confirmed reporting to client.'),
-    stageStart: (ref) => setStage(ref, 'in_progress', 'Job order started.'),
-    stageMonitor: (ref) => setStage(ref, 'monitoring', 'Began monitoring performance & attendance.'),
+    stageReport: (ref) => setStage(ref, 'reporting', 'Employees confirmed reporting to client site.'),
+    stageStart: (ref) => setStage(ref, 'in_progress', 'Job order in progress on-site.'),
+    stageMonitor: (ref) => setStage(ref, 'monitoring', 'Began monitoring performance and attendance.'),
     stageComplete: (ref) => setStage(ref, 'completed', 'Job order marked completed.'),
     stageClose: (ref) => setStage(ref, 'closed', 'Job order closed and archived.'),
   };
@@ -210,7 +391,7 @@ export default function useJobOrderManagementStore() {
     updateJob(ref, (j) => {
       const updated = { ...j, status };
       if (status === 'filled') updated.filled = updated.total;
-      if (status === 'open') updated.filled = 0;
+      if (status === 'open' && j.status === 'filled') updated.filled = 0;
       return logActivity(updated, `Status manually moved to "${STATUS_META[status].label}".`);
     });
   }, [updateJob]);
@@ -229,8 +410,8 @@ export default function useJobOrderManagementStore() {
   const clearSelection = useCallback(() => setSelectedRefs(new Set()), []);
   const bulkApprove = useCallback(() => {
     setJobOrders((prev) => prev.map((j) => (
-      selectedRefs.has(j.ref) && j.stage === 'created'
-        ? logActivity({ ...j, stage: 'approved' }, 'Bulk-approved by manager.')
+      selectedRefs.has(j.ref) && (j.stage === 'created' || j.stage === 'review')
+        ? logActivity({ ...j, status: 'open', stage: 'activated' }, 'Bulk-approved and activated by HR Manager.')
         : j
     )));
   }, [selectedRefs]);
@@ -264,6 +445,7 @@ export default function useJobOrderManagementStore() {
   return {
     loading,
     jobOrders,
+    filteredJobOrders,
     getJob,
     clients,
     columns,

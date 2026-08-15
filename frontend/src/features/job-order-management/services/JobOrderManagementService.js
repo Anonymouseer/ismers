@@ -1,10 +1,12 @@
 // JobOrderManagementService.js
-// API calls for the job-order-management feature
+// API calls, domain constants, and canonical data builder for Job Order Management
 import api from '../../../services/apiClient';
+import { CLIENTS } from '../../client-management/data/mockClients';
+import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
+import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService';
 
 const BASE_URL = '/job-orders';
 
-// ---- Real API (wire the store to this once the backend endpoints are ready) ----
 export const jobOrderManagementService = {
   getAll: () => api.get(BASE_URL),
   getById: (id) => api.get(`${BASE_URL}/${id}`),
@@ -17,20 +19,22 @@ export const jobOrderManagementService = {
 export const TODAY = new Date(2026, 6, 24); // Jul 24, 2026 — matches app "current date"
 
 export const STATUS_META = {
+  review:  { label: 'Review',  color: '#805AD5', soft: '#F3E8FF', order: 0 },
   open:    { label: 'Open',    color: '#3D7DD6', soft: '#E7EFFB', order: 1 },
   filling: { label: 'Filling', color: '#D98A2B', soft: '#FBF0E1', order: 2 },
   urgent:  { label: 'Urgent',  color: '#D45B5B', soft: '#FBEAEA', order: 3 },
   filled:  { label: 'Filled',  color: '#149E6E', soft: '#E4F5EE', order: 4 },
 };
-export const STATUS_ORDER = ['open', 'filling', 'urgent', 'filled'];
+export const STATUS_ORDER = ['review', 'open', 'filling', 'urgent', 'filled'];
 
 export const PRIORITY_META = {
-  high:   { label: 'High',   color: '#D45B5B' },
+  urgent: { label: 'Urgent', color: '#D45B5B' },
+  high:   { label: 'High',   color: '#E53E3E' },
   medium: { label: 'Medium', color: '#D98A2B' },
   normal: { label: 'Normal', color: '#8A8578' },
 };
 
-export const RECRUITERS = ['Maria Santos', 'John Dela Cruz', 'Angela Reyes', 'Mark Tuazon'];
+export const RECRUITERS = ['Karla Reyes', 'Dennis Ocampo', 'Maria Santos', 'John Dela Cruz', 'Angela Reyes'];
 
 // ---- JOB ORDER LIFECYCLE / WORKFLOW ENGINE ----
 export const TRACK_NODES = [
@@ -63,13 +67,16 @@ export function hashCode(str) {
 }
 
 export function daysLeft(deadlineStr) {
+  if (!deadlineStr || deadlineStr === 'TBD') return 30;
+  if (deadlineStr.toLowerCase().includes('closed')) return -1;
   const d = new Date(deadlineStr);
+  if (isNaN(d.getTime())) return 30;
   return Math.ceil((d - TODAY) / 86400000);
 }
 
 export function countdownLabel(deadlineStr) {
   const diff = daysLeft(deadlineStr);
-  if (diff < 0) return { text: 'Overdue', color: 'var(--red)', soft: 'var(--red-soft)' };
+  if (diff < 0) return { text: 'Closed / Fulfilled', color: 'var(--green)', soft: 'var(--green-soft)' };
   if (diff === 0) return { text: 'Due today', color: 'var(--red)', soft: 'var(--red-soft)' };
   if (diff <= 5) return { text: diff + 'd left', color: 'var(--red)', soft: 'var(--red-soft)' };
   if (diff <= 14) return { text: diff + 'd left', color: 'var(--amber)', soft: 'var(--amber-soft)' };
@@ -81,7 +88,7 @@ export function nowStamp() {
 }
 
 export function initials(name) {
-  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  return (name || '').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 }
 export function pillClass(status) {
   return { hired: 'hired', interview: 'interview', screening: 'screening', rejected: 'rejected', applied: 'applied' }[status] || 'applied';
@@ -94,169 +101,218 @@ export function scoreClass(score) {
 }
 
 export function recomputeStatus(j) {
-  if (j.filled >= j.total) j.status = 'filled';
-  else if (daysLeft(j.deadline) <= 5) j.status = 'urgent';
-  else if (j.filled > 0) j.status = 'filling';
-  else j.status = 'open';
+  if (j.status === 'review' || j.stage === 'review') return j;
+  if (j.filled >= j.total) {
+    j.status = 'filled';
+  } else if (j.badge === 'urgent' || (j.deadline && daysLeft(j.deadline) <= 5 && !j.deadline.toLowerCase().includes('closed'))) {
+    j.status = 'urgent';
+  } else if (j.filled > 0) {
+    j.status = 'filling';
+  } else {
+    j.status = 'open';
+  }
   return j;
 }
 
 export function assignDefaults(j) {
   const job = { ...j };
-  if (!job.stage) job.stage = job.status === 'filled' ? 'completed' : 'in_progress';
-  if (!job.recruiter) job.recruiter = RECRUITERS[Math.abs(hashCode(job.ref)) % RECRUITERS.length];
-  if (!job.priority) job.priority = job.status === 'urgent' ? 'high' : 'normal';
-  if (!job.activityLog) job.activityLog = [{ date: job.deadline, text: 'Job order created.', type: 'system' }];
-  if (!job.createdAt) job.createdAt = job.ref;
+  if (!job.stage) {
+    job.stage = job.status === 'review' ? 'review' : job.status === 'filled' ? 'completed' : 'in_progress';
+  }
+  if (!job.recruiter) job.recruiter = RECRUITERS[Math.abs(hashCode(job.ref || job.id || 'rec')) % RECRUITERS.length];
+  if (!job.priority) job.priority = job.status === 'urgent' ? 'urgent' : 'normal';
+  if (!job.activityLog || !job.activityLog.length) {
+    job.activityLog = [{ date: job.deadline || nowStamp(), text: 'Job order requisition initialized in system.', type: 'system' }];
+  }
+  if (!job.createdAt) job.createdAt = job.ref || nowStamp();
   return job;
 }
 
 export function nextRef(jobOrders) {
-  const nums = jobOrders.map((j) => parseInt(j.ref.replace('JO-', ''), 10)).filter((n) => !isNaN(n));
+  const nums = jobOrders.map((j) => parseInt(String(j.ref || '').replace(/[^0-9]/g, ''), 10)).filter((n) => !isNaN(n));
   const next = (nums.length ? Math.max(...nums) : 0) + 1;
   return 'JO-' + String(next).padStart(3, '0');
 }
 
-// ---- MOCK DATA (static preview — remove once wired to jobOrderManagementService above) ----
-const RAW_JOB_ORDERS = [
-  { ref: 'JO-001', client: 'ABC Logistics', title: 'Warehouse Associate', status: 'filling',
-    location: 'Valenzuela City, NCR', type: 'Full-time · Contractual', rate: '₱610/day', deadline: 'Jul 28, 2026', filled: 12, total: 15,
-    description: 'ABC Logistics is looking for Warehouse Associates to support inbound and outbound operations at their Valenzuela distribution center, handling receiving, sorting, and staging of goods.',
-    requirements: ['At least high school graduate; college level an advantage', '6 months of warehouse or logistics experience preferred', 'Able to lift up to 25kg and stand for extended periods', 'Willing to work rotating shifts including weekends'],
-    tags: ['Warehousing', 'Entry-level', 'Shifting', 'On-site'],
-    applicants: [
-      { name: 'Andrea Molina', score: 92, status: 'hired', applied: 'Jul 01, 2026' },
-      { name: 'Jomar Villagracia', score: 89, status: 'hired', applied: 'Jul 01, 2026' },
-      { name: 'Rhea Castillo', score: 88, status: 'hired', applied: 'Jul 02, 2026' },
-      { name: 'Michael Tan', score: 78, status: 'interview', applied: 'Jul 12, 2026' },
-      { name: 'Carlo Dizon', score: 70, status: 'screening', applied: 'Jul 14, 2026' },
-      { name: 'Ella Ramos', score: 55, status: 'applied', applied: 'Jul 16, 2026' },
-    ] },
-  { ref: 'JO-002', client: 'ABC Logistics', title: 'Forklift Operator', status: 'open',
-    location: 'Valenzuela City, NCR', type: 'Full-time · Contractual', rate: '₱650/day', deadline: 'Aug 01, 2026', filled: 3, total: 5,
-    description: 'ABC Logistics needs licensed Forklift Operators to move palletized goods within the warehouse and load/unload delivery trucks safely and efficiently.',
-    requirements: ['Valid forklift operator certification/license', 'At least 1 year of forklift operating experience', 'Good understanding of warehouse safety protocols', 'Willing to work rotating shifts'],
-    tags: ['Warehousing', 'Licensed', 'Shifting'],
-    applicants: [
-      { name: 'Danilo Ferrer', score: 90, status: 'hired', applied: 'Jul 02, 2026' },
-      { name: 'Ramil Cabrera', score: 87, status: 'hired', applied: 'Jul 03, 2026' },
-      { name: 'Wilfredo Santos', score: 85, status: 'hired', applied: 'Jul 04, 2026' },
-      { name: 'Vince Ocampo', score: 80, status: 'interview', applied: 'Jul 10, 2026' },
-      { name: 'Rico Manalo', score: 77, status: 'screening', applied: 'Jul 13, 2026' },
-    ] },
-  { ref: 'JO-003', client: 'Nova Retail Group', title: 'Visual Merchandiser', status: 'urgent',
-    location: 'Makati City, NCR', type: 'Full-time · Regular', rate: '₱19,500/mo', deadline: 'Jul 26, 2026', filled: 1, total: 6,
-    description: "Visual Merchandisers will set up in-store displays and window layouts according to brand guidelines to drive foot traffic ahead of the client's mall-wide relaunch.",
-    requirements: ['At least 1 year of retail or merchandising experience', 'Creative eye for layout, color, and product placement', 'Willing to be assigned across NCR branches', 'Available to start within 2 weeks'],
-    tags: ['Retail', 'Creative', 'On-site', 'Rush'],
-    applicants: [
-      { name: 'Patricia Gomez', score: 81, status: 'hired', applied: 'Jul 08, 2026' },
-      { name: 'Renz Aldover', score: 74, status: 'interview', applied: 'Jul 15, 2026' },
-      { name: 'Shane Bautista', score: 66, status: 'screening', applied: 'Jul 18, 2026' },
-    ] },
-  { ref: 'JO-004', client: 'Nova Retail Group', title: 'Store Associate', status: 'filling',
-    location: 'Quezon City, NCR', type: 'Full-time · Contractual', rate: '₱610/day', deadline: 'Aug 10, 2026', filled: 8, total: 12,
-    description: "Store Associates handle customer assistance, inventory replenishment, and point-of-sale transactions across Nova Retail's Quezon City branches.",
-    requirements: ['At least high school graduate', 'Good communication and customer service skills', 'Willing to work retail hours including weekends and holidays'],
-    tags: ['Retail', 'Customer Service', 'Shifting'],
-    applicants: [
-      { name: 'Joyce Manalastas', score: 86, status: 'hired', applied: 'Jul 05, 2026' },
-      { name: 'Kim Salazar', score: 83, status: 'hired', applied: 'Jul 06, 2026' },
-      { name: 'Dennis Roque', score: 72, status: 'interview', applied: 'Jul 14, 2026' },
-    ] },
-  { ref: 'JO-005', client: 'Meridian BPO Solutions', title: 'Customer Service Representative', status: 'open',
-    location: 'Ortigas, Pasig City', type: 'Full-time · Regular', rate: '₱24,000/mo', deadline: 'Aug 15, 2026', filled: 6, total: 20,
-    description: 'Meridian BPO is ramping up a new voice account and needs Customer Service Representatives to handle inbound queries for a US-based telco client.',
-    requirements: ['At least 2 years college or SHS graduate', 'Excellent English communication skills', 'Willing to work night shift / graveyard schedule', 'Prior BPO/call center experience is a plus'],
-    tags: ['BPO', 'Night Shift', 'Voice'],
-    applicants: [
-      { name: 'Nikki Fernandez', score: 88, status: 'hired', applied: 'Jul 03, 2026' },
-      { name: 'Aaron Villareal', score: 84, status: 'hired', applied: 'Jul 04, 2026' },
-      { name: 'Marielle Cruz', score: 79, status: 'interview', applied: 'Jul 12, 2026' },
-      { name: 'Jopay Santos', score: 69, status: 'screening', applied: 'Jul 17, 2026' },
-    ] },
-  { ref: 'JO-006', client: 'Meridian BPO Solutions', title: 'Technical Support Specialist', status: 'urgent',
-    location: 'Ortigas, Pasig City', type: 'Full-time · Regular', rate: '₱27,000/mo', deadline: 'Jul 25, 2026', filled: 2, total: 10,
-    description: 'Technical Support Specialists will troubleshoot hardware and connectivity issues for a home-internet account, with a hard ramp deadline set by the client.',
-    requirements: ['At least 1 year of technical support experience', 'Strong troubleshooting and problem-solving skills', 'Willing to work night shift', 'Basic understanding of networking concepts'],
-    tags: ['BPO', 'Technical', 'Night Shift', 'Rush'],
-    applicants: [
-      { name: 'Ben Alvarez', score: 82, status: 'hired', applied: 'Jul 06, 2026' },
-      { name: 'Trisha Ong', score: 76, status: 'interview', applied: 'Jul 16, 2026' },
-    ] },
-  { ref: 'JO-007', client: 'Golden Harvest Agri Corp', title: 'Farm Technician', status: 'filled',
-    location: 'Nueva Ecija', type: 'Seasonal · Project-based', rate: '₱480/day', deadline: 'Jul 10, 2026', filled: 10, total: 10,
-    description: "Farm Technicians supported the harvest-season operations for Golden Harvest's rice production sites, from planting assistance to post-harvest handling.",
-    requirements: ['Willing to relocate to Nueva Ecija for the season', 'Prior farm or agricultural work experience preferred', 'Physically fit for fieldwork'],
-    tags: ['Agriculture', 'Seasonal', 'Provincial'],
-    applicants: [
-      { name: 'Rodel Panganiban', score: 80, status: 'hired', applied: 'Jun 20, 2026' },
-      { name: 'Lito Mercado', score: 78, status: 'hired', applied: 'Jun 21, 2026' },
-    ] },
-  { ref: 'JO-008', client: 'CarePlus Health Staffing', title: 'Home Care Aide', status: 'filling',
-    location: 'Cebu City', type: 'Full-time · Contractual', rate: '₱16,500/mo', deadline: 'Aug 20, 2026', filled: 5, total: 9,
-    description: "Home Care Aides provide daily living assistance and basic health monitoring for elderly clients under CarePlus's home-care program in Cebu.",
-    requirements: ['Caregiving NC II or equivalent training preferred', 'Patient, compassionate disposition', 'Willing to be assigned to client residences', 'Basic first-aid knowledge is a plus'],
-    tags: ['Healthcare', 'Caregiving', 'On-site'],
-    applicants: [
-      { name: 'Grace Villanueva', score: 85, status: 'hired', applied: 'Jul 07, 2026' },
-      { name: 'Noel Espino', score: 73, status: 'interview', applied: 'Jul 15, 2026' },
-      { name: 'Vilma Torres', score: 64, status: 'screening', applied: 'Jul 19, 2026' },
-    ] },
-  { ref: 'JO-009', client: 'Swift Freight Logistics', title: 'Delivery Driver', status: 'open',
-    location: 'Caloocan City, NCR', type: 'Full-time · Contractual', rate: '₱620/day', deadline: 'Aug 12, 2026', filled: 4, total: 8,
-    description: "Delivery Drivers handle last-mile delivery routes for Swift Freight's NCR distribution network, ensuring on-time and damage-free deliveries.",
-    requirements: ["Valid non-professional or professional driver's license", 'At least 1 year of driving experience', 'Familiar with NCR roads and routes', 'No major traffic violations on record'],
-    tags: ['Logistics', 'Driving', 'Shifting'],
-    applicants: [
-      { name: 'Ronald Mendoza', score: 83, status: 'hired', applied: 'Jul 09, 2026' },
-      { name: 'Arnel Custodio', score: 71, status: 'interview', applied: 'Jul 17, 2026' },
-    ] },
-  { ref: 'JO-010', client: 'Summit Manufacturing Inc.', title: 'Production Line Worker', status: 'urgent',
-    location: 'Sta. Rosa, Laguna', type: 'Full-time · Contractual', rate: '₱590/day', deadline: 'Jul 27, 2026', filled: 6, total: 25,
-    description: "Production Line Workers will support Summit Manufacturing's assembly line ramp-up ahead of a major client order, with an urgent headcount target this month.",
-    requirements: ['At least high school graduate', 'Willing to work in a factory environment with rotating shifts', 'No experience necessary; training provided', 'Willing to be assigned in Sta. Rosa, Laguna'],
-    tags: ['Manufacturing', 'Entry-level', 'Shifting', 'Rush'],
-    applicants: [
-      { name: 'Ferdie Cabahug', score: 79, status: 'hired', applied: 'Jul 05, 2026' },
-      { name: 'Sheila Marasigan', score: 75, status: 'hired', applied: 'Jul 06, 2026' },
-      { name: 'Jun Villaruel', score: 68, status: 'screening', applied: 'Jul 18, 2026' },
-      { name: 'Dexter Amistad', score: 60, status: 'applied', applied: 'Jul 20, 2026' },
-    ] },
-  { ref: 'JO-011', client: 'Swift Freight Logistics', title: 'Warehouse Supervisor', status: 'filled',
-    location: 'Caloocan City, NCR', type: 'Full-time · Regular', rate: '₱28,000/mo', deadline: 'Jul 05, 2026', filled: 2, total: 2,
-    description: "Warehouse Supervisors oversee daily inbound/outbound operations and manage a team of warehouse associates at Swift Freight's Caloocan hub.",
-    requirements: ['At least 2 years of warehouse supervisory experience', 'Working knowledge of inventory systems', 'Strong people-management skills'],
-    tags: ['Logistics', 'Supervisory', 'On-site'],
-    applicants: [
-      { name: 'Marlon Isip', score: 90, status: 'hired', applied: 'Jun 18, 2026' },
-      { name: 'Cherry Aban', score: 88, status: 'hired', applied: 'Jun 19, 2026' },
-    ] },
-];
+/**
+ * Loads and builds the complete, synchronized list of Job Orders across:
+ * 1. Canonical clients from mockClients.js
+ * 2. Live deployments from DeploymentAssignmentStore
+ * 3. Client Portal PRF submissions from localStorage (ismers_client_job_orders)
+ */
+export function buildSynchronizedJobOrders() {
+  let deployments = [];
+  if (typeof window !== 'undefined') {
+    try {
+      for (const key of ['ismers.deployments.v7', 'ismers.deployments.v6']) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            deployments = parsed;
+            break;
+          }
+        }
+      }
+    } catch {}
+  }
+  if (!deployments.length) deployments = getDeployments();
 
-// ---- mock CRUD facade used by the store for now — swap for jobOrderManagementService above once the backend is ready ----
-// NOTE: mockJobOrderApi is kept for local-only fallback but the store now uses the real API above.
-const mockJobOrderApi = {
-  async getAll() {
-    return RAW_JOB_ORDERS.map(assignDefaults);
-  },
-  async create(payload, existingJobOrders) {
-    const job = assignDefaults({
-      ref: nextRef(existingJobOrders),
-      stage: 'created',
-      activityLog: [],
-      applicants: [],
-      ...payload,
+  const result = [];
+  let refCounter = 1;
+
+  // 1. Process Client Portal submissions FIRST (Review Queue)
+  let cpJobOrders = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ismers_client_job_orders');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) cpJobOrders = parsed;
+      }
+
+      // Also inspect scoped cp_jobs_ keys in localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('cp_jobs_')) {
+          const rawScoped = localStorage.getItem(k);
+          if (rawScoped) {
+            const parsedScoped = JSON.parse(rawScoped);
+            if (Array.isArray(parsedScoped)) {
+              parsedScoped.forEach((item) => {
+                const itemRef = item.ref || item.id;
+                if (!cpJobOrders.some((x) => (x.ref || x.id) === itemRef)) {
+                  cpJobOrders.push(item);
+                }
+              });
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  function resolveClientAM(clientName) {
+    if (!clientName) return 'Karla Reyes';
+    const norm = clientName.toLowerCase().trim();
+    const match = CLIENTS.find((c) => {
+      const cNorm = (c.name || '').toLowerCase().trim();
+      return cNorm === norm || cNorm.includes(norm) || norm.includes(cNorm);
     });
-    recomputeStatus(job);
-    return job;
-  },
-  async update(ref, payload) {
-    return { ref, ...payload };
-  },
-  async remove(ref) {
-    return { ref, deleted: true };
-  },
-};
+    return match?.am || (norm.includes('northline') || norm.includes('coastal') || norm.includes('everwell') ? 'Dennis Ocampo' : 'Karla Reyes');
+  }
+
+  cpJobOrders.forEach((cpJob) => {
+    const ref = cpJob.ref || cpJob.id || `PRF-2026-${String(refCounter++).padStart(4, '0')}`;
+    const clientName = cpJob.client || cpJob.company || 'Northline BPO';
+    const isApproved =
+      cpJob.status === 'open' ||
+      cpJob.stage === 'activated' ||
+      cpJob.status === 'filling' ||
+      cpJob.status === 'filled';
+    const status = isApproved ? (cpJob.status || 'open') : 'review';
+    const stage = isApproved ? (cpJob.stage || 'activated') : 'review';
+    const recruiter = (cpJob.recruiter && !cpJob.recruiter.toLowerCase().includes('unassigned'))
+      ? cpJob.recruiter
+      : resolveClientAM(clientName);
+
+    result.push(assignDefaults({
+      id: cpJob.id || `jo-cp-${refCounter++}`,
+      ref,
+      client: clientName,
+      title: cpJob.title || cpJob.position || 'Requisition Position',
+      status,
+      stage,
+      location: cpJob.location || 'Metro Manila',
+      type: cpJob.type || 'Full-time · Contractual',
+      rate: cpJob.rate || '₱22,000 / mo',
+      deadline: cpJob.deadline || 'Aug 30, 2026',
+      filled: cpJob.filled || 0,
+      total: cpJob.total || 1,
+      priority: cpJob.priority || 'normal',
+      recruiter,
+      description: cpJob.description || 'Job order request submitted via Client Portal.',
+      requirements: Array.isArray(cpJob.requirements) ? cpJob.requirements : [cpJob.requirements || 'DOLE DO-174 Compliant Requirements'],
+      tags: ['Client Portal', status === 'review' ? 'Under Review' : 'Active Requisition', cpJob.priority || 'Normal'],
+      applicants: cpJob.applicants || [],
+      source: 'client_portal',
+      activityLog: cpJob.activityLog || [
+        {
+          date: cpJob.requested || nowStamp(),
+          text: 'Job order request submitted from Client Portal. Awaiting HR Manager review.',
+          type: 'system',
+        },
+      ],
+    }));
+  });
+
+  // 2. Process canonical client jobs
+  const augmentedClients = mergeClientsWithDeployments(CLIENTS, deployments);
+
+  augmentedClients.forEach((client) => {
+    (client.jobs || []).forEach((job) => {
+      const ref = job.ref || `JO-${String(refCounter++).padStart(3, '0')}`;
+
+      // If already added from cpJobOrders, skip
+      if (result.some((r) => r.ref === ref || (r.title.toLowerCase() === (job.title || '').toLowerCase() && r.client.toLowerCase() === (client.name || '').toLowerCase()))) {
+        return;
+      }
+
+      const filled = job.filled || 0;
+      const total = Math.max(job.total || 1, filled);
+
+      let status = 'open';
+      let stage = 'in_progress';
+
+      if (job.badge === 'review' || job.status === 'review' || job.stage === 'review') {
+        status = 'review';
+        stage = 'review';
+      } else if (filled >= total) {
+        status = 'filled';
+        stage = 'completed';
+      } else if (job.badge === 'urgent' || (job.deadline && daysLeft(job.deadline) <= 5 && !job.deadline.toLowerCase().includes('closed'))) {
+        status = 'urgent';
+        stage = 'in_progress';
+      } else if (filled > 0) {
+        status = 'filling';
+        stage = 'in_progress';
+      } else {
+        status = 'open';
+        stage = 'activated';
+      }
+
+      result.push(assignDefaults({
+        id: job.id || `jo${refCounter}`,
+        ref,
+        client: client.name,
+        companyId: client.companyId,
+        title: job.title,
+        status,
+        stage,
+        location: job.location || client.address || 'Metro Manila',
+        type: job.type || 'Full-time · Contractual',
+        rate: job.rate || client.rate || '₱22,000/mo',
+        deadline: job.deadline || 'Aug 30, 2026',
+        filled,
+        total,
+        priority: job.badge === 'urgent' ? 'urgent' : (job.badge === 'filling' ? 'high' : 'normal'),
+        recruiter: client.am || 'Karla Reyes',
+        description: job.description || `Job requisition for ${job.title} at ${client.name}.`,
+        requirements: Array.isArray(job.requirements) ? job.requirements : [job.requirements || 'DOLE DO-174 Compliant Requirements'],
+        tags: job.tags || ['On-site', 'Contractual'],
+        applicants: job.applicants || [],
+        activityLog: [
+          {
+            date: job.deadline || 'Jul 15, 2026',
+            text: `Job order requisition active for ${client.name}. Headcount fulfillment: ${filled} / ${total}.`,
+            type: 'system',
+          },
+        ],
+      }));
+    });
+  });
+
+  return result;
+}
 
 export default jobOrderManagementService;

@@ -26,7 +26,7 @@ export default function JobOrderTicket({ job, selectMode, isSelected, onOpen, on
       <div className="ticket-body">
         <div className="ticket-title">{job.title}</div>
         <div className="ticket-client">{job.client}</div>
-        <div className="ticket-meta-row"><span>loc</span><span>{job.location}</span></div>
+        <div className="ticket-meta-row"><span>Location</span><span>{job.location}</span></div>
         <div className="ticket-progress-row">
           <div className="ticket-progress-track">
             <div className="ticket-progress-fill" style={{ width: `${pct}%`, background: meta.color }} />

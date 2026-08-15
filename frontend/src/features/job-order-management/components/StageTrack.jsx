@@ -40,6 +40,16 @@ export default function StageTrack({ job, actions }) {
 function StageActions({ job, actions }) {
   const ref = job.ref;
   switch (job.stage) {
+    case 'review':
+      return (
+        <>
+          <div className="stage-note">This job order was submitted from the Client Portal and is awaiting HR Manager review and approval.</div>
+          <div className="stage-btn-row">
+            <button className="stage-btn go" onClick={() => actions.approveAndOpen(ref)}>Approve &amp; Open Requisition</button>
+            <button className="stage-btn stop" onClick={() => actions.stageReject(ref)}>Reject Request</button>
+          </div>
+        </>
+      );
     case 'created':
       return (
         <>

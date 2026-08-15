@@ -78,6 +78,43 @@ h1.page-title{font-family:var(--font-display);font-size:22px;font-weight:700;let
 .filter-search svg{width:14px;height:14px;}
 .filter-search input{border:none;background:none;outline:none;font-size:11.5px;color:var(--text);width:100%;font-family:inherit;}
 select.chip{font-size:11px;font-weight:700;border:1px solid var(--border);background:var(--panel);border-radius:9px;padding:8px 10px;color:#4B4A45;font-family:inherit;}
+
+.view-mode-toggle-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg, #F1F5F9);
+  border: 1px solid var(--border, #E2E8F0);
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.view-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 11px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--muted, #64748B);
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.view-mode-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.view-mode-btn.active {
+  background: var(--panel, #ffffff);
+  color: var(--text, #0F172A);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .status-toggles{display:flex;gap:6px;margin-left:auto;}
 .status-toggle{font-family:var(--font-mono);font-size:10.5px;font-weight:600;padding:8px 12px;border-radius:20px;border:1px solid var(--border);background:var(--panel);color:var(--muted);transition:all .14s var(--ease);}
 .status-toggle.active{color:#fff;border-color:transparent;}

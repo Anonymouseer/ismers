@@ -7,6 +7,7 @@ export default function ControlsBar({
   selectMode, onToggleSelectMode,
   onExportCsv,
   activeStatus, setActiveStatus,
+  displayMode = 'table', setDisplayMode,
 }) {
   const statusOptions = [{ v: 'all', label: 'All' }, ...STATUS_ORDER.map((s) => ({ v: s, label: STATUS_META[s].label }))];
 
@@ -33,6 +34,36 @@ export default function ControlsBar({
         <option value="fill">Sort: Fill %</option>
         <option value="newest">Sort: Newest</option>
       </select>
+
+      {setDisplayMode && (
+        <div className="view-mode-toggle-group">
+          <button
+            type="button"
+            className={`view-mode-btn ${displayMode === 'table' ? 'active' : ''}`}
+            title="Table View"
+            onClick={() => setDisplayMode('table')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18M3 15h18M9 3v18" />
+            </svg>
+            Table
+          </button>
+          <button
+            type="button"
+            className={`view-mode-btn ${displayMode === 'board' ? 'active' : ''}`}
+            title="Dispatch Board View"
+            onClick={() => setDisplayMode('board')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="5" height="18" rx="1" />
+              <rect x="10" y="3" width="5" height="18" rx="1" />
+              <rect x="17" y="3" width="5" height="18" rx="1" />
+            </svg>
+            Board
+          </button>
+        </div>
+      )}
 
       <button className={`toolbar-toggle${selectMode ? ' active' : ''}`} onClick={onToggleSelectMode}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
