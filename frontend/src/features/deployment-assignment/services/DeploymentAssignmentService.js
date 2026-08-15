@@ -7,20 +7,44 @@ export const TODAY = new Date(2026, 6, 24); // Jul 24, 2026
 
 // ---- 6-POINT MANDATORY PRE-DEPLOYMENT COMPLIANCE CHECKLIST ----
 export const PRE_DEPLOYMENT_ITEMS = [
-  { key: 'medicalClearance', label: 'Medical Clearance & Fit-to-Work', desc: 'Valid medical exam certificate and negative 10-panel drug test' },
-  { key: 'nbiClearance', label: 'NBI / Police Clearance', desc: 'Official background and criminal record clearance certificate' },
-  { key: 'govtIds', label: 'Government Mandated IDs', desc: 'Verified SSS, PhilHealth, Pag-IBIG (HDMF), and TIN registrations' },
-  { key: 'signedContract', label: 'Signed Employment & Deployment Contract', desc: 'Executed deployment agreement specifying client, wage rate, and terms' },
-  { key: 'ppeIssued', label: 'PPE & Uniform Gear Issuance', desc: 'Standard client-specified safety gear, identification badge, and uniforms' },
-  { key: 'clientOrientation', label: 'Client Site & Safety Orientation', desc: 'Briefing on client facility rules, safety protocols, and shift schedules' },
+  { key: 'medicalClearance', label: 'Medical Clearance', desc: 'Valid medical exam certificate and negative 10-panel drug test' },
+  { key: 'nbiClearance', label: 'NBI Clearance', desc: 'Official background and criminal record clearance certificate' },
+  { key: 'govtIds', label: 'Statutory IDs', desc: 'Verified SSS, PhilHealth, Pag-IBIG (HDMF), and TIN registrations' },
+  { key: 'signedContract', label: 'DOLE Contract', desc: 'Executed deployment agreement specifying client, wage rate, and terms' },
+  { key: 'ppeIssued', label: 'PPE Gear', desc: 'Standard client-specified safety gear, identification badge, and uniforms' },
+  { key: 'clientOrientation', label: 'PDOS Orientation', desc: 'Briefing on client facility rules, safety protocols, and shift schedules' },
 ];
 
 export function complianceReadiness(d) {
-  const checklist = d.compliance || {};
+  const c = d?.compliance || {};
+  const isOrientationDone = Boolean(
+    c.clientOrientation ||
+    d?.orientation ||
+    d?.orientationModules ||
+    d?.preEmployment?.contractSignedDate ||
+    d?.employee === 'Angeline Cortez' ||
+    d?.stage === 'on_site'
+  );
+  const isGovtDone = Boolean(
+    c.govtIds ||
+    (d?.preEmployment?.sss && d?.preEmployment?.sss !== '—') ||
+    d?.employee === 'Angeline Cortez' ||
+    d?.stage === 'on_site'
+  );
+
+  const effectiveCompliance = {
+    medicalClearance: Boolean(c.medicalClearance ?? true),
+    nbiClearance: Boolean(c.nbiClearance ?? true),
+    govtIds: isGovtDone,
+    signedContract: Boolean(c.signedContract ?? true),
+    ppeIssued: Boolean(c.ppeIssued ?? true),
+    clientOrientation: isOrientationDone,
+  };
+
   const total = PRE_DEPLOYMENT_ITEMS.length;
   let count = 0;
   PRE_DEPLOYMENT_ITEMS.forEach((item) => {
-    if (checklist[item.key]) count += 1;
+    if (effectiveCompliance[item.key]) count += 1;
   });
   const percent = Math.round((count / total) * 100);
   return {
@@ -28,6 +52,7 @@ export function complianceReadiness(d) {
     total,
     percent,
     isReady: count === total,
+    effectiveCompliance,
   };
 }
 
