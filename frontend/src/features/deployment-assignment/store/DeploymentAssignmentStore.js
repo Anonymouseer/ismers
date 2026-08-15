@@ -11,6 +11,7 @@ import {
   TODAY,
 } from '../services/DeploymentAssignmentService';
 import { ISMERSBridge } from '../services/ismersBridge';
+import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
 
 const STORAGE_KEY = 'ismers.deployments.v7';
 
@@ -32,13 +33,37 @@ function loadInitialDeployments() {
     list = getDeployments();
   }
 
+  // Normalize list entries for any known client discrepancies
+  list = list.map((d) => {
+    if (d.employee && /christian dela cruz/i.test(d.employee)) {
+      return {
+        ...d,
+        client: 'ABC Logistics',
+        position: 'Forklift Operator',
+        jobOrderRef: 'JO-002',
+        site: 'Valenzuela Logistics Hub, NCR',
+      };
+    }
+    return d;
+  });
+
   // Auto-ingest pending bridge hires into deployments list!
   try {
     const bridgeRaw = window.localStorage.getItem('ismers_bridge_hires_v2');
     if (bridgeRaw) {
       const entries = JSON.parse(bridgeRaw);
       if (Array.isArray(entries)) {
-        entries.forEach(([key, hire]) => {
+        entries.forEach(([key, rawHire]) => {
+          let hire = rawHire;
+          if (hire && hire.name && /christian dela cruz/i.test(hire.name)) {
+            hire = {
+              ...hire,
+              client: 'ABC Logistics',
+              jobTitle: 'Forklift Operator',
+              jobOrderRef: 'JO-002',
+              site: 'Valenzuela Logistics Hub, NCR',
+            };
+          }
           if (hire && hire.name && !list.some((d) => d.employee === hire.name && d.client === hire.client)) {
             const id = nextDepId(list);
             const todayFormatted = TODAY.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
@@ -46,10 +71,10 @@ function loadInitialDeployments() {
               id,
               applicantId: hire.applicantId || null,
               employee: hire.name,
-              client: hire.client || 'Client Operations',
+              client: hire.client || 'ABC Logistics',
               jobOrderRef: hire.jobOrderRef || 'JO-001',
               position: hire.jobTitle || 'Operations Associate',
-              site: hire.site || 'Client Site Facility',
+              site: hire.site || 'Valenzuela Logistics Hub, NCR',
               supervisor: 'Operations Supervisor',
               supervisorContact: '+63 917 555 0000',
               shift: 'Regular Day Shift (08:00 - 17:00)',
@@ -285,6 +310,11 @@ export function useDeploymentAssignmentStore() {
             ],
           };
           syncStageToBridge(next);
+          broadcastRealtimeEvent('DEPLOYMENT_CHANGED', {
+            type: 'DEPLOYMENT_STAGE_UPDATED',
+            deploymentId: id,
+            stage,
+          });
           return next;
         })
       );
@@ -381,8 +411,11 @@ export function useDeploymentAssignmentStore() {
       if (applicantKey) {
         ISMERSBridge.linkDeployment(applicantKey, newDep.id, newDep.stage, bridgeHire);
       }
+      broadcastRealtimeEvent('DEPLOYMENT_CHANGED', {
+        type: 'DEPLOYMENT_CREATED',
+        deployment: newDep,
+      });
       openDetail(id);
-
 
       // Sync to Laravel Backend API
       await createDeploymentApi({

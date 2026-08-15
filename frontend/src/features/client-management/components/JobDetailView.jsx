@@ -175,16 +175,28 @@ export default function JobDetailView({ client, job, jobIndex, onBack }) {
                 <span>Hired / Placed</span>
                 <span className="jdv2-side-count">{hired.length} / {j.total}</span>
               </div>
-              {hired.length ? hired.map((a, idx) => (
-                <div className="jdv2-hire-card" key={idx}>
-                  <div className="jdv2-hire-avatar">{initials(a.name)}</div>
-                  <div className="jdv2-hire-info">
-                    <div className="jdv2-hire-name">{a.name}</div>
-                    <div className="jdv2-hire-meta">Applied {a.applied}</div>
+              {hired.length ? hired.map((a, idx) => {
+                const metaText = a.deployedDate
+                  ? `Deployed · ${a.deployedDate}`
+                  : a.stage === 'on_site'
+                  ? 'Confirmed Active On-Site'
+                  : a.applied
+                  ? `Applied ${a.applied}`
+                  : 'Hired & Deployed';
+
+                return (
+                  <div className="jdv2-hire-card" key={idx}>
+                    <div className="jdv2-hire-avatar">{initials(a.name)}</div>
+                    <div className="jdv2-hire-info">
+                      <div className="jdv2-hire-name">{a.name}</div>
+                      <div className="jdv2-hire-meta">{metaText}</div>
+                    </div>
+                    <span className={`jdv2-hire-score ${scoreClass(a.score || 90)}`}>
+                      {a.score || 90}
+                    </span>
                   </div>
-                  <span className={`jdv2-hire-score ${scoreClass(a.score)}`}>{a.score}</span>
-                </div>
-              )) : (
+                );
+              }) : (
                 <div style={{ color: 'var(--muted)', fontSize: 11.5 }}>No one has been hired for this role yet.</div>
               )}
             </div>

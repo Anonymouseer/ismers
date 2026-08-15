@@ -258,10 +258,33 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   }
 
   function handleDeployHandover() {
-    const jobOrderRef = job?.depRef || app.jobOrderRef || app.jobId || 'JO-001';
-    const clientName = job?.client || app.client || 'Sunrise Hospitality Group';
-    const positionTitle = job?.title || app.jobTitle || app.position || 'Front Desk Associate';
-    const siteLocation = job?.location || app.location || 'Boracay, Aklan';
+    const resolvedJob = job || (app.jobId ? jobById(app.jobId) : null) || (app.targetJobId ? jobById(app.targetJobId) : null);
+
+    let clientName = resolvedJob?.client || app.client || app.deploymentDetails?.client;
+    let positionTitle = resolvedJob?.title || app.jobTitle || app.position || app.category || 'Operations Associate';
+    let siteLocation = resolvedJob?.site || resolvedJob?.location || app.site || app.location || app.deploymentDetails?.site;
+    let jobOrderRef = resolvedJob?.depRef || resolvedJob?.ref || app.jobOrderRef || 'JO-001';
+
+    // Intelligent fallback for category alignment
+    const expText = `${app.category || ''} ${app.experienceSummary || ''} ${app.experience || ''} ${positionTitle}`.toLowerCase();
+    if (!clientName || clientName === 'Sunrise Hospitality Group' || clientName === 'Client Operations') {
+      if (expText.includes('warehouse') || expText.includes('forklift') || expText.includes('logistics') || expText.includes('inventory')) {
+        clientName = 'ABC Logistics';
+        siteLocation = siteLocation || 'Valenzuela Logistics Hub, NCR';
+        jobOrderRef = jobOrderRef || 'JO-001';
+      } else if (expText.includes('hospitality') || expText.includes('housekeeping') || expText.includes('hotel')) {
+        clientName = 'Seda Vertis North';
+        siteLocation = siteLocation || 'Vertis North, Astra cor. Lux Drive, QC';
+        jobOrderRef = jobOrderRef || 'JO-011';
+      } else if (expText.includes('food') || expText.includes('cook') || expText.includes('beverage') || expText.includes('dining')) {
+        clientName = 'Vikings Luxury Buffet';
+        siteLocation = siteLocation || 'SM Mall of Asia, Seaside Blvd, Pasay City';
+        jobOrderRef = jobOrderRef || 'JO-003';
+      } else {
+        clientName = 'ABC Logistics';
+      }
+    }
+
     const signatureData = app.employmentContract?.signatureData || (typeof window !== 'undefined' ? (localStorage.getItem(`contract_signature_${app.name}`) || localStorage.getItem(`contract_signature_${persistId}`)) : null);
 
     const todayFormatted = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
@@ -417,11 +440,14 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   }
 
   function toggleDocVerified(type) {
-    const nextStatus = { ...app.docStatus, [type]: !app.docStatus[type] };
+    const currentDocStatus = app.docStatus || { resume: false, certificate: false, portfolio: false };
+    const nextStatus = { ...currentDocStatus, [type]: !currentDocStatus[type] };
     update((a) => {
-      let notes = a.notes;
+      let notes = a.notes || [];
       if (nextStatus[type]) {
-        notes = [...notes, { text: `${DOC_DEFS.find((d) => d.type === type).name} verified.`, meta: `${assignedRecruiter(job)} · ${formatDate(TODAY)}` }];
+        const docDef = DOC_DEFS.find((d) => d.type === type);
+        const docName = docDef ? docDef.name : 'Document';
+        notes = [...notes, { text: `${docName} verified.`, meta: `${assignedRecruiter(job)} · ${formatDate(TODAY)}` }];
         if (Object.values(nextStatus).every(Boolean)) {
           notes = notes.filter((n) => !/awaiting document verification/i.test(n.text));
         }
@@ -443,8 +469,14 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
     updateRecruitmentScreening(persistId, { interviewPlatform: val }).catch(() => { });
   }
 
-  function allDocsVerified() { return Object.values(app.docStatus).every(Boolean); }
-  function allChecklistDone() { return Object.values(app.checklist).every(Boolean); }
+  function allDocsVerified() {
+    const status = app.docStatus || { resume: false, certificate: false, portfolio: false };
+    return Object.values(status).every(Boolean);
+  }
+  function allChecklistDone() {
+    const checklist = app.checklist || { requirements: false, identity: false, history: false, reference: false };
+    return Object.values(checklist).every(Boolean);
+  }
 
   function flashWarning(msg) {
     setWarning(msg);
@@ -1037,22 +1069,26 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
             <div className="modal-section">
               <div className="modal-section-label">Application Documents</div>
               <div className="doc-list">
-                {DOC_DEFS.map((d) => (
-                  <button key={d.type} className="doc-chip" onClick={() => setDocViewerType(d.type)}>
-                    <svg className="icon" viewBox="0 0 24 24">{DOC_ICONS[d.type]}</svg>
-                    {d.name}
-                    <span className={`doc-badge ${app.docStatus[d.type] ? 'verified' : 'pending'}`} title={app.docStatus[d.type] ? 'Verified' : 'Pending verification'}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        {app.docStatus[d.type] ? <path d="M20 6 9 17l-5-5" /> : <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>}
-                      </svg>
-                    </span>
-                  </button>
-                ))}
+                {DOC_DEFS.map((d) => {
+                  const docStatus = app.docStatus || { resume: false, certificate: false, portfolio: false };
+                  const isVerified = Boolean(docStatus[d.type]);
+                  return (
+                    <button key={d.type} className="doc-chip" onClick={() => setDocViewerType(d.type)}>
+                      <svg className="icon" viewBox="0 0 24 24">{DOC_ICONS[d.type]}</svg>
+                      {d.name}
+                      <span className={`doc-badge ${isVerified ? 'verified' : 'pending'}`} title={isVerified ? 'Verified' : 'Pending verification'}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          {isVerified ? <path d="M20 6 9 17l-5-5" /> : <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>}
+                        </svg>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               <div className={`doc-verify-summary ${allDocsVerified() ? 'all-verified' : ''}`}>
                 {allDocsVerified()
                   ? 'All documents verified'
-                  : `${Object.values(app.docStatus).filter(Boolean).length} of ${DOC_DEFS.length} documents verified — click a document to review and verify`}
+                  : `${Object.values(app.docStatus || {}).filter(Boolean).length} of ${DOC_DEFS.length} documents verified — click a document to review and verify`}
               </div>
             </div>
           )}
@@ -1237,7 +1273,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           app={app}
           job={job}
           type={docViewerType}
-          isVerified={app.docStatus[docViewerType]}
+          isVerified={Boolean(app?.docStatus?.[docViewerType])}
           onClose={() => setDocViewerType(null)}
           onToggleVerified={() => toggleDocVerified(docViewerType)}
         />

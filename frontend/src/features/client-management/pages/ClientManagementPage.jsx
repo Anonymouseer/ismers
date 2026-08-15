@@ -2,12 +2,13 @@ import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import ClientsTable from '../components/ClientsTable';
 import ClientProfile from '../components/ClientProfile';
-import { CLIENTS } from '../data/mockClients';
+import { useClientManagementStore } from '../store/ClientManagementStore';
 import { renewalStatus, isExpiringSoon } from '../utils/clientDisplay';
 import './ClientManagementPage.css';
 
 export default function ClientManagementPage() {
   const { collapsed } = useOutletContext() || { collapsed: false };
+  const { clients } = useClientManagementStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -15,31 +16,31 @@ export default function ClientManagementPage() {
 
   // Contract Expiry Alerts — clients whose renewal date is coming up soon.
   const expiryAlerts = useMemo(() => {
-    return CLIENTS
+    return clients
       .map((c, i) => ({ client: c, index: i, status: renewalStatus(c.renewal) }))
       .filter(({ client: c }) => isExpiringSoon(c.renewal))
       .sort((a, b) => (a.status.days ?? 0) - (b.status.days ?? 0));
-  }, []);
+  }, [clients]);
 
   const filteredClients = useMemo(() => {
     const q = search.toLowerCase();
-    return CLIENTS
+    return clients
       .map((c, i) => ({ client: c, index: i }))
       .filter(({ client: c }) => {
         if (statusFilter !== 'all' && c.status !== statusFilter) return false;
         if (q && !c.name.toLowerCase().includes(q) && !c.industry.toLowerCase().includes(q)) return false;
         return true;
       });
-  }, [search, statusFilter]);
+  }, [clients, search, statusFilter]);
 
-  const selectedClient = selectedIndex !== null ? CLIENTS[selectedIndex] : null;
+  const selectedClient = selectedIndex !== null ? clients[selectedIndex] : null;
 
   return (
     <div className="app" onClick={() => bellOpen && setBellOpen(false)}>
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="title-row">
           <h1 className="page-title">Client Management</h1>
-          <div className="page-sub">{CLIENTS.length} registered clients</div>
+          <div className="page-sub">{clients.length} registered clients</div>
         </div>
 
         <div className="workspace">
