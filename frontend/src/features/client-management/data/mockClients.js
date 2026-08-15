@@ -158,7 +158,8 @@ export const CLIENTS = [
         "tags": [
           "Warehousing",
           "Licensed",
-          "Shifting Schedule"
+          "Heavy Equipment",
+          "On-site"
         ],
         "applicants": [
           {
@@ -181,112 +182,112 @@ export const CLIENTS = [
           },
           {
             "name": "Vince Ocampo",
-            "score": 80,
-            "status": "interview",
-            "applied": "Jul 10, 2026"
+            "score": 72,
+            "status": "screening",
+            "applied": "Jul 11, 2026"
           },
           {
             "name": "Rico Manalo",
-            "score": 77,
-            "status": "screening",
-            "applied": "Jul 13, 2026"
+            "score": 68,
+            "status": "applied",
+            "applied": "Jul 15, 2026"
           }
         ]
       },
       {
         "title": "Inventory Clerk",
         "filled": 4,
-        "total": 6,
-        "badge": "filling",
+        "total": 4,
+        "badge": "closed",
         "color": "var(--amber)",
         "location": "Valenzuela City, NCR",
-        "type": "Full-time · Contractual",
-        "rate": "₱560/day",
-        "deadline": "Aug 5, 2026",
-        "description": "ABC Logistics needs Inventory Clerks to conduct cycle counts, reconcile stock discrepancies, and encode inbound/outbound movements into the warehouse management system.",
+        "type": "Full-time · Regular",
+        "rate": "₱18,000/mo",
+        "deadline": "Closed Jul 10, 2026",
+        "description": "Inventory Clerks manage stock levels, reconcile physical counts with WMS data, and generate daily discrepancy reports for the operations manager.",
         "requirements": [
-          "At least 2 years college; inventory or admin background a plus",
-          "Comfortable with basic spreadsheet and WMS data entry",
-          "Detail-oriented with strong record-keeping habits",
-          "Willing to work on-site in Valenzuela"
+          "Graduate of any business or IT course",
+          "Proficient in Excel and basic WMS software",
+          "High attention to detail and numerical accuracy",
+          "At least 1 year experience in inventory management"
         ],
         "tags": [
           "Warehousing",
-          "Admin",
-          "On-site"
+          "Inventory",
+          "Closed"
         ],
         "applicants": [
           {
             "name": "Marivic Santos",
-            "score": 84,
+            "score": 94,
             "status": "hired",
-            "applied": "Jul 15, 2026"
+            "applied": "Jun 25, 2026"
           },
           {
             "name": "AllanBautista",
-            "score": 79,
+            "score": 91,
             "status": "hired",
-            "applied": "Jul 16, 2026"
+            "applied": "Jun 26, 2026"
           },
           {
             "name": "Joy Ramirez",
-            "score": 75,
-            "status": "interview",
-            "applied": "Jul 18, 2026"
+            "score": 88,
+            "status": "hired",
+            "applied": "Jun 27, 2026"
           },
           {
             "name": "Nestor Villamor",
-            "score": 68,
-            "status": "screening",
-            "applied": "Jul 20, 2026"
+            "score": 84,
+            "status": "hired",
+            "applied": "Jun 28, 2026"
           }
         ]
       },
       {
         "title": "Delivery Driver",
-        "filled": 2,
-        "total": 4,
-        "badge": "open",
+        "filled": 3,
+        "total": 6,
+        "badge": "filling",
         "color": "var(--purple)",
-        "location": "Caloocan City, NCR",
+        "location": "Valenzuela City, NCR",
         "type": "Full-time · Contractual",
-        "rate": "₱650/day",
-        "deadline": "Aug 12, 2026",
-        "description": "ABC Logistics is hiring Delivery Drivers to handle last-mile distribution runs for client accounts across Metro Manila, ensuring on-time and damage-free delivery.",
+        "rate": "₱700/day",
+        "deadline": "Aug 10, 2026",
+        "description": "Delivery Drivers operate 4-wheel and 6-wheel closed vans to transport goods from the Valenzuela hub to retail clients across Metro Manila.",
         "requirements": [
-          "Valid non-professional or professional driver's license",
-          "At least 1 year of delivery or courier driving experience",
-          "Familiar with Metro Manila routes",
-          "No major traffic violations on record"
+          "Professional Driver's License (Restriction Code 2, 3)",
+          "At least 2 years commercial driving experience",
+          "Familiar with Metro Manila delivery routes and road regulations",
+          "Clean driving record and no derogatory findings"
         ],
         "tags": [
           "Logistics",
-          "Driving License",
+          "Driving",
           "On-site"
         ],
         "applicants": [
           {
             "name": "Ronald Espino",
-            "score": 88,
+            "score": 89,
             "status": "hired",
-            "applied": "Jul 19, 2026"
+            "applied": "Jul 05, 2026"
           },
           {
             "name": "Freddie Manalo",
-            "score": 81,
+            "score": 86,
             "status": "hired",
-            "applied": "Jul 20, 2026"
+            "applied": "Jul 06, 2026"
           },
           {
             "name": "Bea Concepcion",
-            "score": 70,
-            "status": "screening",
-            "applied": "Jul 23, 2026"
+            "score": 82,
+            "status": "hired",
+            "applied": "Jul 07, 2026"
           }
         ]
       }
     ],
-    "address": "412 Katipunan Ave, Quezon City, Metro Manila"
+    "address": "12 MacArthur Highway, Valenzuela City, Metro Manila"
   },
   {
     "companyId": "CLT-2026-0002",
@@ -294,44 +295,44 @@ export const CLIENTS = [
     "industry": "Business Process Outsourcing",
     "status": "active",
     "am": "Dennis Ocampo",
-    "contract": "Retained Search",
-    "renewal": "Nov 15, 2026",
+    "contract": "Staffing (Exclusive)",
+    "renewal": "Oct 15, 2026",
     "rate": "₱210/hr avg",
     "cardIcon": "headset",
     "cardTag": "BPO · Customer Service",
-    "cardBlurb": "Scaling a 30-seat CSR and technical support bench this quarter.",
-    "revenueQ": "₱2.1M",
-    "tenure": "10m",
-    "nextEvent": "Interview batch · Tomorrow",
+    "cardBlurb": "Ramping 20 CSR agents for a US retail account launch in August.",
+    "revenueQ": "₱980k",
+    "tenure": "2y 1m",
+    "nextEvent": "Staffing check-in · Jul 25",
     "jobs": [
       {
-        "title": "Customer Service Rep",
-        "filled": 4,
+        "title": "Customer Service Representative",
+        "filled": 7,
         "total": 20,
-        "badge": "open",
-        "color": "var(--blue)",
-        "location": "Quezon City, NCR",
+        "badge": "urgent",
+        "color": "var(--red)",
+        "location": "Ortigas Center, Pasig City",
         "type": "Full-time · Regular",
         "rate": "₱22,000/mo + allowances",
-        "deadline": "Aug 10, 2026",
-        "description": "Northline BPO needs Customer Service Representatives to handle inbound voice support for a US-based telecom account. Agents will assist customers with billing inquiries, service troubleshooting, and account changes while meeting quality and handle-time targets.",
+        "deadline": "Jul 25, 2026",
+        "description": "Northline BPO is ramping up a 20-seat team for a premier US retail client. CSRs will handle inbound voice and chat inquiries regarding orders, tracking, refunds, and product questions during US business hours (graveyard shift).",
         "requirements": [
-          "At least 2 years of college or completed senior high school",
-          "Good to excellent English communication skills",
-          "Prior BPO/call center experience an advantage but not required",
-          "Willing to work night shift and on-site in Quezon City",
-          "Basic computer navigation skills"
+          "At least 2 years of college completed",
+          "Excellent verbal and written English communication skills",
+          "Typing speed of at least 35 wpm with 90% accuracy",
+          "Willing to work night shifts, weekends, and holidays",
+          "Previous BPO customer service experience is an advantage"
         ],
         "tags": [
           "BPO",
+          "Voice/Non-Voice",
           "Night Shift",
-          "Voice Account",
-          "Training Provided"
+          "Urgent"
         ],
         "applicants": [
           {
             "name": "Bianca Reyes",
-            "score": 90,
+            "score": 93,
             "status": "hired",
             "applied": "Jul 01, 2026"
           },
@@ -867,7 +868,7 @@ export const CLIENTS = [
         ]
       },
       {
-        "title": "Cashier",
+        "title": "Store Cashier",
         "filled": 3,
         "total": 5,
         "badge": "open",
@@ -876,7 +877,7 @@ export const CLIENTS = [
         "type": "Full-time · Contractual",
         "rate": "₱540/day",
         "deadline": "Aug 10, 2026",
-        "description": "Cashiers will process transactions accurately, handle cash and card payments, and balance the till at the end of each shift.",
+        "description": "Store Cashiers will process transactions accurately, handle cash and card payments, and balance the till at the end of each shift.",
         "requirements": [
           "At least high school graduate",
           "Basic math and cash-handling skills",
@@ -978,905 +979,392 @@ export const CLIENTS = [
     "name": "Ironclad Freight Co.",
     "industry": "Freight & Transport",
     "status": "inactive",
-    "am": "Karla Reyes",
-    "contract": "Staffing (Contingency)",
-    "renewal": "Expired May 2026",
-    "rate": "₱170/hr avg",
+    "am": "Dennis Ocampo",
+    "contract": "Expired Jun 30, 2026",
+    "renewal": "Jun 30, 2026",
+    "rate": "₱175/hr avg",
     "cardIcon": "truck",
-    "cardTag": "Freight · Transport",
-    "cardBlurb": "Contract lapsed in May with no renewal response yet.",
+    "cardTag": "Freight · Logistics",
+    "cardBlurb": "Contract expired last month; re-engagement outreach sent.",
     "revenueQ": "₱0",
-    "tenure": "Ended",
-    "nextEvent": "Contract expired · May 2026",
+    "tenure": "1y 0m",
+    "nextEvent": "Re-engagement outreach sent",
     "jobs": [],
-    "address": "19 J.P. Rizal St, Marikina City, Metro Manila"
+    "address": "88 Shaw Blvd, Mandaluyong City, Metro Manila"
   },
   {
     "companyId": "CLT-2026-0008",
     "name": "Sunrise Hospitality Group",
-    "industry": "Hospitality",
+    "industry": "Hospitality & Leisure",
     "status": "active",
-    "am": "Dennis Ocampo",
+    "am": "Karla Reyes",
     "contract": "Staffing (Contingency)",
-    "renewal": "Oct 20, 2026",
-    "rate": "₱140/hr avg",
-    "cardIcon": "leaf",
-    "cardTag": "Hospitality · Resort Staffing",
-    "cardBlurb": "Seasonal front desk and housekeeping hiring for peak season.",
-    "revenueQ": "₱780k",
-    "tenure": "6m",
-    "nextEvent": "Housekeeping deadline · Aug 20",
+    "renewal": "Nov 15, 2026",
+    "rate": "₱195/hr avg",
+    "cardIcon": "coffee",
+    "cardTag": "Hospitality · Leisure",
+    "cardBlurb": "Fulfilling 15 seasonal resort staff positions for the holiday rush.",
+    "revenueQ": "₱850k",
+    "tenure": "1y 2m",
+    "nextEvent": "Mid-year review · Aug 10",
     "jobs": [
       {
         "title": "Front Desk Associate",
-        "filled": 5,
+        "filled": 7,
         "total": 8,
         "badge": "filling",
-        "color": "var(--green)",
+        "color": "var(--blue)",
         "location": "Boracay, Aklan",
-        "type": "Full-time · Seasonal",
-        "rate": "₱18,000/mo + service charge",
+        "type": "Full-time · Contractual",
+        "rate": "₱18,000/mo + lodging",
         "deadline": "Aug 15, 2026",
-        "description": "Front Desk Associates will handle guest check-in/check-out, reservation coordination, and general guest concerns at a beachfront resort property during peak season.",
+        "description": "Front Desk Associates handle guest check-ins, reservations, and guest inquiries for Sunrise Resort Boracay.",
         "requirements": [
-          "Hospitality/Tourism graduate preferred",
-          "Pleasing personality with strong customer service orientation",
-          "Willing to work on-site in Boracay with provided accommodation",
-          "Basic proficiency with hotel PMS systems a plus"
+          "College graduate, preferably in Hospitality Management",
+          "Excellent English communication and interpersonal skills",
+          "Willing to relocate to Boracay (housing provided)",
+          "At least 1 year hotel front office experience"
         ],
         "tags": [
           "Hospitality",
-          "Seasonal",
-          "Accommodation Provided"
+          "Customer Service",
+          "Stay-in"
         ],
         "applicants": [
           {
             "name": "Analyn Ferrer",
+            "score": 92,
+            "status": "hired",
+            "applied": "Jul 01, 2026"
+          },
+          {
+            "name": "Bogart Miranda",
             "score": 88,
             "status": "hired",
             "applied": "Jul 02, 2026"
           },
           {
-            "name": "Bogart Miranda",
+            "name": "Cathy Rosales",
             "score": 85,
             "status": "hired",
             "applied": "Jul 03, 2026"
           },
           {
-            "name": "Cathy Rosales",
-            "score": 83,
+            "name": "Dexter Quinto",
+            "score": 84,
             "status": "hired",
             "applied": "Jul 04, 2026"
           },
           {
-            "name": "Dexter Quinto",
-            "score": 81,
+            "name": "Elaine Gatchalian",
+            "score": 82,
             "status": "hired",
             "applied": "Jul 05, 2026"
           },
           {
-            "name": "Elaine Gatchalian",
-            "score": 79,
+            "name": "Joyce Villamor",
+            "score": 81,
             "status": "hired",
             "applied": "Jul 06, 2026"
           },
           {
-            "name": "Joyce Villamor",
-            "score": 84,
-            "status": "interview",
-            "applied": "Jul 11, 2026"
-          },
-          {
             "name": "Erwin Salcedo",
-            "score": 72,
-            "status": "screening",
-            "applied": "Jul 14, 2026"
+            "score": 80,
+            "status": "hired",
+            "applied": "Jul 07, 2026"
           }
         ]
       },
       {
-        "title": "Housekeeping Staff",
-        "filled": 2,
-        "total": 12,
+        "title": "F&B Service Crew",
+        "filled": 4,
+        "total": 10,
         "badge": "open",
-        "color": "var(--blue)",
+        "color": "var(--amber)",
         "location": "Boracay, Aklan",
-        "type": "Full-time · Seasonal",
-        "rate": "₱15,500/mo + service charge",
+        "type": "Full-time · Contractual",
+        "rate": "₱520/day + tips",
         "deadline": "Aug 20, 2026",
-        "description": "Housekeeping Staff will maintain cleanliness and presentation standards across guest rooms and common areas, following resort housekeeping protocols and turnaround timelines.",
+        "description": "F&B Service Crew will serve dining guests across 3 resort restaurants and handle banquet service during resort events.",
         "requirements": [
-          "At least high school graduate",
-          "Prior housekeeping or hospitality experience an advantage",
-          "Willing to work on-site in Boracay with provided accommodation",
-          "Physically fit and detail-oriented"
+          "High school graduate or vocational in Food & Beverage",
+          "Pleasant demeanor and customer-first mindset",
+          "Willing to work on-site in Boracay"
         ],
         "tags": [
           "Hospitality",
-          "Seasonal",
-          "Accommodation Provided"
+          "F&B",
+          "Stay-in"
         ],
         "applicants": [
           {
             "name": "Rowena Sison",
-            "score": 76,
-            "status": "hired",
-            "applied": "Jul 03, 2026"
-          },
-          {
-            "name": "Bimbo Delacruz",
-            "score": 73,
-            "status": "hired",
-            "applied": "Jul 04, 2026"
-          },
-          {
-            "name": "Lorna Bautista",
-            "score": 65,
-            "status": "applied",
-            "applied": "Jul 15, 2026"
-          },
-          {
-            "name": "Ferdie Cortez",
-            "score": 60,
-            "status": "applied",
-            "applied": "Jul 16, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Food & Beverage Server",
-        "filled": 4,
-        "total": 10,
-        "badge": "filling",
-        "color": "var(--amber)",
-        "location": "Tagaytay City, Cavite",
-        "type": "Full-time · Seasonal",
-        "rate": "₱520/day + tips",
-        "deadline": "Aug 8, 2026",
-        "description": "F&B Servers will take orders, serve guests at the resort's restaurant and events venue, and ensure a pleasant dining experience during peak weekend traffic.",
-        "requirements": [
-          "At least high school graduate; HRM background a plus",
-          "Prior F&B or restaurant service experience preferred",
-          "Pleasing personality and good communication skills",
-          "Willing to work on-site in Tagaytay, including weekends"
-        ],
-        "tags": [
-          "Hospitality",
-          "Seasonal",
-          "Accommodation Provided"
-        ],
-        "applicants": [
-          {
-            "name": "Marlon Salazar",
-            "score": 82,
-            "status": "hired",
-            "applied": "Jul 12, 2026"
-          },
-          {
-            "name": "Nicole Padua",
-            "score": 78,
-            "status": "hired",
-            "applied": "Jul 13, 2026"
-          },
-          {
-            "name": "Ryan Custodio",
-            "score": 74,
-            "status": "interview",
-            "applied": "Jul 17, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Maintenance Technician",
-        "filled": 1,
-        "total": 2,
-        "badge": "open",
-        "color": "var(--purple)",
-        "location": "Tagaytay City, Cavite",
-        "type": "Full-time · Contractual",
-        "rate": "₱600/day",
-        "deadline": "Aug 22, 2026",
-        "description": "Maintenance Technicians will handle routine repairs, preventive maintenance, and troubleshooting of electrical and plumbing systems across the resort property.",
-        "requirements": [
-          "Vocational graduate in electrical, plumbing, or a related trade",
-          "At least 1 year of building/facilities maintenance experience",
-          "Willing to be on-call for urgent repairs",
-          "Willing to work on-site in Tagaytay"
-        ],
-        "tags": [
-          "Hospitality",
-          "Maintenance",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Efren Castillo",
-            "score": 80,
-            "status": "hired",
-            "applied": "Jul 14, 2026"
-          }
-        ]
-      }
-    ],
-    "address": "102 Ortigas Ave, Pasig City, Metro Manila"
-  },
-  {
-    "name": "Prime Realty Corp",
-    "industry": "Real Estate",
-    "status": "active",
-    "am": "Karla Reyes",
-    "contract": "Staffing (Contingency)",
-    "renewal": "Sep 12, 2026",
-    "rate": "₱190/hr avg",
-    "cardIcon": "bag",
-    "cardTag": "Real Estate · Property Management",
-    "cardBlurb": "Building out a leasing and front-office team for two new residential towers.",
-    "revenueQ": "₱780k",
-    "tenure": "8m",
-    "nextEvent": "Leasing Consultant interviews · Aug 2",
-    "jobs": [
-      {
-        "title": "Leasing Consultant",
-        "filled": 3,
-        "total": 6,
-        "badge": "filling",
-        "color": "var(--green)",
-        "location": "BGC, Taguig City",
-        "type": "Full-time · Contractual",
-        "rate": "₱25,000/mo + commissions",
-        "deadline": "Aug 2, 2026",
-        "description": "Leasing Consultants will handle unit viewings, walk-in inquiries, and lease documentation for two newly turned-over residential towers.",
-        "requirements": [
-          "Bachelor's degree, preferably in business or marketing",
-          "Prior leasing, real estate, or sales experience a plus",
-          "Well-groomed with strong client-facing communication skills",
-          "Willing to work on-site in BGC, including weekends"
-        ],
-        "tags": [
-          "Real Estate",
-          "Sales",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Bianca Moreno",
-            "score": 90,
-            "status": "hired",
-            "applied": "Jul 10, 2026"
-          },
-          {
-            "name": "Carlo Beltran",
-            "score": 85,
-            "status": "hired",
-            "applied": "Jul 11, 2026"
-          },
-          {
-            "name": "Reyna Aquino",
-            "score": 81,
-            "status": "hired",
-            "applied": "Jul 12, 2026"
-          },
-          {
-            "name": "Miguel Santos",
-            "score": 76,
-            "status": "interview",
-            "applied": "Jul 16, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Property Administrator",
-        "filled": 1,
-        "total": 2,
-        "badge": "open",
-        "color": "var(--blue)",
-        "location": "BGC, Taguig City",
-        "type": "Full-time · Contractual",
-        "rate": "₱24,000/mo",
-        "deadline": "Aug 14, 2026",
-        "description": "Property Administrators will process lease renewals, coordinate with building maintenance, and maintain tenant records for the property management office.",
-        "requirements": [
-          "Bachelor's degree in business administration or related field",
-          "Proficient in MS Office and basic property management systems",
-          "Organized and detail-oriented",
-          "Willing to work on-site in BGC"
-        ],
-        "tags": [
-          "Real Estate",
-          "Admin",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Denise Lopez",
-            "score": 83,
-            "status": "hired",
-            "applied": "Jul 13, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Front Desk Officer",
-        "filled": 2,
-        "total": 4,
-        "badge": "filling",
-        "color": "var(--amber)",
-        "location": "BGC, Taguig City",
-        "type": "Full-time · Contractual",
-        "rate": "₱520/day",
-        "deadline": "Aug 9, 2026",
-        "description": "Front Desk Officers will greet residents and guests, manage the lobby reception area, and coordinate deliveries and visitor logs for the residential towers.",
-        "requirements": [
-          "At least 2 years college",
-          "Pleasing personality with good communication skills",
-          "Prior front desk or concierge experience a plus",
-          "Willing to work on-site shifting schedule"
-        ],
-        "tags": [
-          "Real Estate",
-          "Front Desk",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Kimberly Rosales",
-            "score": 86,
-            "status": "hired",
-            "applied": "Jul 09, 2026"
-          },
-          {
-            "name": "Aldwin Fajardo",
-            "score": 79,
-            "status": "hired",
-            "applied": "Jul 10, 2026"
-          },
-          {
-            "name": "Trisha Manalang",
-            "score": 70,
-            "status": "screening",
-            "applied": "Jul 15, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Maintenance Coordinator",
-        "filled": 0,
-        "total": 2,
-        "badge": "open",
-        "color": "var(--purple)",
-        "location": "BGC, Taguig City",
-        "type": "Full-time · Contractual",
-        "rate": "₱560/day",
-        "deadline": "Aug 25, 2026",
-        "description": "Maintenance Coordinators will schedule and track building repair requests, liaise with third-party contractors, and ensure timely resolution of tenant maintenance concerns.",
-        "requirements": [
-          "Vocational or college graduate; facilities background a plus",
-          "Basic understanding of building systems (electrical, plumbing, HVAC)",
-          "Strong coordination and follow-through skills",
-          "Willing to work on-site in BGC"
-        ],
-        "tags": [
-          "Real Estate",
-          "Maintenance",
-          "On-site"
-        ],
-        "applicants": []
-      }
-    ],
-    "address": "56 C.M. Recto Ave, Manila"
-  },
-  {
-    "name": "Metro Health Diagnostics",
-    "industry": "Healthcare",
-    "status": "active",
-    "am": "Dennis Ocampo",
-    "contract": "Staffing (Contingency)",
-    "renewal": "Oct 3, 2026",
-    "rate": "₱200/hr avg",
-    "cardIcon": "heart",
-    "cardTag": "Healthcare · Diagnostics",
-    "cardBlurb": "Staffing two new diagnostic branches with medical and admin personnel.",
-    "revenueQ": "₱910k",
-    "tenure": "5m",
-    "nextEvent": "Medical Technologist licensure check · Jul 30",
-    "jobs": [
-      {
-        "title": "Medical Technologist",
-        "filled": 2,
-        "total": 5,
-        "badge": "filling",
-        "color": "var(--green)",
-        "location": "Quezon City, NCR",
-        "type": "Full-time · Contractual",
-        "rate": "₱650/day",
-        "deadline": "Jul 30, 2026",
-        "description": "Medical Technologists will perform laboratory testing and specimen analysis for two newly opened diagnostic branches, following DOH and lab accreditation standards.",
-        "requirements": [
-          "Registered Medical Technologist (licensed)",
-          "At least 1 year of clinical laboratory experience",
-          "Familiar with DOH-accredited lab procedures",
-          "Willing to work on-site rotating shifts"
-        ],
-        "tags": [
-          "Healthcare",
-          "Licensed",
-          "Rotating Shift"
-        ],
-        "applicants": [
-          {
-            "name": "Dr. Jasmine Uy",
-            "score": 93,
+            "score": 87,
             "status": "hired",
             "applied": "Jul 05, 2026"
           },
           {
-            "name": "Ronaldo Espiritu",
-            "score": 87,
+            "name": "Bimbo Delacruz",
+            "score": 83,
             "status": "hired",
             "applied": "Jul 06, 2026"
           },
           {
-            "name": "Kaye Villanueva",
-            "score": 80,
-            "status": "interview",
-            "applied": "Jul 12, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Radiologic Technologist",
-        "filled": 1,
-        "total": 3,
-        "badge": "open",
-        "color": "var(--blue)",
-        "location": "Quezon City, NCR",
-        "type": "Full-time · Contractual",
-        "rate": "₱680/day",
-        "deadline": "Aug 6, 2026",
-        "description": "Radiologic Technologists will perform X-ray and imaging procedures, ensure equipment safety compliance, and maintain accurate imaging records.",
-        "requirements": [
-          "Registered Radiologic Technologist (licensed)",
-          "At least 1 year of clinical imaging experience",
-          "Knowledge of radiation safety protocols",
-          "Willing to work on-site rotating shifts"
-        ],
-        "tags": [
-          "Healthcare",
-          "Licensed",
-          "Rotating Shift"
-        ],
-        "applicants": [
-          {
-            "name": "Mark Villaverde",
-            "score": 84,
-            "status": "hired",
-            "applied": "Jul 07, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Patient Service Representative",
-        "filled": 4,
-        "total": 6,
-        "badge": "filling",
-        "color": "var(--amber)",
-        "location": "Quezon City, NCR",
-        "type": "Full-time · Contractual",
-        "rate": "₱560/day",
-        "deadline": "Aug 11, 2026",
-        "description": "Patient Service Representatives will handle patient registration, appointment scheduling, and billing inquiries at the branch front desk.",
-        "requirements": [
-          "At least 2 years college",
-          "Good communication and customer service skills",
-          "Basic computer literacy for patient records systems",
-          "Willing to work on-site rotating shifts"
-        ],
-        "tags": [
-          "Healthcare",
-          "Front Desk",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Angelica Torres",
+            "name": "Lorna Bautista",
             "score": 81,
             "status": "hired",
-            "applied": "Jul 08, 2026"
+            "applied": "Jul 07, 2026"
           },
           {
-            "name": "Bea Mendoza",
-            "score": 78,
-            "status": "hired",
-            "applied": "Jul 09, 2026"
-          },
-          {
-            "name": "Carlo Nazario",
-            "score": 74,
-            "status": "hired",
-            "applied": "Jul 10, 2026"
-          },
-          {
-            "name": "Diane Ocampo",
-            "score": 69,
-            "status": "screening",
-            "applied": "Jul 15, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Billing Clerk",
-        "filled": 0,
-        "total": 2,
-        "badge": "open",
-        "color": "var(--purple)",
-        "location": "Quezon City, NCR",
-        "type": "Full-time · Contractual",
-        "rate": "₱540/day",
-        "deadline": "Aug 19, 2026",
-        "description": "Billing Clerks will process patient billing, coordinate with HMO providers for claims, and reconcile daily transaction reports.",
-        "requirements": [
-          "At least 2 years college, accounting or business-related course preferred",
-          "Basic knowledge of HMO/insurance billing a plus",
-          "Detail-oriented and comfortable with spreadsheets",
-          "Willing to work on-site in Quezon City"
-        ],
-        "tags": [
-          "Healthcare",
-          "Admin",
-          "On-site"
-        ],
-        "applicants": []
-      }
-    ],
-    "address": "210 Shaw Blvd, Mandaluyong City, Metro Manila"
-  },
-  {
-    "name": "GreenFields Agri Export",
-    "industry": "Agriculture & Export",
-    "status": "active",
-    "am": "Karla Reyes",
-    "contract": "Staffing (Contingency)",
-    "renewal": "Nov 2, 2026",
-    "rate": "₱150/hr avg",
-    "cardIcon": "leaf",
-    "cardTag": "Agriculture · Export Packing",
-    "cardBlurb": "Ramping up packing house staff ahead of the export harvest season.",
-    "revenueQ": "₱540k",
-    "tenure": "4m",
-    "nextEvent": "Packing Associate onboarding · Aug 4",
-    "jobs": [
-      {
-        "title": "Packing Associate",
-        "filled": 10,
-        "total": 20,
-        "badge": "filling",
-        "color": "var(--green)",
-        "location": "Sto. Tomas, Batangas",
-        "type": "Full-time · Seasonal",
-        "rate": "₱480/day",
-        "deadline": "Aug 4, 2026",
-        "description": "Packing Associates will sort, grade, and pack fresh produce for export, following strict hygiene and quality standards during peak harvest season.",
-        "requirements": [
-          "At least high school graduate",
-          "Able to stand and do repetitive tasks for a full shift",
-          "Willing to work on-site in Sto. Tomas, Batangas",
-          "Willing to work extended hours during peak season"
-        ],
-        "tags": [
-          "Agriculture",
-          "Seasonal",
-          "Entry-level"
-        ],
-        "applicants": [
-          {
-            "name": "Herminia Cabug-os",
+            "name": "Ferdie Cortez",
             "score": 80,
             "status": "hired",
             "applied": "Jul 08, 2026"
-          },
-          {
-            "name": "Domingo Reyes",
-            "score": 77,
-            "status": "hired",
-            "applied": "Jul 09, 2026"
-          },
-          {
-            "name": "Perla Manansala",
-            "score": 74,
-            "status": "hired",
-            "applied": "Jul 10, 2026"
-          },
-          {
-            "name": "Isagani Torres",
-            "score": 70,
-            "status": "interview",
-            "applied": "Jul 14, 2026"
           }
         ]
       },
       {
-        "title": "QA Inspector",
-        "filled": 2,
-        "total": 4,
-        "badge": "open",
-        "color": "var(--blue)",
-        "location": "Sto. Tomas, Batangas",
+        "title": "Housekeeping Attendant",
+        "filled": 3,
+        "total": 6,
+        "badge": "filling",
+        "color": "var(--green)",
+        "location": "Boracay, Aklan",
         "type": "Full-time · Contractual",
-        "rate": "₱560/day",
-        "deadline": "Aug 10, 2026",
-        "description": "QA Inspectors will check produce quality against export-grade standards, log rejection rates, and ensure packing house hygiene protocols are followed.",
+        "rate": "₱500/day + lodging",
+        "deadline": "Aug 25, 2026",
+        "description": "Housekeeping Attendants maintain guest room cleanliness, linen changes, and public area sanitization.",
         "requirements": [
-          "College graduate, food technology or agriculture background a plus",
-          "Prior QA/QC experience in food or agri-export a plus",
-          "Detail-oriented with good documentation habits",
-          "Willing to work on-site in Batangas"
+          "High school graduate",
+          "Physically fit and attentive to cleanliness standards",
+          "Prior hotel housekeeping experience preferred"
         ],
         "tags": [
-          "Agriculture",
-          "Quality Control",
-          "On-site"
+          "Hospitality",
+          "Housekeeping",
+          "Stay-in"
         ],
         "applicants": [
           {
-            "name": "Feliza Ramos",
+            "name": "Marlon Salazar",
             "score": 85,
+            "status": "hired",
+            "applied": "Jul 09, 2026"
+          },
+          {
+            "name": "Nicole Padua",
+            "score": 82,
+            "status": "hired",
+            "applied": "Jul 10, 2026"
+          },
+          {
+            "name": "Ryan Custodio",
+            "score": 80,
             "status": "hired",
             "applied": "Jul 11, 2026"
           }
         ]
       },
       {
-        "title": "Logistics Coordinator",
+        "title": "Line Cook",
         "filled": 1,
-        "total": 2,
-        "badge": "filling",
-        "color": "var(--amber)",
-        "location": "Sto. Tomas, Batangas",
+        "total": 3,
+        "badge": "open",
+        "color": "var(--red)",
+        "location": "Boracay, Aklan",
         "type": "Full-time · Contractual",
-        "rate": "₱600/day",
-        "deadline": "Aug 16, 2026",
-        "description": "Logistics Coordinators will schedule outbound container bookings, coordinate with freight forwarders, and track shipment documentation for export orders.",
+        "rate": "₱650/day + lodging",
+        "deadline": "Aug 30, 2026",
+        "description": "Line Cooks assist the Executive Chef in hot and cold stations for daily buffet and a la carte service.",
         "requirements": [
-          "College graduate, logistics or supply chain background preferred",
-          "Prior experience with export documentation a plus",
-          "Organized with strong follow-through on deadlines",
-          "Willing to work on-site in Batangas"
+          "Culinary diploma or at least 1 year commercial kitchen experience",
+          "Knowledge of food safety and hygiene regulations (HACCP)",
+          "Willing to relocate to Boracay"
         ],
         "tags": [
-          "Agriculture",
-          "Logistics",
-          "On-site"
+          "Hospitality",
+          "Kitchen",
+          "Stay-in"
         ],
         "applicants": [
           {
-            "name": "Ruel Manalo",
-            "score": 82,
+            "name": "Efren Castillo",
+            "score": 88,
             "status": "hired",
             "applied": "Jul 12, 2026"
           }
         ]
-      },
-      {
-        "title": "Farm Supervisor",
-        "filled": 0,
-        "total": 1,
-        "badge": "open",
-        "color": "var(--purple)",
-        "location": "Sto. Tomas, Batangas",
-        "type": "Full-time · Contractual",
-        "rate": "₱700/day",
-        "deadline": "Aug 28, 2026",
-        "description": "The Farm Supervisor will oversee harvest scheduling, manage field crews, and coordinate produce hand-off to the packing house.",
-        "requirements": [
-          "At least 3 years of farm or agricultural operations experience",
-          "Strong people-management and scheduling skills",
-          "Willing to be based on-site in Sto. Tomas, Batangas",
-          "Driver's license preferred"
-        ],
-        "tags": [
-          "Agriculture",
-          "Supervisory",
-          "On-site"
-        ],
-        "applicants": []
       }
     ],
-    "address": "4 Alabang-Zapote Rd, Muntinlupa City, Metro Manila"
+    "address": "Station 2, White Beach, Boracay, Malay, Aklan"
   },
   {
     "companyId": "CLT-2026-0011",
     "name": "Apex Construction Builders",
-    "industry": "Construction",
+    "industry": "Construction & Engineering",
     "status": "active",
-    "am": "Dennis Ocampo",
-    "contract": "Staffing (Contingency)",
-    "renewal": "Sep 28, 2026",
-    "rate": "₱175/hr avg",
-    "cardIcon": "truck",
-    "cardTag": "Construction · Residential",
-    "cardBlurb": "Scaling up site crews for a new residential development in Cavite.",
-    "revenueQ": "₱1.05M",
-    "tenure": "1y 1m",
-    "nextEvent": "Site safety orientation · Aug 6",
+    "am": "Karla Reyes",
+    "contract": "Project-based Staffing",
+    "renewal": "Jan 30, 2027",
+    "rate": "₱220/hr avg",
+    "cardIcon": "gear",
+    "cardTag": "Construction · Heavy Infra",
+    "cardBlurb": "Providing 30 certified operators and skilled trades for QC high-rise project.",
+    "revenueQ": "₱1.4M",
+    "tenure": "1y 8m",
+    "nextEvent": "Safety compliance review · Aug 1",
     "jobs": [
       {
-        "title": "Construction Laborer",
-        "filled": 18,
-        "total": 25,
-        "badge": "filling",
-        "color": "var(--green)",
-        "location": "Imus, Cavite",
-        "type": "Full-time · Contractual",
-        "rate": "₱520/day",
-        "deadline": "Aug 6, 2026",
-        "description": "Construction Laborers will support general site work including material handling, basic carpentry and masonry assistance, and site cleanup for a residential development project.",
+        "title": "Safety Officer 2",
+        "filled": 4,
+        "total": 4,
+        "badge": "closed",
+        "color": "var(--amber)",
+        "location": "Quezon City, NCR",
+        "type": "Full-time · Project-based",
+        "rate": "₱35,000/mo",
+        "deadline": "Closed Jul 05, 2026",
+        "description": "DOLE-certified SO2 to conduct daily safety briefings, inspect scaffolding, and ensure full compliance with OSH standards on high-rise construction.",
         "requirements": [
-          "At least high school graduate",
-          "Prior construction site experience preferred",
-          "Physically fit; able to do manual labor outdoors",
-          "Willing to work on-site in Imus, Cavite"
-        ],
-        "tags": [
-          "Construction",
-          "Entry-level",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Ramon Estacio",
-            "score": 78,
-            "status": "hired",
-            "applied": "Jul 06, 2026"
-          },
-          {
-            "name": "Bayani Cruz",
-            "score": 75,
-            "status": "hired",
-            "applied": "Jul 07, 2026"
-          },
-          {
-            "name": "Edgardo Marasigan",
-            "score": 72,
-            "status": "hired",
-            "applied": "Jul 08, 2026"
-          },
-          {
-            "name": "Willy Santos",
-            "score": 68,
-            "status": "interview",
-            "applied": "Jul 13, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Site Engineer Assistant",
-        "filled": 1,
-        "total": 2,
-        "badge": "open",
-        "color": "var(--blue)",
-        "location": "Imus, Cavite",
-        "type": "Full-time · Contractual",
-        "rate": "₱750/day",
-        "deadline": "Aug 12, 2026",
-        "description": "Site Engineer Assistants will support daily site inspections, document progress reports, and assist the project engineer with plan reviews and material takeoffs.",
-        "requirements": [
-          "Civil engineering graduate (board passer a plus)",
-          "Fresh graduates welcome to apply",
-          "Basic knowledge of AutoCAD and site documentation",
-          "Willing to be based on-site in Imus, Cavite"
-        ],
-        "tags": [
-          "Construction",
-          "Engineering",
-          "On-site"
-        ],
-        "applicants": [
-          {
-            "name": "Engr. Ivan Buenavista",
-            "score": 86,
-            "status": "hired",
-            "applied": "Jul 09, 2026"
-          }
-        ]
-      },
-      {
-        "title": "Safety Officer",
-        "filled": 0,
-        "total": 1,
-        "badge": "urgent",
-        "color": "var(--red)",
-        "location": "Imus, Cavite",
-        "type": "Full-time · Contractual",
-        "rate": "₱780/day",
-        "deadline": "Jul 29, 2026",
-        "description": "The Safety Officer will conduct daily toolbox talks, enforce PPE compliance, and monitor site hazards to ensure OSHS-compliant construction operations.",
-        "requirements": [
-          "BOSH-certified Safety Officer (SO2 or higher)",
-          "At least 2 years of construction site safety experience",
-          "Strong enforcement and reporting discipline",
-          "Willing to be based on-site in Imus, Cavite"
+          "DOLE BOSH / COSH 40-hour certificate",
+          "At least 2 years safety officer experience in high-rise building",
+          "Strong reporting and incident investigation skills"
         ],
         "tags": [
           "Construction",
           "Safety",
-          "Urgent"
+          "Closed"
         ],
-        "applicants": []
+        "applicants": [
+          {
+            "name": "Ramon Estacio",
+            "score": 95,
+            "status": "hired",
+            "applied": "Jun 15, 2026"
+          },
+          {
+            "name": "Bayani Cruz",
+            "score": 92,
+            "status": "hired",
+            "applied": "Jun 16, 2026"
+          },
+          {
+            "name": "Edgardo Marasigan",
+            "score": 89,
+            "status": "hired",
+            "applied": "Jun 17, 2026"
+          },
+          {
+            "name": "Willy Santos",
+            "score": 87,
+            "status": "hired",
+            "applied": "Jun 18, 2026"
+          }
+        ]
       },
       {
-        "title": "Heavy Equipment Operator",
-        "filled": 2,
-        "total": 3,
+        "title": "Tower Crane Operator",
+        "filled": 1,
+        "total": 2,
         "badge": "filling",
-        "color": "var(--amber)",
-        "location": "Imus, Cavite",
-        "type": "Full-time · Contractual",
-        "rate": "₱680/day",
-        "deadline": "Aug 20, 2026",
-        "description": "Heavy Equipment Operators will operate backhoes and mini excavators for site grading and excavation work under the project engineer's direction.",
+        "color": "var(--purple)",
+        "location": "Quezon City, NCR",
+        "type": "Full-time · Project-based",
+        "rate": "₱950/day",
+        "deadline": "Aug 10, 2026",
+        "description": "TESDA-certified Heavy Equipment Operator for high-capacity tower crane hoisting steel and formworks.",
         "requirements": [
-          "Valid heavy equipment operator certification/license",
-          "At least 2 years of relevant operating experience",
-          "Good understanding of site safety protocols",
-          "Willing to work on-site in Imus, Cavite"
+          "TESDA NC II for Heavy Equipment Operation (Tower Crane)",
+          "At least 3 years experience operating tower cranes in high-rise projects",
+          "Physical fitness certification and no acrophobia"
         ],
         "tags": [
           "Construction",
-          "Licensed",
+          "Heavy Equipment",
+          "Licensed"
+        ],
+        "applicants": [
+          {
+            "name": "Engr. Ivan Buenavista",
+            "score": 90,
+            "status": "hired",
+            "applied": "Jul 08, 2026"
+          }
+        ]
+      },
+      {
+        "title": "Structural Welder (SMAW / GTAW)",
+        "filled": 2,
+        "total": 6,
+        "badge": "open",
+        "color": "var(--blue)",
+        "location": "Quezon City, NCR",
+        "type": "Full-time · Project-based",
+        "rate": "₱750/day",
+        "deadline": "Aug 20, 2026",
+        "description": "Certified structural welders for beam connections, rebar cages, and steel framework.",
+        "requirements": [
+          "TESDA SMAW NC II or GTAW NC II",
+          "Experience with 3G/4G/6G position welding",
+          "Pass on-site weld test (visual and bend test)"
+        ],
+        "tags": [
+          "Construction",
+          "Skilled Trade",
           "On-site"
         ],
         "applicants": [
           {
             "name": "Pablo Ignacio",
-            "score": 83,
+            "score": 88,
             "status": "hired",
             "applied": "Jul 10, 2026"
           },
           {
             "name": "Teodoro Villamin",
-            "score": 79,
+            "score": 84,
             "status": "hired",
             "applied": "Jul 11, 2026"
           }
         ]
       }
     ],
-    "address": "77 Congressional Ave, Quezon City, Metro Manila"
+    "address": "45 E. Rodriguez Jr. Ave, Quezon City, Metro Manila"
   },
   {
     "companyId": "CLT-2026-0013",
     "name": "Nordic Freight Co.",
-    "industry": "Freight & Cargo",
-    "status": "suspended",
+    "industry": "Freight & Transport",
+    "status": "prospect",
     "am": "Karla Reyes",
-    "contract": "Staffing (Contingency)",
-    "renewal": "Feb 10, 2027",
-    "rate": "₱195/hr avg",
+    "contract": "Not yet signed",
+    "renewal": "—",
+    "rate": "TBD",
     "cardIcon": "truck",
-    "cardTag": "Freight · Cargo",
-    "cardBlurb": "Account suspended pending payment resolution.",
-    "revenueQ": "₱0",
-    "tenure": "2y 1m",
-    "nextEvent": "Awaiting account review",
+    "cardTag": "Freight · Logistics",
+    "cardBlurb": "Contract proposal under review for bonded warehouse staffing.",
+    "revenueQ": "—",
+    "tenure": "New",
+    "nextEvent": "Proposal review · Next week",
     "jobs": [],
-    "address": "15 Gil Puyat Ave, Makati City, Metro Manila"
+    "address": "North Harbor, Port Area, Manila"
   },
   {
     "companyId": "CLT-2026-0014",
     "name": "Coastline Retail Group",
-    "industry": "Retail Staffing",
-    "status": "archived",
-    "am": "Jasmine Uy",
-    "contract": "Staffing (Project-Based)",
+    "industry": "Retail",
+    "status": "prospect",
+    "am": "Dennis Ocampo",
+    "contract": "Not yet signed",
     "renewal": "—",
-    "rate": "₱150/hr avg",
+    "rate": "TBD",
     "cardIcon": "bag",
-    "cardTag": "Retail Staffing",
-    "cardBlurb": "Archived — engagement concluded after project completion.",
-    "revenueQ": "₱0",
-    "tenure": "8m",
-    "nextEvent": "No upcoming events",
+    "cardTag": "Retail · Store Ops",
+    "cardBlurb": "Sister brand of Coastal Retail exploring seasonal promo merchandisers.",
+    "revenueQ": "—",
+    "tenure": "New",
+    "nextEvent": "Initial discovery call · Pending",
     "jobs": [],
-    "address": "9 Marcos Highway, Marikina City, Metro Manila"
+    "address": "Ayala Center, Makati City, Metro Manila"
   }
 ];

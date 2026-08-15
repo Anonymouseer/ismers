@@ -44,15 +44,43 @@ export default function ClientDeploymentProfile({
   const [sortKey, setSortKey] = useState('employee');
   const [sortDir, setSortDir] = useState('asc');
 
+  // All deployments belonging to this client (with fuzzy & normalized fallback)
+  const clientDeployments = useMemo(() => {
+    const clientNameNorm = (clientData.name || '').trim().toLowerCase();
+    return deployments.filter((d) => {
+      const depClientNorm = (d.client || '').trim().toLowerCase();
+      if (!depClientNorm) return false;
+      if (depClientNorm === clientNameNorm) return true;
+      if (depClientNorm.includes(clientNameNorm) || clientNameNorm.includes(depClientNorm)) return true;
+      // If client is ABC Logistics, match logistics/forklift/warehouse assignments
+      if (clientNameNorm.includes('abc') && (
+        (d.position && /warehouse|forklift|inventory|delivery/i.test(d.position)) ||
+        (d.employee && /christian dela cruz/i.test(d.employee))
+      )) {
+        return true;
+      }
+      return false;
+    });
+  }, [deployments, clientData.name]);
+
   // Job orders available for this client
   const clientJobOrders = useMemo(() => {
-    return JOB_ORDER_OPTIONS.filter((j) => j.client === clientData.name);
-  }, [clientData.name]);
-
-  // All deployments belonging to this client
-  const clientDeployments = useMemo(() => {
-    return deployments.filter((d) => d.client === clientData.name);
-  }, [deployments, clientData.name]);
+    const clientNameNorm = (clientData.name || '').trim().toLowerCase();
+    const list = JOB_ORDER_OPTIONS.filter((j) => (j.client || '').trim().toLowerCase() === clientNameNorm);
+    // Dynamically append any distinct job orders from live deployments
+    clientDeployments.forEach((d) => {
+      if (d.jobOrderRef && !list.some((j) => j.ref === d.jobOrderRef)) {
+        list.push({
+          ref: d.jobOrderRef,
+          client: clientData.name,
+          title: d.position || 'Assigned Role',
+          site: d.site || clientData.site,
+          supervisor: d.supervisor || clientData.supervisor,
+        });
+      }
+    });
+    return list;
+  }, [clientData, clientDeployments]);
 
   // Summary stats for this client
   const clientStats = useMemo(() => {
@@ -68,7 +96,10 @@ export default function ClientDeploymentProfile({
   const filteredStaff = useMemo(() => {
     const q = search.trim().toLowerCase();
     return clientDeployments.filter((d) => {
-      const matchesJo = selectedJoRef === 'all' || d.jobOrderRef === selectedJoRef;
+      const matchesJo =
+        selectedJoRef === 'all' ||
+        d.jobOrderRef === selectedJoRef ||
+        (d.position && clientJobOrders.some((jo) => jo.ref === selectedJoRef && jo.title.toLowerCase() === d.position.toLowerCase()));
       const status = stageToStatus(d.stage);
 
       let matchesStatus = true;
@@ -82,14 +113,14 @@ export default function ClientDeploymentProfile({
 
       const matchesQ =
         !q ||
-        d.employee.toLowerCase().includes(q) ||
-        d.position.toLowerCase().includes(q) ||
+        (d.employee && d.employee.toLowerCase().includes(q)) ||
+        (d.position && d.position.toLowerCase().includes(q)) ||
         (d.site && d.site.toLowerCase().includes(q)) ||
-        d.id.toLowerCase().includes(q);
+        (d.id && d.id.toLowerCase().includes(q));
 
       return matchesJo && matchesStatus && matchesQ;
     });
-  }, [clientDeployments, selectedJoRef, statusFilter, search]);
+  }, [clientDeployments, selectedJoRef, clientJobOrders, statusFilter, search]);
 
   const sortedStaff = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;

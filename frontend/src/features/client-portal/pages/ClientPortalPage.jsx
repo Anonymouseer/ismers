@@ -11,8 +11,9 @@ import ClientCandidateModal from '../components/ClientCandidateModal';
 import ClientScheduleInterviewModal from '../components/ClientScheduleInterviewModal';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import { CLIENTS } from '../../client-management/data/mockClients';
+import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
+import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService';
 import './ClientPortalPage.css';
-
 
 const TODAY = new Date().toLocaleDateString('en-US', {
   weekday: 'long',
@@ -21,83 +22,91 @@ const TODAY = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
 });
 
-const INITIAL_JOB_REQUESTS = [
-  {
-    id: 'PRF-2026-0081',
-    position: 'Production Supervisor',
-    type: 'Full-time',
-    total: 3,
-    filled: 1,
-    location: 'Valenzuela Plant 2',
-    requested: 'Aug 01, 2026',
-    deadline: 'Aug 25, 2026',
-    status: 'Active',
-    statusClass: 'client-portal-badge--active',
-    recruiter: 'M. Dela Cruz',
-    priority: 'high',
-    rate: '₱28,000 / mo',
-  },
-  {
-    id: 'PRF-2026-0079',
-    position: 'Quality Control Analyst',
-    type: 'Full-time',
-    total: 2,
-    filled: 0,
-    location: 'Main Lab - QC Bldg',
-    requested: 'Jul 28, 2026',
-    deadline: 'Aug 20, 2026',
-    status: 'In Review',
-    statusClass: 'client-portal-badge--review',
-    recruiter: 'J. Santos',
-    priority: 'medium',
-    rate: '₱22,000 / mo',
-  },
-  {
-    id: 'PRF-2026-0075',
-    position: 'Warehouse Associate',
-    type: 'Contractual',
-    total: 10,
-    filled: 10,
-    location: 'Bulacan Logistics Hub',
-    requested: 'Jul 22, 2026',
-    deadline: 'Aug 05, 2026',
-    status: 'Filled',
-    statusClass: 'client-portal-badge--filled',
-    recruiter: 'A. Reyes',
-    priority: 'normal',
-    rate: '₱610 / day',
-  },
-  {
-    id: 'PRF-2026-0070',
-    position: 'Maintenance Technician',
-    type: 'Full-time',
-    total: 2,
-    filled: 0,
-    location: 'Valenzuela Plant 1',
-    requested: 'Jul 15, 2026',
-    deadline: 'Aug 15, 2026',
-    status: 'Pending',
-    statusClass: 'client-portal-badge--pending',
-    recruiter: 'R. Navarro',
-    priority: 'high',
-    rate: '₱25,000 / mo',
-  },
-  {
-    id: 'PRF-2026-0066',
-    position: 'Forklift Operator',
-    type: 'Contractual',
-    total: 5,
-    filled: 3,
-    location: 'Bulacan Logistics Hub',
-    requested: 'Jul 08, 2026',
-    deadline: 'Aug 10, 2026',
-    status: 'Active',
-    statusClass: 'client-portal-badge--active',
-    recruiter: 'M. Dela Cruz',
-    priority: 'normal',
-    rate: '₱650 / day',
-  },
-];
+function getStoredDeployments() {
+  let list = [];
+  if (typeof window !== 'undefined') {
+    try {
+      for (const key of ['ismers.deployments.v7', 'ismers.deployments.v6']) {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            list = parsed;
+            break;
+          }
+        }
+      }
+    } catch {}
+  }
+  if (!list.length) list = getDeployments();
+  return list;
+}
+
+export function getInitialClientData(currentSession) {
+  let sess = currentSession;
+  if (!sess && typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('cp_session');
+      if (raw) sess = JSON.parse(raw);
+    } catch {
+      sess = null;
+    }
+  }
+
+  const clientCompName = sess?.company?.trim() || '';
+  const clientEmail = sess?.email?.trim() || '';
+
+  const deployments = getStoredDeployments();
+  const liveClients = mergeClientsWithDeployments(CLIENTS, deployments);
+
+  const matchedCm = liveClients.find(
+    (c) =>
+      (clientCompName && c.name.toLowerCase() === clientCompName.toLowerCase()) ||
+      (clientEmail && c.email && c.email.toLowerCase() === clientEmail.toLowerCase())
+  ) || liveClients[0];
+
+  const jobs = (matchedCm.jobs || []).map((j, idx) => {
+    const isFilled = (j.filled || 0) >= (j.total || 1);
+    const isFilling = j.badge === 'filling' || (j.filled > 0 && !isFilled);
+    const isUrgent = j.badge === 'urgent';
+    const status = isFilled ? 'Filled' : (isUrgent || isFilling) ? 'Active' : 'In Review';
+    const statusClass = isFilled ? 'client-portal-badge--filled' : (isUrgent || isFilling) ? 'client-portal-badge--active' : 'client-portal-badge--review';
+
+    return {
+      id: `PRF-2026-${String(idx + 1).padStart(4, '0')}`,
+      position: j.title,
+      type: j.type?.split('·')[0]?.trim() || 'Full-time',
+      total: j.total,
+      filled: j.filled,
+      location: j.location || matchedCm.address || 'Metro Manila',
+      requested: 'Jul 15, 2026',
+      deadline: j.deadline || 'Aug 30, 2026',
+      status,
+      statusClass,
+      recruiter: matchedCm.am,
+      priority: isUrgent ? 'urgent' : isFilling ? 'high' : 'normal',
+      rate: j.rate || matchedCm.rate || '₱22,000 / mo',
+    };
+  });
+
+  const rosterItems = [];
+  (matchedCm.jobs || []).forEach((j, jIdx) => {
+    (j.applicants || []).filter((a) => a.status === 'hired').forEach((a, aIdx) => {
+      rosterItems.push({
+        id: `dep-${matchedCm.name.slice(0, 3).toLowerCase()}-${jIdx + 1}-${aIdx + 1}`,
+        employeeName: a.name,
+        position: j.title,
+        site: j.location || matchedCm.address || 'Client Facility',
+        startDate: a.applied || 'Jul 01, 2026',
+        expiryDate: matchedCm.renewal || 'Jan 15, 2027',
+        status: 'Active',
+        contractType: j.type || 'Full-time · Contractual',
+      });
+    });
+  });
+
+  return { jobs, roster: rosterItems, client: matchedCm, allClients: liveClients };
+}
 
 const ANNOUNCEMENTS = [
   {
@@ -161,49 +170,6 @@ export function resolveAccountManager(amName) {
   };
 }
 
-const MOCK_DEPLOYED_ROSTER = [
-  {
-    id: 'dep-501',
-    employeeName: 'Eduardo M. Santos',
-    position: 'Production Line Operator',
-    site: 'Valenzuela Plant 2',
-    startDate: 'Feb 15, 2026',
-    expiryDate: 'Aug 15, 2026',
-    status: 'Expiring Soon',
-    contractType: '6-Month Project',
-  },
-  {
-    id: 'dep-502',
-    employeeName: 'Analyn S. Mendoza',
-    position: 'Quality Control Analyst',
-    site: 'Main Lab - QC Bldg',
-    startDate: 'Jan 10, 2026',
-    expiryDate: 'Jan 10, 2027',
-    status: 'Active',
-    contractType: '1-Year Contract',
-  },
-  {
-    id: 'dep-503',
-    employeeName: 'Benjamin K. Cruz',
-    position: 'Warehouse Associate',
-    site: 'Bulacan Logistics Hub',
-    startDate: 'Mar 01, 2026',
-    expiryDate: 'Sep 01, 2026',
-    status: 'Active',
-    contractType: '6-Month Project',
-  },
-  {
-    id: 'dep-504',
-    employeeName: 'Carla D. Reyes',
-    position: 'Forklift Operator',
-    site: 'Bulacan Logistics Hub',
-    startDate: 'Feb 20, 2026',
-    expiryDate: 'Aug 20, 2026',
-    status: 'Expiring Soon',
-    contractType: '6-Month Project',
-  },
-];
-
 const EMPLOYMENT_TYPES = ['Full-time', 'Part-time', 'Contractual', 'Project-based', 'Others'];
 const PRIORITIES = [
   { value: 'normal', label: 'Normal' },
@@ -214,13 +180,39 @@ const PRIORITIES = [
 
 export default function ClientPortalPage() {
   const navigate = useNavigate();
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('cp_session') : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'settings'
   const [showJobModal, setShowJobModal] = useState(false);
-  const [jobRequests, setJobRequests] = useState(INITIAL_JOB_REQUESTS);
+
+  const [jobRequests, setJobRequests] = useState(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('cp_session') : null;
+      const s = raw ? JSON.parse(raw) : null;
+      return getInitialClientData(s).jobs;
+    } catch {
+      return getInitialClientData(null).jobs;
+    }
+  });
+
   const [endorsedCandidates, setEndorsedCandidates] = useState([]);
-  const [deployedRoster, setDeployedRoster] = useState(MOCK_DEPLOYED_ROSTER);
+  const [deployedRoster, setDeployedRoster] = useState(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('cp_session') : null;
+      const s = raw ? JSON.parse(raw) : null;
+      return getInitialClientData(s).roster;
+    } catch {
+      return getInitialClientData(null).roster;
+    }
+  });
   const [endorsementFilter, setEndorsementFilter] = useState('ALL');
   const [endorsementSearch, setEndorsementSearch] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -775,16 +767,10 @@ export default function ClientPortalPage() {
         const parsed = JSON.parse(raw);
         if (!cancelled) setSession(parsed);
 
-        // Look up corresponding Client Management profile
-        const clientCompName = parsed?.company?.trim() || '';
-        const clientEmail = parsed?.email?.trim() || '';
-        const matchedCm = CLIENTS.find(
-          (c) =>
-            (clientCompName && c.name.toLowerCase() === clientCompName.toLowerCase()) ||
-            (clientEmail && c.email && c.email.toLowerCase() === clientEmail.toLowerCase())
-        );
+        // Look up corresponding live Client Management profile
+        const { jobs: liveJobs, roster: liveRoster, client: matchedCm } = getInitialClientData(parsed);
 
-        // 1. Load Job Orders: check backend API first, fallback to matched Client Management jobs
+        // 1. Load Job Orders: check backend API first, fallback to live Client Management jobs
         let loadedJobs = [];
         if (parsed?.id) {
           try {
@@ -821,22 +807,8 @@ export default function ClientPortalPage() {
           }
         }
 
-        if (!loadedJobs.length && matchedCm?.jobs?.length) {
-          loadedJobs = matchedCm.jobs.map((j, idx) => ({
-            id: `PRF-2026-${String(idx + 1).padStart(4, '0')}`,
-            position: j.title,
-            type: j.type?.split('·')[0]?.trim() || 'Full-time',
-            total: j.total,
-            filled: j.filled,
-            location: j.location || 'Metro Manila',
-            requested: 'Jul 15, 2026',
-            deadline: j.deadline || 'Aug 30, 2026',
-            status: j.filled >= j.total ? 'Filled' : j.badge === 'urgent' ? 'Active' : j.badge === 'filling' ? 'Active' : 'In Review',
-            statusClass: j.filled >= j.total ? 'client-portal-badge--filled' : j.badge === 'urgent' ? 'client-portal-badge--active' : j.badge === 'filling' ? 'client-portal-badge--active' : 'client-portal-badge--review',
-            recruiter: matchedCm.am,
-            priority: j.badge === 'urgent' ? 'urgent' : j.badge === 'filling' ? 'high' : 'normal',
-            rate: j.rate || matchedCm.rate || '₱22,000 / mo',
-          }));
+        if (!loadedJobs.length && liveJobs?.length) {
+          loadedJobs = liveJobs;
         } else if (!loadedJobs.length) {
           const storedJobs = localStorage.getItem(`cp_jobs_${parsed?.email}`);
           if (storedJobs) {
@@ -848,26 +820,9 @@ export default function ClientPortalPage() {
           setJobRequests(loadedJobs);
         }
 
-        // 2. Load Deployed Roster: extract hired employees from matched Client Management jobs
-        if (matchedCm?.jobs?.length) {
-          const rosterItems = [];
-          matchedCm.jobs.forEach((j, jIdx) => {
-            (j.applicants || []).filter((a) => a.status === 'hired').forEach((a, aIdx) => {
-              rosterItems.push({
-                id: `dep-${matchedCm.name.slice(0, 3).toLowerCase()}-${jIdx + 1}-${aIdx + 1}`,
-                employeeName: a.name,
-                position: j.title,
-                site: j.location || 'Client Facility',
-                startDate: a.applied || 'Jul 01, 2026',
-                expiryDate: matchedCm.renewal || 'Jan 15, 2027',
-                status: 'Active',
-                contractType: j.type || 'Full-time · Contractual',
-              });
-            });
-          });
-          if (!cancelled && rosterItems.length > 0) {
-            setDeployedRoster(rosterItems);
-          }
+        // 2. Load Deployed Roster: extract hired employees from live Client Management jobs
+        if (!cancelled && liveRoster?.length > 0) {
+          setDeployedRoster(liveRoster);
         }
 
         // 3. Load Candidate Endorsements (Scoped to this Client only)
@@ -945,6 +900,23 @@ export default function ClientPortalPage() {
       const data = evt.data || evt.detail;
       if (!data) return;
 
+      // 1. Auto-refresh Job Orders & Deployed Roster on any live deployment or status change
+      if (
+        data.type === 'DEPLOYMENT_CREATED' ||
+        data.type === 'DEPLOYMENT_CHANGED' ||
+        data.type === 'EMPLOYEE_DEPLOYED' ||
+        data.type === 'candidate_deployed' ||
+        data.type === 'STAGE_CHANGED' ||
+        data.type === 'APPLICANT_STATUS_UPDATED'
+      ) {
+        const rawCurrent = localStorage.getItem('cp_session');
+        const currentSession = rawCurrent ? JSON.parse(rawCurrent) : null;
+        const { jobs: updatedJobs, roster: updatedRoster } = getInitialClientData(currentSession);
+        if (!cancelled && updatedJobs.length > 0) setJobRequests(updatedJobs);
+        if (!cancelled && updatedRoster.length > 0) setDeployedRoster(updatedRoster);
+      }
+
+      // 2. Candidate Endorsements real-time update
       if (data.type === 'CANDIDATE_ENDORSED' || data.type === 'STAGE_CHANGED') {
         const { applicant } = data.payload || {};
         if (applicant) {
@@ -996,11 +968,40 @@ export default function ClientPortalPage() {
       }
     };
 
+    const handleStorage = (e) => {
+      if (
+        !e ||
+        !e.key ||
+        e.key.startsWith('ismers.deployments') ||
+        e.key === 'ismers_bridge_hires_v2' ||
+        e.key === 'ismers_sync_beacon' ||
+        e.key === 'cp_session'
+      ) {
+        const rawCurrent = localStorage.getItem('cp_session');
+        const currentSession = rawCurrent ? JSON.parse(rawCurrent) : null;
+        const { jobs: updatedJobs, roster: updatedRoster } = getInitialClientData(currentSession);
+        if (!cancelled && updatedJobs.length > 0) setJobRequests(updatedJobs);
+        if (!cancelled && updatedRoster.length > 0) setDeployedRoster(updatedRoster);
+      }
+    };
+
+    const handleDeploymentsUpdated = () => {
+      const rawCurrent = localStorage.getItem('cp_session');
+      const currentSession = rawCurrent ? JSON.parse(rawCurrent) : null;
+      const { jobs: updatedJobs, roster: updatedRoster } = getInitialClientData(currentSession);
+      if (!cancelled && updatedJobs.length > 0) setJobRequests(updatedJobs);
+      if (!cancelled && updatedRoster.length > 0) setDeployedRoster(updatedRoster);
+    };
+
     const unsubscribe = subscribeRealtimeEvents(handleSyncEvent);
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('ismers:deployments-updated', handleDeploymentsUpdated);
 
     return () => {
       cancelled = true;
       unsubscribe();
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('ismers:deployments-updated', handleDeploymentsUpdated);
     };
   }, [navigate]);
 
@@ -1176,12 +1177,7 @@ export default function ClientPortalPage() {
   ];
 
   const matchedClient = useMemo(() => {
-    if (!session?.company && !session?.email) return null;
-    return CLIENTS.find(
-      (c) =>
-        (session?.company && c.name?.toLowerCase() === session.company.toLowerCase()) ||
-        (session?.email && c.email && c.email.toLowerCase() === session.email.toLowerCase())
-    ) || null;
+    return getInitialClientData(session).client;
   }, [session]);
 
   const currentAccountManager = useMemo(() => {

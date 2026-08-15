@@ -400,7 +400,7 @@ select.chip:focus { border-color: var(--primary); }
 .doc-verify-summary.all-verified { color: var(--green); font-weight: 700; }
 
 /* DOCUMENT VIEWER (stacks above candidate modal) */
-.doc-overlay { display: none; position: fixed; inset: 0; background: rgba(31,41,55,0.55); backdrop-filter: blur(2px); z-index: 60; align-items: center; justify-content: center; padding: 30px; }
+.doc-overlay { display: none; position: fixed; inset: 0; background: rgba(31,41,55,0.65); backdrop-filter: blur(4px); z-index: 1300; align-items: center; justify-content: center; padding: 30px; }
 .doc-overlay.open { display: flex; }
 .doc-box { background: var(--panel); border-radius: 16px; width: 100%; max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-lg); }
 .doc-box-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
