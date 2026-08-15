@@ -155,16 +155,40 @@ export default function Sidebar({
               <div className={`submenu-wrapper ${openMenus['job-order-management'] && !collapsed ? 'open' : ''}`}>
                 <div className="submenu-inner">
                   <Link
-                    to="/job-order-management"
-                    className={`submenu-item${!location.search.includes('view=requisitions') ? ' active' : ''}`}
+                    to="/job-order-management?status=all"
+                    className={`submenu-item${(!location.search || location.search === '?status=all') && location.pathname === '/job-order-management' ? ' active' : ''}`}
                   >
-                    Job Orders (PRFs)
+                    All Job Orders
                   </Link>
                   <Link
-                    to="/job-order-management?view=requisitions"
-                    className={`submenu-item${location.search.includes('view=requisitions') ? ' active' : ''}`}
+                    to="/job-order-management?status=review"
+                    className={`submenu-item${location.search.includes('status=review') ? ' active' : ''}`}
                   >
-                    Position Requisitions
+                    Under Review
+                  </Link>
+                  <Link
+                    to="/job-order-management?status=open"
+                    className={`submenu-item${location.search.includes('status=open') ? ' active' : ''}`}
+                  >
+                    Open
+                  </Link>
+                  <Link
+                    to="/job-order-management?status=filling"
+                    className={`submenu-item${location.search.includes('status=filling') ? ' active' : ''}`}
+                  >
+                    Filling
+                  </Link>
+                  <Link
+                    to="/job-order-management?status=urgent"
+                    className={`submenu-item${location.search.includes('status=urgent') ? ' active' : ''}`}
+                  >
+                    Urgent
+                  </Link>
+                  <Link
+                    to="/job-order-management?status=filled"
+                    className={`submenu-item${location.search.includes('status=filled') ? ' active' : ''}`}
+                  >
+                    Filled
                   </Link>
                 </div>
               </div>

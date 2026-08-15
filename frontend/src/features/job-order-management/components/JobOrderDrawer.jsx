@@ -48,7 +48,7 @@ export default function JobOrderDrawer({ open, job, actions, onClose, onEdit, on
             <svg className="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
           <span className="stamp" style={{ color: meta.color }}>{meta.label}</span>
-          <div className="sheet-eyebrow">{job.ref} · job_order_management</div>
+          <div className="sheet-eyebrow">{job.ref} · Job Order Requisition</div>
           <div className="sheet-title">{job.title}</div>
           <div className="sheet-sub">{job.client} · {job.location}</div>
         </div>
@@ -65,7 +65,7 @@ export default function JobOrderDrawer({ open, job, actions, onClose, onEdit, on
           </div>
 
           <div className="fill-block">
-            <div className="fill-block-top"><span>positions_filled</span><span>{job.filled} / {job.total} ({pct}%)</span></div>
+            <div className="fill-block-top"><span>Positions Filled</span><span>{job.filled} / {job.total} ({pct}%)</span></div>
             <div className="fill-block-track"><div className="fill-block-fill" style={{ width: `${pct}%`, background: meta.color }} /></div>
           </div>
 

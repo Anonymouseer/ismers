@@ -1,47 +1,89 @@
+import { useState, useEffect, useMemo } from 'react';
 import { jobMatchesForCandidate } from '../services/ApplicantRegistrationService';
+import { subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 
 function scoreTier(score) {
-  if (score >= 70) return { color: 'var(--green)', bg: 'var(--green-soft)' };
-  if (score >= 40) return { color: 'var(--amber)', bg: 'var(--amber-soft)' };
-  return { color: 'var(--muted-fg)', bg: 'var(--border-soft)' };
+  if (score >= 70) return { color: 'var(--green, #10b981)', bg: 'var(--green-soft, #ecfdf5)' };
+  if (score >= 40) return { color: 'var(--amber, #f59e0b)', bg: 'var(--amber-soft, #fffbeb)' };
+  if (score > 0) return { color: 'var(--primary, #007dcc)', bg: 'rgba(0, 125, 204, 0.08)' };
+  return { color: 'var(--muted-fg, #6b7280)', bg: 'var(--border-soft, #f3f4f6)' };
 }
 
-// Replaces the old plain "pick any job order" dropdown. Shows job orders
-// within the applicant's category, ranked by a keyword-match score against
-// their skills + work history, so staff review a shortlist instead of
-// guessing from an unordered list. Clicking a row sets it as the target
-// job — staff still makes the call, the score just informs it.
 export default function JobMatchList({ candidate, canSelect, onSelect }) {
-  if (!candidate.category) {
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    const handleSync = () => {
+      setVersion((v) => v + 1);
+    };
+
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('ismers:job-orders-updated', handleSync);
+    window.addEventListener('ismers:deployments-updated', handleSync);
+    const unsub = subscribeRealtimeEvents((msg) => {
+      if (
+        msg.type === 'JOB_ORDER_CREATED' ||
+        msg.type === 'JOB_ORDER_APPROVED' ||
+        msg.type === 'STAGE_CHANGED'
+      ) {
+        setVersion((v) => v + 1);
+      }
+    });
+
+    return () => {
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('ismers:job-orders-updated', handleSync);
+      window.removeEventListener('ismers:deployments-updated', handleSync);
+      unsub();
+    };
+  }, []);
+
+  const matches = useMemo(() => {
+    return jobMatchesForCandidate(candidate);
+  }, [candidate, version]);
+
+  if (!candidate?.category) {
     return <div className="empty-note">Assign a category first to see job order matches.</div>;
   }
 
-  const matches = jobMatchesForCandidate(candidate);
-
   if (!matches.length) {
-    return <div className="empty-note">No job orders currently open in this category.</div>;
+    return <div className="empty-note">No job orders currently open in this category ({candidate.category}).</div>;
   }
 
   return (
     <div className="jobmatch-list">
       {matches.map(({ job, score }) => {
         const tier = scoreTier(score);
-        const selected = candidate.targetJobId === job.id;
+        const selected = candidate.targetJobId === job.id || candidate.targetJobId === job.ref;
+
         return (
           <button
             type="button"
-            key={job.id}
+            key={job.id || job.ref || `${job.title}-${job.client}`}
             className={`jobmatch-row${selected ? ' selected' : ''}`}
             disabled={!canSelect}
-            onClick={() => onSelect(job.id, `${job.title} — ${job.client}`)}
+            onClick={() => onSelect(job.id || job.ref, `${job.title} — ${job.client}`)}
           >
             <div className="jobmatch-info">
               <div className="jobmatch-title">{job.title}</div>
               <div className="jobmatch-client">{job.client}</div>
             </div>
-            <div className="jobmatch-score" style={{ color: tier.color, background: tier.bg }}>
+
+            <div
+              className="jobmatch-score"
+              style={{
+                color: tier.color,
+                background: tier.bg,
+                fontWeight: 700,
+                fontSize: 11,
+                padding: '3px 8px',
+                borderRadius: 12,
+                whiteSpace: 'nowrap',
+              }}
+            >
               {score}% match
             </div>
+
             {selected && <div className="jobmatch-selected-tag">Selected</div>}
           </button>
         );

@@ -188,81 +188,211 @@ export async function bulkReturnToProfilingApi() {
   return res.json();
 }
 
-// ── MATCH SCORING & STATIC CONSTANTS ──
+// ── MATCH SCORING & CLIENT MANAGEMENT DATA SYNC ──
+import { CLIENTS } from '../../client-management/data/mockClients';
+import { buildSynchronizedJobOrders } from '../../job-order-management/services/JobOrderManagementService';
 
-export const JOB_TARGETS = [
-  // --- ABC Logistics ---
-  { id: 'jo1', title: 'Warehouse Associate', client: 'ABC Logistics', category: 'Warehousing & Logistics', keywords: ['inventory', 'warehouse', 'pallet', 'logistics', 'stock', 'picking', 'packing'] },
-  { id: 'jo2', title: 'Forklift Operator', client: 'ABC Logistics', category: 'Warehousing & Logistics', keywords: ['forklift', 'warehouse', 'logistics', 'pallet', 'material handling', 'inventory'] },
-  { id: 'jo3', title: 'Inventory Clerk', client: 'ABC Logistics', category: 'Warehousing & Logistics', keywords: ['inventory', 'stock', 'wms', 'cycle count', 'data entry', 'clerk'] },
-  { id: 'jo4', title: 'Delivery Driver', client: 'ABC Logistics', category: 'Warehousing & Logistics', keywords: ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics'] },
+export function mapCategoryForJob(job) {
+  if (job.category) return job.category;
+  const title = (job.title || '').toLowerCase();
+  const client = (job.client || '').toLowerCase();
 
-  // --- Northline BPO ---
-  { id: 'jo5', title: 'Customer Service Rep', client: 'Northline BPO', category: 'Customer Service (BPO)', keywords: ['customer service', 'crm', 'english proficiency', 'call center', 'customer support', 'communication'] },
-  { id: 'jo6', title: 'Technical Support Agent', client: 'Northline BPO', category: 'Customer Service (BPO)', keywords: ['technical troubleshooting', 'ticketing', 'networking', 'technical support', 'troubleshooting'] },
-  { id: 'jo7', title: 'Sales Development Representative', client: 'Northline BPO', category: 'Customer Service (BPO)', keywords: ['sales', 'outbound', 'inbound', 'crm', 'cold calling', 'leads'] },
-  { id: 'jo8', title: 'Team Leader - Customer Experience', client: 'Northline BPO', category: 'Customer Service (BPO)', keywords: ['team leader', 'supervisor', 'bpo', 'coaching', 'kpi', 'csat'] },
+  if (title.includes('warehouse') || title.includes('forklift') || title.includes('driver') || title.includes('inventory') || title.includes('logistics') || client.includes('logistics') || client.includes('abc')) {
+    return 'Warehousing & Logistics';
+  }
+  if (title.includes('csr') || title.includes('customer service') || title.includes('bpo') || title.includes('technical support') || title.includes('sales dev') || title.includes('team leader') || title.includes('tier') || client.includes('bpo') || client.includes('northline')) {
+    return 'Customer Service (BPO)';
+  }
+  if (title.includes('machine') || title.includes('quality') || title.includes('production') || title.includes('packaging') || title.includes('assembly') || client.includes('manufacturing') || client.includes('delta')) {
+    return 'Manufacturing';
+  }
+  if (title.includes('retail') || title.includes('cashier') || title.includes('merchandiser') || title.includes('sales associate') || title.includes('store') || client.includes('retail') || client.includes('coastal')) {
+    return 'Retail & Store Operations';
+  }
+  if (title.includes('cook') || title.includes('chef') || title.includes('f&b') || title.includes('server') || title.includes('dining') || title.includes('kitchen') || title.includes('food')) {
+    return 'Food & Beverage (F&B / Cook)';
+  }
+  if (title.includes('hotel') || title.includes('front desk') || title.includes('guest relations') || title.includes('concierge') || title.includes('housekeeping') || title.includes('hospitality') || client.includes('hospitality') || client.includes('sunrise')) {
+    return 'Hospitality & Front Desk';
+  }
+  if (title.includes('construction') || title.includes('engineer') || title.includes('welder') || title.includes('heavy equipment') || title.includes('crane') || title.includes('safety officer') || client.includes('builders') || client.includes('apex')) {
+    return 'Construction & Engineering';
+  }
+  if (title.includes('developer') || title.includes('devops') || title.includes('qa automation') || title.includes('it support') || client.includes('vantage') || client.includes('tech')) {
+    return 'Admin & Technical Support';
+  }
+  if (title.includes('nurse') || title.includes('medical') || title.includes('clinic') || title.includes('pharmacy') || client.includes('everwell') || client.includes('health')) {
+    return 'Healthcare & Diagnostics';
+  }
+  return 'Customer Service (BPO)';
+}
 
-  // --- Delta Manufacturing ---
-  { id: 'jo9', title: 'Machine Operator', client: 'Delta Manufacturing', category: 'Manufacturing', keywords: ['machine operation', 'quality inspection', 'safety compliance', 'production', 'troubleshooting'] },
-  { id: 'jo10', title: 'Quality Control Inspector', client: 'Delta Manufacturing', category: 'Manufacturing', keywords: ['quality control', 'inspection', 'qc', 'calipers', 'manufacturing', 'specifications'] },
-  { id: 'jo11', title: 'Production Line Supervisor', client: 'Delta Manufacturing', category: 'Manufacturing', keywords: ['supervisor', 'production line', 'kpi', 'line balancing', 'manufacturing'] },
-  { id: 'jo12', title: 'Packaging Associate', client: 'Delta Manufacturing', category: 'Manufacturing', keywords: ['packaging', 'sorting', 'labeling', 'finished goods', 'packing'] },
+export function getAllJobTargets() {
+  const map = new Map();
 
-  // --- Coastal Retail Group ---
-  { id: 'jo13', title: 'Admin Assistant', client: 'Coastal Retail Group', category: 'Retail & Store Operations', keywords: ['admin', 'office', 'excel', 'documentation', 'scheduling', 'clerical'] },
-  { id: 'jo14', title: 'Sales Associate', client: 'Coastal Retail Group', category: 'Retail & Store Operations', keywords: ['sales associate', 'retail', 'customer service', 'stocking', 'replenishment'] },
-  { id: 'jo15', title: 'Store Cashier', client: 'Coastal Retail Group', category: 'Retail & Store Operations', keywords: ['cashier', 'pos', 'cash handling', 'retail', 'customer service'] },
-  { id: 'jo16', title: 'Visual Merchandiser', client: 'Coastal Retail Group', category: 'Retail & Store Operations', keywords: ['merchandiser', 'visual', 'display', 'retail layout', 'branding'] },
+  // 1. Read all real client job orders directly from Client Management (CLIENTS)
+  (CLIENTS || []).forEach((client) => {
+    (client.jobs || []).forEach((job, idx) => {
+      const title = job.title || '';
+      if (!title) return;
+      const key = `${title.toLowerCase()}|${client.name.toLowerCase()}`;
+      const category = mapCategoryForJob({ title, client: client.name });
+      const keywords = (job.requirements && job.requirements.length > 0)
+        ? job.requirements.map((r) => r.toLowerCase().split(/\s+/)).flat().filter((w) => w.length > 3)
+        : (job.tags || []).map((t) => t.toLowerCase());
 
-  // --- Sunrise Hospitality Group ---
-  { id: 'jo17', title: 'Front Desk Associate', client: 'Sunrise Hospitality Group', category: 'Hospitality & Front Desk', keywords: ['front desk', 'guest relations', 'booking systems', 'hospitality', 'customer service', 'front office'] },
-  { id: 'jo18', title: 'Housekeeping Staff', client: 'Sunrise Hospitality Group', category: 'Hospitality & Front Desk', keywords: ['housekeeping', 'cleaning', 'room turnaround', 'resort', 'hospitality'] },
-  { id: 'jo19', title: 'Food & Beverage Server', client: 'Sunrise Hospitality Group', category: 'Food & Beverage (F&B / Cook)', keywords: ['f&b', 'server', 'waiter', 'restaurant', 'dining', 'hospitality'] },
-  { id: 'jo20', title: 'Maintenance Technician', client: 'Sunrise Hospitality Group', category: 'Hospitality & Front Desk', keywords: ['maintenance', 'technician', 'electrical', 'plumbing', 'repairs'] },
+      map.set(key, {
+        id: job.ref || `jo-${client.name.slice(0, 3).toLowerCase()}-${idx + 1}`,
+        ref: job.ref || `jo-${client.name.slice(0, 3).toLowerCase()}-${idx + 1}`,
+        title,
+        client: client.name,
+        category,
+        keywords: Array.from(new Set([
+          ...title.toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2),
+          ...(job.tags || []).map((t) => t.toLowerCase()),
+          ...keywords,
+        ])),
+        rate: job.rate || client.rate,
+        location: job.location || client.address,
+        status: job.badge || 'open',
+      });
+    });
+  });
 
-  // --- Prime Realty Corp ---
-  { id: 'jo21', title: 'Leasing Consultant', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', keywords: ['leasing', 'real estate', 'sales', 'viewings', 'property', 'contracts'] },
-  { id: 'jo22', title: 'Property Administrator', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', keywords: ['property administrator', 'tenant records', 'lease renewals', 'admin'] },
-  { id: 'jo23', title: 'Front Desk Officer', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', keywords: ['front desk', 'reception', 'lobby', 'concierge', 'visitor logs'] },
-  { id: 'jo24', title: 'Maintenance Coordinator', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', keywords: ['maintenance coordinator', 'repairs', 'facilities', 'building systems'] },
+  // 2. Read live synchronized and submitted job orders (including approved PRFs)
+  try {
+    const synched = buildSynchronizedJobOrders();
+    (synched || []).forEach((j) => {
+      const title = j.title || '';
+      const client = j.client || '';
+      if (!title || !client) return;
+      const key = `${title.toLowerCase()}|${client.toLowerCase()}`;
+      const category = mapCategoryForJob(j);
+      const existing = map.get(key);
 
-  // --- Metro Health Diagnostics ---
-  { id: 'jo25', title: 'Medical Technologist', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', keywords: ['medical technologist', 'medtech', 'lab testing', 'specimen analysis', 'doh'] },
-  { id: 'jo26', title: 'Radiologic Technologist', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', keywords: ['radiologic', 'x-ray', 'imaging', 'radtech', 'radiation safety'] },
-  { id: 'jo27', title: 'Patient Service Representative', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', keywords: ['patient service', 'registration', 'healthcare front desk', 'appointments'] },
-  { id: 'jo28', title: 'Billing Clerk', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', keywords: ['billing', 'hmo', 'insurance claims', 'patient accounts', 'accounting'] },
+      map.set(key, {
+        id: j.ref || j.id || `jo-sync-${key}`,
+        ref: j.ref || j.id,
+        title,
+        client,
+        category: j.category || existing?.category || category,
+        keywords: existing?.keywords || Array.from(new Set([
+          ...title.toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2),
+          ...(j.tags || []).map((t) => t.toLowerCase()),
+        ])),
+        rate: j.rate,
+        location: j.location,
+        status: j.status,
+      });
+    });
+  } catch {}
 
-  // --- GreenFields Agri Export ---
-  { id: 'jo29', title: 'Packing Associate', client: 'GreenFields Agri Export', category: 'Agriculture & Export', keywords: ['packing', 'produce', 'grading', 'harvest', 'hygiene', 'export'] },
-  { id: 'jo30', title: 'QA Inspector (Agri)', client: 'GreenFields Agri Export', category: 'Agriculture & Export', keywords: ['qa inspector', 'quality control', 'export-grade', 'agri', 'produce'] },
-  { id: 'jo31', title: 'Logistics Coordinator', client: 'GreenFields Agri Export', category: 'Agriculture & Export', keywords: ['logistics coordinator', 'container bookings', 'freight', 'export documentation'] },
-  { id: 'jo32', title: 'Farm Supervisor', client: 'GreenFields Agri Export', category: 'Agriculture & Export', keywords: ['farm supervisor', 'harvest scheduling', 'field crews', 'agriculture'] },
+  // 3. Inspect localStorage for freshly created/approved job orders
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ismers_client_job_orders');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((j) => {
+            const title = j.title || j.position || '';
+            const client = j.client || j.company || '';
+            if (!title || !client) return;
+            const key = `${title.toLowerCase()}|${client.toLowerCase()}`;
+            const category = mapCategoryForJob(j);
+            const existing = map.get(key);
+            map.set(key, {
+              id: j.ref || j.id || `jo-custom-${key}`,
+              ref: j.ref || j.id,
+              title,
+              client,
+              category: j.category || existing?.category || category,
+              keywords: existing?.keywords || Array.from(new Set([
+                ...title.toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2),
+                ...(j.tags || []).map((t) => t.toLowerCase()),
+              ])),
+              rate: j.rate,
+              location: j.location,
+              status: j.status,
+            });
+          });
+        }
+      }
+    } catch {}
+  }
 
-  // --- Apex Construction Builders ---
-  { id: 'jo33', title: 'Construction Laborer', client: 'Apex Construction Builders', category: 'Construction & Engineering', keywords: ['construction', 'laborer', 'material handling', 'masonry', 'site work'] },
-  { id: 'jo34', title: 'Site Engineer Assistant', client: 'Apex Construction Builders', category: 'Construction & Engineering', keywords: ['site engineer', 'autocad', 'civil engineering', 'inspections', 'plans'] },
-  { id: 'jo35', title: 'Safety Officer', client: 'Apex Construction Builders', category: 'Construction & Engineering', keywords: ['safety officer', 'bosh', 'ppe', 'oshs', 'hazard inspection'] },
-  { id: 'jo36', title: 'Heavy Equipment Operator', client: 'Apex Construction Builders', category: 'Construction & Engineering', keywords: ['heavy equipment', 'backhoe', 'excavator', 'operator license', 'grading'] },
-];
+  return Array.from(map.values());
+}
+
+export const JOB_TARGETS = getAllJobTargets();
 
 export function computeMatchScore(candidate, job) {
-  if (!job.keywords || !job.keywords.length) return 0;
+  const keywords = (job.keywords && job.keywords.length > 0)
+    ? job.keywords
+    : (job.title || '').toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2);
+
+  if (!keywords || !keywords.length) return 0;
+
   const searchable = [
     ...(candidate.skills || []),
     ...(candidate.workHistory || []).map((w) => `${w.role} ${w.company}`),
   ].join(' ').toLowerCase();
 
-  const matched = job.keywords.filter((kw) => searchable.includes(kw.toLowerCase())).length;
-  return Math.round((matched / job.keywords.length) * 100);
+  if (!searchable.trim()) return 0;
+
+  const matched = keywords.filter((kw) => searchable.includes(kw.toLowerCase())).length;
+  if (matched === 0) return 0;
+  return Math.round((matched / keywords.length) * 100);
 }
 
 export function jobMatchesForCandidate(candidate) {
-  if (!candidate.category) return [];
-  return JOB_TARGETS
-    .filter((j) => j.category === candidate.category)
+  if (!candidate?.category) return [];
+
+  const candCatNorm = candidate.category.trim().toLowerCase();
+  const targets = getAllJobTargets();
+
+  return targets
+    .filter((j) => {
+      const jobCatNorm = (j.category || '').trim().toLowerCase();
+      if (!jobCatNorm) return false;
+
+      if (jobCatNorm === candCatNorm) return true;
+
+      // Hospitality & Food & Beverage cross-match
+      if (
+        (candCatNorm.includes('hospitality') || candCatNorm.includes('food') || candCatNorm.includes('f&b')) &&
+        (jobCatNorm.includes('hospitality') || jobCatNorm.includes('food') || jobCatNorm.includes('f&b'))
+      ) {
+        return true;
+      }
+
+      // Customer Service & BPO cross-match
+      if (
+        (candCatNorm.includes('bpo') || candCatNorm.includes('customer service') || candCatNorm.includes('tech')) &&
+        (jobCatNorm.includes('bpo') || jobCatNorm.includes('customer service') || jobCatNorm.includes('tech'))
+      ) {
+        return true;
+      }
+
+      // Logistics & Warehousing cross-match
+      if (
+        (candCatNorm.includes('logistics') || candCatNorm.includes('warehousing')) &&
+        (jobCatNorm.includes('logistics') || jobCatNorm.includes('warehousing'))
+      ) {
+        return true;
+      }
+
+      if (candCatNorm.includes('retail') && jobCatNorm.includes('retail')) return true;
+      if (candCatNorm.includes('manufacturing') && jobCatNorm.includes('manufacturing')) return true;
+      if (candCatNorm.includes('health') && jobCatNorm.includes('health')) return true;
+      if (candCatNorm.includes('construction') && jobCatNorm.includes('construction')) return true;
+      if (candCatNorm.includes('agri') && jobCatNorm.includes('agri')) return true;
+      if (candCatNorm.includes('real estate') && jobCatNorm.includes('real estate')) return true;
+
+      return false;
+    })
     .map((j) => ({ job: j, score: computeMatchScore(candidate, j) }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score || (a.job.title || '').localeCompare(b.job.title || ''));
 }
 
 export const CATEGORIES = [
@@ -282,7 +412,9 @@ export const CATEGORIES = [
 ];
 
 export function targetById(id) {
-  return JOB_TARGETS.find((j) => j.id === id);
+  if (!id) return null;
+  const targets = getAllJobTargets();
+  return targets.find((j) => j.id === id || j.ref === id || String(j.id).toLowerCase() === String(id).toLowerCase());
 }
 
 export const STAGE_META = {

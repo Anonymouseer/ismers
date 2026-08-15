@@ -247,6 +247,60 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
       }
     });
 
+    // Check if there are new Job Orders submitted from Client Portal
+    let customJobOrders = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('ismers_client_job_orders');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) customJobOrders = parsed;
+        }
+      } catch {}
+    }
+
+    customJobOrders.forEach((cj) => {
+      const cjClientNorm = (cj.client || cj.company || '').trim().toLowerCase();
+      if (!cjClientNorm) return;
+      const isForThisClient = cjClientNorm === clientNameNorm ||
+        cjClientNorm.includes(clientNameNorm) ||
+        clientNameNorm.includes(cjClientNorm);
+      if (!isForThisClient) return;
+
+      const cjTitleNorm = (cj.title || cj.position || '').trim().toLowerCase();
+      const cjRefNorm = (cj.ref || cj.id || '').trim().toLowerCase();
+      const alreadyHasJob = updatedJobs.some((j) => {
+        const jTitleNorm = (j.title || '').trim().toLowerCase();
+        const jRefNorm = (j.ref || '').trim().toLowerCase();
+        return (cjRefNorm && jRefNorm === cjRefNorm) || (jTitleNorm && jTitleNorm === cjTitleNorm);
+      });
+
+      if (!alreadyHasJob && (cj.title || cj.position)) {
+        const isReview = cj.status === 'review' || cj.stage === 'review' || cj.status === 'In Review' || cj.badge === 'review';
+        const badge = isReview ? 'review' : (cj.status === 'Filled' ? 'filled' : (cj.filled > 0 ? 'filling' : 'open'));
+        const color = isReview ? '#805AD5' : (cj.color || 'var(--blue)');
+
+        updatedJobs.push({
+          ref: cj.ref || cj.id,
+          title: cj.title || cj.position,
+          filled: cj.filled || 0,
+          total: cj.total || 1,
+          badge,
+          status: isReview ? 'review' : (cj.status || 'open'),
+          stage: isReview ? 'review' : (cj.stage || 'activated'),
+          color,
+          location: cj.location || client.address || 'Metro Manila',
+          type: cj.type || 'Full-time · Contractual',
+          rate: cj.rate || client.rate || '₱20,000/mo',
+          deadline: cj.deadline || 'TBD',
+          description: cj.description || `New job order submitted from Client Portal for ${client.name}.`,
+          requirements: Array.isArray(cj.requirements) ? cj.requirements : [cj.requirements || 'DOLE DO-174 Compliant Requirements'],
+          tags: ['Client Portal', isReview ? 'Under Review' : 'Active Requisition', cj.priority || 'Normal'],
+          applicants: cj.applicants || [],
+        });
+      }
+    });
+
     return {
       ...client,
       jobs: updatedJobs,
@@ -264,18 +318,22 @@ export function useClientManagementStore() {
   }, []);
 
   useEffect(() => {
-    // 1. Listen to native storage events
+    // 1. Listen to storage events across tabs
     const handleStorage = (e) => {
       if (
+        !e ||
+        !e.key ||
         DEPLOYMENTS_STORAGE_KEYS.includes(e.key) ||
         e.key === 'ismers_bridge_hires_v2' ||
-        e.key === 'ismers_sync_beacon'
+        e.key === 'ismers_sync_beacon' ||
+        e.key === 'ismers_client_job_orders'
       ) {
         reloadData();
       }
     };
 
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('ismers:job-orders-updated', reloadData);
 
     // 2. Listen to ISMERSBridge changes
     const unsubscribeBridge = ISMERSBridge.onChange(() => {
@@ -288,7 +346,8 @@ export function useClientManagementStore() {
         msg.type === 'DEPLOYMENT_CHANGED' ||
         msg.type === 'EMPLOYEE_DEPLOYED' ||
         msg.type === 'STAGE_CHANGED' ||
-        msg.type === 'candidate_deployed'
+        msg.type === 'candidate_deployed' ||
+        msg.type === 'JOB_ORDER_CREATED'
       ) {
         reloadData();
       }
@@ -296,6 +355,7 @@ export function useClientManagementStore() {
 
     return () => {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('ismers:job-orders-updated', reloadData);
       unsubscribeBridge();
       unsubscribeRealtime();
     };

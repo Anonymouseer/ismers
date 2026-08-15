@@ -1,0 +1,335 @@
+/* JobOrderTableView.css */
+.jot-table-container {
+  background: var(--panel, #ffffff);
+  border: 1px solid var(--border, #E2E8F0);
+  border-radius: 14px;
+  box-shadow: var(--shadow-xs, 0 1px 3px rgba(0, 0, 0, 0.05));
+  overflow-x: auto;
+  margin-top: 14px;
+}
+
+.jot-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.jot-table thead th {
+  background: var(--bg, #F8FAFC);
+  color: var(--muted, #64748B);
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, #E2E8F0);
+  white-space: nowrap;
+}
+
+.jot-th-check {
+  width: 36px;
+  text-align: center;
+}
+
+.jot-th-actions {
+  text-align: right;
+  padding-right: 20px;
+}
+
+.jot-tr {
+  border-bottom: 1px solid var(--border-soft, #F1F5F9);
+  cursor: pointer;
+  transition: background 0.14s ease;
+}
+
+.jot-tr:last-child {
+  border-bottom: none;
+}
+
+.jot-tr:hover {
+  background: var(--bg, #F8FAFC);
+}
+
+.jot-tr--selected {
+  background: #F0FDF4 !important;
+}
+
+.jot-tr--review {
+  background: #FAF5FF;
+}
+
+.jot-tr--review:hover {
+  background: #F3E8FF;
+}
+
+.jot-table td {
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.jot-td-check {
+  text-align: center;
+}
+
+.jot-checkbox {
+  cursor: pointer;
+  accent-color: var(--green, #149E6E);
+  width: 15px;
+  height: 15px;
+}
+
+.jot-ref-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ref-color, #3D7DD6);
+  background: var(--bg, #F1F5F9);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #E2E8F0);
+  white-space: nowrap;
+}
+
+.jot-pos-title {
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--text, #0F172A);
+  line-height: 1.25;
+}
+
+.jot-pos-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.jot-type-tag {
+  font-size: 11px;
+  color: var(--muted, #64748B);
+}
+
+.jot-priority-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.jot-priority-tag--urgent {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.jot-client-name {
+  font-weight: 600;
+  color: var(--text, #1E293B);
+  font-size: 12.5px;
+}
+
+.jot-client-loc {
+  font-size: 11px;
+  color: var(--muted, #64748B);
+  margin-top: 2px;
+}
+
+.jot-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--pill-bg, #F1F5F9);
+  color: var(--pill-color, #475569);
+  border: 1px solid var(--pill-border, transparent);
+  white-space: nowrap;
+}
+
+.jot-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pill-color, #475569);
+}
+
+.jot-prog-wrap {
+  width: 130px;
+}
+
+.jot-prog-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  color: var(--muted, #64748B);
+  margin-bottom: 5px;
+}
+
+.jot-prog-pct {
+  font-weight: 700;
+  color: var(--text, #0F172A);
+}
+
+.jot-prog-track {
+  height: 6px;
+  background: var(--bg, #E2E8F0);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.jot-prog-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.jot-rate-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text, #0F172A);
+  white-space: nowrap;
+}
+
+.jot-deadline-date {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text, #1E293B);
+}
+
+.jot-countdown-badge {
+  display: inline-block;
+  font-family: var(--font-mono, monospace);
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 12px;
+  margin-top: 3px;
+  white-space: nowrap;
+}
+
+.jot-recruiter-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jot-recruiter-av {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #E0E7FF;
+  color: #4338CA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.jot-recruiter-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text, #1E293B);
+  white-space: nowrap;
+}
+
+.jot-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.jot-btn-view {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #CBD5E1);
+  background: var(--panel, #ffffff);
+  color: var(--text, #1E293B);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.jot-btn-view:hover {
+  background: var(--bg, #F1F5F9);
+  border-color: #94A3B8;
+}
+
+.jot-btn-approve {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid #7C3AED;
+  background: #7C3AED;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.jot-btn-approve:hover {
+  background: #6D28D9;
+}
+
+.jot-btn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--border, #E2E8F0);
+  background: var(--panel, #ffffff);
+  color: var(--muted, #64748B);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.jot-btn-icon:hover {
+  color: var(--text, #0F172A);
+  background: var(--bg, #F1F5F9);
+}
+
+.jot-btn-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.jot-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--panel, #ffffff);
+  border: 1px dashed var(--border, #CBD5E1);
+  border-radius: 14px;
+  margin-top: 14px;
+}
+
+.jot-empty-icon {
+  width: 42px;
+  height: 42px;
+  color: var(--muted, #94A3B8);
+  margin-bottom: 12px;
+}
+
+.jot-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #0F172A);
+  margin-bottom: 4px;
+}
+
+.jot-empty-desc {
+  font-size: 12.5px;
+  color: var(--muted, #64748B);
+}
