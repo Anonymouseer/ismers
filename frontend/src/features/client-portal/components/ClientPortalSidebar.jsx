@@ -230,6 +230,19 @@ export default function ClientPortalSidebar({
 
           <button
             type="button"
+            id="nav-feedback"
+            className={`client-portal-nav-item ${activeTab === 'feedback' ? 'active' : ''}`}
+            onClick={() => setActiveTab('feedback')}
+            title={sidebarCollapsed ? 'Feedback' : undefined}
+          >
+            <svg className="icon" viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Feedback</span>
+          </button>
+
+          <button
+            type="button"
             id="nav-settings"
             className={`client-portal-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
             onClick={() => setActiveTab('settings')}
