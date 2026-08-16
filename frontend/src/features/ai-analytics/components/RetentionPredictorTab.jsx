@@ -127,7 +127,7 @@ export default function RetentionPredictorTab() {
 
   // 3. Pagination & Selection States
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(12);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [expandedRowIds, setExpandedRowIds] = useState(new Set());
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
@@ -604,10 +604,10 @@ export default function RetentionPredictorTab() {
                 background: 'var(--panel)', color: 'var(--text)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
               }}
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value={48}>48</option>
+              <option value={96}>96</option>
             </select>
           </div>
 
