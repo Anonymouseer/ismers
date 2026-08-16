@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
+import Pagination from '../../../components/common/Pagination';
 import {
   complianceReadiness,
   initials,
@@ -35,7 +36,6 @@ export default function ClientDeploymentProfile({
   onBack,
   onOpenSlip,
   onOpenRecord,
-  onNewDeployment,
 }) {
   const [selectedJoRef, setSelectedJoRef] = useState('all');
 
@@ -43,6 +43,8 @@ export default function ClientDeploymentProfile({
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortKey, setSortKey] = useState('employee');
   const [sortDir, setSortDir] = useState('asc');
+  const [staffPage, setStaffPage] = useState(1);
+  const staffPageSize = 12;
 
   // All deployments belonging to this client (with fuzzy & normalized fallback)
   const clientDeployments = useMemo(() => {
@@ -136,6 +138,14 @@ export default function ClientDeploymentProfile({
     });
   }, [filteredStaff, sortKey, sortDir]);
 
+  const totalStaffPages = Math.max(1, Math.ceil(sortedStaff.length / staffPageSize));
+  const safeStaffPage = Math.min(staffPage, totalStaffPages);
+  const paginatedStaff = sortedStaff.slice((safeStaffPage - 1) * staffPageSize, safeStaffPage * staffPageSize);
+
+  useEffect(() => {
+    setStaffPage(1);
+  }, [search, statusFilter, selectedJoRef, sortKey, sortDir]);
+
   const handleSort = (key) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -143,6 +153,7 @@ export default function ClientDeploymentProfile({
       setSortKey(key);
       setSortDir('asc');
     }
+    setStaffPage(1);
   };
 
   return (
@@ -233,16 +244,6 @@ export default function ClientDeploymentProfile({
               <b>Industry:</b> {clientData.industry} &nbsp;·&nbsp; <b>Primary Site:</b> {clientData.site} &nbsp;·&nbsp; <b>Supervisor:</b> {clientData.supervisor} ({clientData.supervisorContact})
             </div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            className="btn primary"
-            style={{ padding: '8px 16px', fontWeight: 800, fontSize: 12 }}
-            onClick={() => onNewDeployment(clientData.name)}
-          >
-            + Deploy Worker to {clientData.name.split(' ')[0]}
-          </button>
         </div>
       </div>
 
@@ -389,7 +390,7 @@ export default function ClientDeploymentProfile({
             </thead>
             <tbody>
               {sortedStaff.length ? (
-                sortedStaff.map((d) => {
+                paginatedStaff.map((d) => {
                   const status = stageToStatus(d.stage);
                   const meta = STATUS_META[status];
                   const read = complianceReadiness(d);
@@ -438,7 +439,6 @@ export default function ClientDeploymentProfile({
                         </div>
                       </td>
 
-
                       {/* JOB ORDER / ROLE */}
                       <td style={{ padding: '13px 18px' }}>
                         <div style={{ fontWeight: 700, color: 'var(--text)' }}>{d.position}</div>
@@ -446,38 +446,33 @@ export default function ClientDeploymentProfile({
                       </td>
 
                       {/* DEPLOYMENT FACILITY & SITE */}
-                      <td style={{ padding: '13px 18px' }}>
-                        <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>
-                          {d.site}
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--muted-fg)', marginTop: 2 }}>
-                          {d.shift || 'Regular Day Shift'} &nbsp;·&nbsp; Supv: {d.supervisor ? d.supervisor.split(' ')[0] : 'Supervisor'}
+                      <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: 'var(--primary)', flexShrink: 0 }}><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 11.4 7.6 11.9a1 1 0 0 0 1.3 0C13 21.4 20 15.4 20 10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" /></svg>
+                          <span>{d.site || clientData.site}</span>
                         </div>
                       </td>
 
                       {/* READ-ONLY COMPLIANCE STATUS */}
                       <td style={{ padding: '13px 18px' }}>
-                        {(() => {
-                          const effectiveMissing = PRE_DEPLOYMENT_ITEMS.filter((item) => !read.effectiveCompliance?.[item.key]);
-                          return (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 130 }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 700 }}>
-                                <span style={{ color: read.isReady ? 'var(--green)' : 'var(--amber, #d97706)' }}>
-                                  {read.isReady ? '✓ 6/6 Fully Compliant' : `${read.count}/6 Pre-Cleared`}
-                                </span>
-                                <span style={{ color: 'var(--muted-fg)' }}>{read.percent}%</span>
-                              </div>
-                              <div style={{ height: 6, borderRadius: 3, background: 'var(--bg)', overflow: 'hidden' }}>
-                                <div style={{ width: `${read.percent}%`, height: '100%', background: read.isReady ? 'var(--green)' : 'var(--amber, #d97706)', borderRadius: 3 }}></div>
-                              </div>
-                              {!read.isReady && effectiveMissing.length > 0 && (
-                                <div style={{ fontSize: '10px', color: 'var(--red, #dc2626)', fontWeight: 700, marginTop: 2 }}>
-                                  Missing: {effectiveMissing.map((m) => m.label).join(', ')}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <div style={{ width: 60, height: 6, background: 'var(--border-soft)', borderRadius: 4, overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                width: `${read.percent}%`,
+                                height: '100%',
+                                background: read.percent === 100 ? 'var(--green)' : read.percent >= 75 ? 'var(--amber)' : 'var(--red)',
+                                borderRadius: 4,
+                              }}
+                            />
+                          </div>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: read.percent === 100 ? 'var(--green)' : read.percent >= 75 ? 'var(--amber)' : 'var(--red)' }}>
+                            {read.percent}%
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--muted-fg)', marginTop: 2 }}>
+                          {read.completed}/{read.total} Required Verified
+                        </div>
                       </td>
 
                       {/* DEPLOYMENT STATUS */}
@@ -488,13 +483,15 @@ export default function ClientDeploymentProfile({
                             borderRadius: 12,
                             fontSize: 11,
                             fontWeight: 800,
-                            background: meta.soft,
+                            background: meta.bg,
                             color: meta.color,
-                            border: `1px solid ${meta.color}`,
-                            display: 'inline-block',
-                            whiteSpace: 'nowrap',
+                            border: `1px solid ${meta.border}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 5,
                           }}
                         >
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: meta.color }}></span>
                           {meta.label}
                         </span>
                       </td>
@@ -568,6 +565,20 @@ export default function ClientDeploymentProfile({
               )}
             </tbody>
           </table>
+          {sortedStaff.length > 0 && (
+            <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--panel)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <span style={{ fontSize: '11.5px', color: 'var(--muted-fg)' }}>
+                Showing <b>{(safeStaffPage - 1) * staffPageSize + 1}</b> – <b>{Math.min(safeStaffPage * staffPageSize, sortedStaff.length)}</b> of <b>{sortedStaff.length}</b> Deployed Staff (Max {staffPageSize} per page)
+              </span>
+              <Pagination
+                currentPage={safeStaffPage}
+                totalPages={totalStaffPages}
+                onPageChange={setStaffPage}
+                totalItems={sortedStaff.length}
+                pageSize={staffPageSize}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

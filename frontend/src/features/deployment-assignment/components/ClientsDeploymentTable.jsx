@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
+import Pagination from '../../../components/common/Pagination';
 
 const COLUMNS = [
   { key: 'name', label: 'Client Account', sortable: true },
@@ -27,6 +28,8 @@ export default function ClientsDeploymentTable({
 }) {
   const [sortKey, setSortKey] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
+  const [page, setPage] = useState(1);
+  const pageSize = 12;
 
   const sortedClients = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
@@ -42,6 +45,10 @@ export default function ClientsDeploymentTable({
     });
   }, [clientList, sortKey, sortDir]);
 
+  const totalPages = Math.max(1, Math.ceil(sortedClients.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedClients = sortedClients.slice((safePage - 1) * pageSize, safePage * pageSize);
+
   const handleSort = (key) => {
     if (sortKey === key) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -49,6 +56,7 @@ export default function ClientsDeploymentTable({
       setSortKey(key);
       setSortDir('asc');
     }
+    setPage(1);
   };
 
   return (
@@ -77,7 +85,7 @@ export default function ClientsDeploymentTable({
         </thead>
         <tbody>
           {sortedClients.length ? (
-            sortedClients.map((c) => {
+            paginatedClients.map((c) => {
               const newCount = newCountsByClient[c.name] || 0;
               const hasNew = newCount > 0;
               return (
@@ -172,51 +180,49 @@ export default function ClientsDeploymentTable({
                     </div>
                   </td>
 
+                  {/* ACTIVE JOB ORDERS */}
+                  <td style={{ padding: '13px 18px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--primary)', background: 'var(--blue-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
+                      {c.jobOrdersCount} Active Roles
+                    </span>
+                  </td>
 
-                {/* ACTIVE JOB ORDERS */}
-                <td style={{ padding: '13px 18px' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--primary)', background: 'var(--blue-soft)', padding: '4px 10px', borderRadius: 12, fontSize: 11.5 }}>
-                    {c.jobOrdersCount} Active Roles
-                  </span>
-                </td>
+                  {/* PRIMARY SITE */}
+                  <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: 'var(--primary)', flexShrink: 0 }}><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 11.4 7.6 11.9a1 1 0 0 0 1.3 0C13 21.4 20 15.4 20 10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" /></svg>
+                      <span>{c.site}</span>
+                    </div>
+                  </td>
 
-                {/* PRIMARY SITE */}
-                <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14, color: 'var(--primary)', flexShrink: 0 }}><path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 11.4 7.6 11.9a1 1 0 0 0 1.3 0C13 21.4 20 15.4 20 10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" /></svg>
-                    <span>{c.site}</span>
-                  </div>
-                </td>
+                  {/* ACCOUNT SUPERVISOR */}
+                  <td style={{ padding: '13px 18px' }}>
+                    <div style={{ fontWeight: 700, color: 'var(--text)' }}>{c.supervisor}</div>
+                    <div style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{c.supervisorContact}</div>
+                  </td>
 
-                {/* ACCOUNT SUPERVISOR */}
-                <td style={{ padding: '13px 18px' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--text)' }}>{c.supervisor}</div>
-                  <div style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{c.supervisorContact}</div>
-                </td>
+                  {/* DEPLOYMENT PERIOD */}
+                  <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600, fontSize: 11.5 }}>
+                    Jul 2026 – Jan 2027
+                  </td>
 
-                {/* DEPLOYMENT PERIOD */}
-                <td style={{ padding: '13px 18px', color: 'var(--text)', fontWeight: 600, fontSize: 11.5 }}>
-                  Jul 2026 – Jan 2027
-                </td>
-
-                {/* ACTION */}
-                <td style={{ padding: '13px 18px', textAlign: 'right' }}>
-                  <button
-                    className="btn primary"
-                    style={{ padding: '6px 14px', fontSize: 11, fontWeight: 800 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectClient(c.name);
-                    }}
-                  >
-                    View Job Orders &amp; Staff →
-                  </button>
-                </td>
-              </tr>
-            );
-          })
-        ) : (
-
+                  {/* ACTION */}
+                  <td style={{ padding: '13px 18px', textAlign: 'right' }}>
+                    <button
+                      className="btn primary"
+                      style={{ padding: '6px 14px', fontSize: 11, fontWeight: 800 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectClient(c.name);
+                      }}
+                    >
+                      View Job Orders &amp; Staff →
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
             <tr>
               <td colSpan={COLUMNS.length} style={{ padding: 36, textAlign: 'center', color: 'var(--muted-fg)', fontSize: 12 }}>
                 No clients found matching your search.
@@ -225,6 +231,20 @@ export default function ClientsDeploymentTable({
           )}
         </tbody>
       </table>
+      {sortedClients.length > 0 && (
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', background: 'var(--panel)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+          <span style={{ fontSize: '11.5px', color: 'var(--muted-fg)' }}>
+            Showing <b>{(safePage - 1) * pageSize + 1}</b> – <b>{Math.min(safePage * pageSize, sortedClients.length)}</b> of <b>{sortedClients.length}</b> Client Accounts (Max {pageSize} per page)
+          </span>
+          <Pagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={sortedClients.length}
+            pageSize={pageSize}
+          />
+        </div>
+      )}
     </div>
   );
 }

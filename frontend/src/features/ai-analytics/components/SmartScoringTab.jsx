@@ -4,6 +4,8 @@ import { CLIENTS } from '../../client-management/data/mockClients';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
 import ClientsAiScoringTable from './ClientsAiScoringTable';
 import Pagination from '../../../components/common/Pagination';
+import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
+import { saveStoredStage, getCachedApplications, saveCachedApplications } from '../../recruitment-selection/services/RecruitmentSelectionService';
 
 export default function SmartScoringTab() {
   const [selectedClientName, setSelectedClientName] = useState(null);
@@ -13,7 +15,7 @@ export default function SmartScoringTab() {
   const [candidateSearch, setCandidateSearch] = useState('');
   const [scoreFilter, setScoreFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(12);
   const [selectedCandidateModal, setSelectedCandidateModal] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
 
@@ -208,7 +210,37 @@ export default function SmartScoringTab() {
   const paginatedCandidates = filteredCandidates.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleShortlist = (candidateName, jobTitle, clientName) => {
-    showToast(`Candidate ${candidateName} successfully shortlisted for ${jobTitle} at ${clientName}!`);
+    // 1. Advance candidate into client_interview stage in recruitment pipeline cache
+    try {
+      const existingApps = getCachedApplications() || [];
+      const targetApp = existingApps.find((a) => a.name === candidateName);
+      if (targetApp) {
+        targetApp.status = 'client_interview';
+        targetApp.clientEndorsementStatus = 'Endorsed for Client Review';
+        saveStoredStage(targetApp.id, 'client_interview');
+        saveCachedApplications(existingApps);
+      } else {
+        saveStoredStage(candidateName, 'client_interview');
+      }
+    } catch (e) {
+      console.warn('Could not sync shortlist to recruitment cache:', e);
+    }
+
+    // 2. Broadcast real-time event across Recruitment Board and Client Portal
+    try {
+      broadcastRealtimeEvent('RECRUITMENT_APPLICATION_UPDATED', {
+        candidateName,
+        jobTitle,
+        clientName,
+        status: 'client_interview',
+        clientEndorsementStatus: 'Endorsed for Client Review',
+        timestamp: Date.now(),
+      });
+    } catch (e) {
+      console.warn('Could not broadcast shortlist event:', e);
+    }
+
+    showToast(`Candidate ${candidateName} successfully shortlisted & endorsed for Client Interview at ${clientName}!`);
   };
 
   const getInitials = (name = '') => {
@@ -717,13 +749,13 @@ export default function SmartScoringTab() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead>
                     <tr style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', color: 'var(--muted-fg)', fontWeight: 700, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      <th style={{ padding: '12px 18px', textAlign: 'left' }}>Candidate Name &amp; Pooling Status</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center' }}>AI Match Score</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center' }}>Skills Fit</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left' }}>Matched Skills in JD</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left' }}>Skill Gaps / Missing</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left' }}>Verified Credentials</th>
-                      <th style={{ padding: '12px 18px', textAlign: 'right' }}>Action</th>
+                      <th style={{ padding: '14px 18px', textAlign: 'left' }}>Candidate Name &amp; Pooling Status</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>AI Match Score</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center' }}>Skills Fit</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'left' }}>Matched Skills in JD</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'left' }}>Skill Gaps / Missing</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'left' }}>Verified Credentials</th>
+                      <th style={{ padding: '14px 18px', textAlign: 'right' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -745,12 +777,12 @@ export default function SmartScoringTab() {
                             onClick={() => setSelectedCandidateModal({ candidate: c, requisition: activeRequisition })}
                           >
                             {/* CANDIDATE NAME */}
-                            <td style={{ padding: '12px 18px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <td style={{ padding: '16px 18px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                                 <div
                                   style={{
-                                    width: 32,
-                                    height: 32,
+                                    width: 36,
+                                    height: 36,
                                     borderRadius: '50%',
                                     background: isTopFit ? 'var(--green)' : isStrongFit ? 'var(--blue)' : 'var(--purple)',
                                     color: '#fff',
@@ -760,26 +792,29 @@ export default function SmartScoringTab() {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     flexShrink: 0,
+                                    boxShadow: 'var(--shadow-xs)',
                                   }}
                                 >
                                   {c.name.charAt(0)}
                                 </div>
-                                <div>
-                                  <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13 }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                  <div style={{ fontWeight: 800, color: 'var(--text)', fontSize: 13.5, lineHeight: 1.25 }}>
                                     {c.name}
                                   </div>
-                                  <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>
-                                    {c.yearsExp} Verified Exp &nbsp;·&nbsp; <span style={{ color: 'var(--green)', fontWeight: 700 }}>In Pooling</span>
+                                  <div style={{ fontSize: 11, color: 'var(--muted-fg)', display: 'flex', alignItems: 'center', gap: 6, lineHeight: 1.2 }}>
+                                    <span>{c.yearsExp} Verified Exp</span>
+                                    <span style={{ opacity: 0.5 }}>•</span>
+                                    <span style={{ color: 'var(--green)', fontWeight: 700 }}>In Pooling</span>
                                   </div>
                                 </div>
                               </div>
                             </td>
 
                             {/* AI MATCH SCORE */}
-                            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                            <td style={{ padding: '16px 16px', textAlign: 'center' }}>
                               <span
                                 style={{
-                                  padding: '4px 10px',
+                                  padding: '5px 12px',
                                   borderRadius: 12,
                                   fontSize: 11.5,
                                   fontWeight: 900,
@@ -795,18 +830,18 @@ export default function SmartScoringTab() {
                             </td>
 
                             {/* SKILLS FIT */}
-                            <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                              <div style={{ fontWeight: 800, color: 'var(--green)', fontSize: 12.5 }}>
+                            <td style={{ padding: '16px 16px', textAlign: 'center' }}>
+                              <div style={{ fontWeight: 800, color: 'var(--green)', fontSize: 12.5, lineHeight: 1.2 }}>
                                 {c.skillsFit}%
                               </div>
-                              <div style={{ fontSize: 10, color: 'var(--muted-fg)' }}>
+                              <div style={{ fontSize: 10, color: 'var(--muted-fg)', marginTop: 3, lineHeight: 1.2 }}>
                                 {c.matchedSkills.length}/{activeRequisition.requiredSkills.length} Verified
                               </div>
                             </td>
 
                             {/* MATCHED SKILLS */}
-                            <td style={{ padding: '12px 16px' }}>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 280 }}>
+                            <td style={{ padding: '16px 16px' }}>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 280 }}>
                                 {c.matchedSkills.map((skill, sIdx) => (
                                   <span
                                     key={sIdx}
@@ -828,9 +863,9 @@ export default function SmartScoringTab() {
                             </td>
 
                             {/* SKILL GAPS / MISSING */}
-                            <td style={{ padding: '12px 16px' }}>
+                            <td style={{ padding: '16px 16px' }}>
                               {c.missingSkills.length > 0 ? (
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 220 }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 220 }}>
                                   {c.missingSkills.map((gap, gIdx) => (
                                     <span
                                       key={gIdx}
@@ -857,8 +892,8 @@ export default function SmartScoringTab() {
                             </td>
 
                             {/* VERIFIED CREDENTIALS */}
-                            <td style={{ padding: '12px 16px' }}>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 200 }}>
+                            <td style={{ padding: '16px 16px' }}>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, maxWidth: 200 }}>
                                 {c.verifiedCertifications.map((cert, cIdx) => (
                                   <span
                                     key={cIdx}
@@ -880,12 +915,12 @@ export default function SmartScoringTab() {
                             </td>
 
                             {/* ACTIONS */}
-                            <td style={{ padding: '12px 18px', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+                            <td style={{ padding: '16px 18px', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
                                 <button
                                   type="button"
                                   className="btn primary"
-                                  style={{ padding: '5px 12px', fontSize: 11, fontWeight: 800, background: 'var(--blue)', borderColor: 'var(--blue)' }}
+                                  style={{ padding: '6px 12px', fontSize: 11, fontWeight: 800, background: 'var(--blue)', borderColor: 'var(--blue)' }}
                                   onClick={() => handleShortlist(c.name, activeRequisition.jobTitle, activeRequisition.client)}
                                 >
                                   Shortlist →
@@ -893,7 +928,7 @@ export default function SmartScoringTab() {
                                 <button
                                   type="button"
                                   className="btn"
-                                  style={{ padding: '5px 10px', fontSize: 11, fontWeight: 700 }}
+                                  style={{ padding: '6px 10px', fontSize: 11, fontWeight: 700 }}
                                   onClick={() => setSelectedCandidateModal({ candidate: c, requisition: activeRequisition })}
                                 >
                                   Deep Dive
@@ -914,8 +949,8 @@ export default function SmartScoringTab() {
                 </table>
               </div>
 
-              {totalPages > 1 && (
-                <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)' }}>
+              {filteredCandidates.length > 0 && (
+                <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', background: 'var(--panel)' }}>
                   <Pagination
                     currentPage={page}
                     totalPages={totalPages}

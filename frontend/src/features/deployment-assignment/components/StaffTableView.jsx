@@ -5,7 +5,7 @@ export default function StaffTableView({ deployments, onOpen }) {
   const [selectedClient, setSelectedClient] = useState('all');
   const [activeStatus, setActiveStatus] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(12);
 
   // Status Filter options
   const statusOptions = [{ v: 'all', label: 'All Deployments' }, ...STATUS_ORDER.map((s) => ({ v: s, label: STATUS_META[s].label }))];
@@ -264,10 +264,10 @@ export default function StaffTableView({ deployments, onOpen }) {
                   setCurrentPage(1);
                 }}
               >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
+                <option value={12}>12</option>
+                <option value={24}>24</option>
+                <option value={48}>48</option>
+                <option value={96}>96</option>
               </select>
             </div>
 

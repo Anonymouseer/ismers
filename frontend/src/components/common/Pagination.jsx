@@ -1,7 +1,7 @@
 import './Pagination.css';
 
-export default function Pagination({ currentPage, totalPages, onPageChange, totalItems, pageSize }) {
-  if (totalPages <= 1) return null;
+export default function Pagination({ currentPage = 1, totalPages = 1, onPageChange, totalItems, pageSize, hideIfSingle = false }) {
+  if (hideIfSingle && totalPages <= 1) return null;
 
   const pages = [];
   const maxVisible = 5;
@@ -20,7 +20,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, tota
     <div className="pagination-bar">
       {totalItems != null && pageSize != null && (
         <span className="pagination-info">
-          Showing {Math.min((currentPage - 1) * pageSize + 1, totalItems)}-{Math.min(currentPage * pageSize, totalItems)} of {totalItems}
+          Showing <b>{totalItems > 0 ? Math.min((currentPage - 1) * pageSize + 1, totalItems) : 0}</b>–<b>{Math.min(currentPage * pageSize, totalItems)}</b> of <b>{totalItems}</b> (Max {pageSize} per page)
         </span>
       )}
 

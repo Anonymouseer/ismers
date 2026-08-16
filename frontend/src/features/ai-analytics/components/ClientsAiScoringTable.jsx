@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
+import Pagination from '../../../components/common/Pagination';
 
 const COLUMNS = [
   { key: 'name', label: 'Client Account', sortable: true },
@@ -28,7 +29,7 @@ export default function ClientsAiScoringTable({
   const [sortKey, setSortKey] = useState('topMatchScore'); // Default sort by highest matching score percentage!
   const [sortDir, setSortDir] = useState('desc');
   const [page, setPage] = useState(1);
-  const pageSize = 10; // Max 10 rows per page as requested
+  const pageSize = 12; // Max 12 rows per page as requested
 
   const sortedClients = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
@@ -251,8 +252,8 @@ export default function ClientsAiScoringTable({
         </table>
       </div>
 
-      {/* ── NEXT / PREV PAGINATION BAR (MAX 10 PER PAGE) ── */}
-      {sortedClients.length > pageSize && (
+      {/* ── PAGINATION BAR (MAX 12 PER PAGE) ── */}
+      {sortedClients.length > 0 && (
         <div
           style={{
             padding: '12px 18px',
@@ -266,46 +267,16 @@ export default function ClientsAiScoringTable({
           }}
         >
           <div style={{ fontSize: 11.5, color: 'var(--muted-fg)', fontWeight: 700 }}>
-            Showing <b>{(safePage - 1) * pageSize + 1}</b> – <b>{Math.min(safePage * pageSize, sortedClients.length)}</b> of <b>{sortedClients.length}</b> Client Accounts
+            Showing <b>{(safePage - 1) * pageSize + 1}</b> – <b>{Math.min(safePage * pageSize, sortedClients.length)}</b> of <b>{sortedClients.length}</b> Client Accounts (Max {pageSize} per page)
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              type="button"
-              className="btn"
-              disabled={safePage <= 1}
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              style={{
-                padding: '5px 12px',
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: safePage <= 1 ? 'not-allowed' : 'pointer',
-                opacity: safePage <= 1 ? 0.5 : 1,
-              }}
-            >
-              ← Prev
-            </button>
-
-            <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--text)', padding: '0 4px' }}>
-              Page {safePage} of {totalPages}
-            </span>
-
-            <button
-              type="button"
-              className="btn"
-              disabled={safePage >= totalPages}
-              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              style={{
-                padding: '5px 12px',
-                fontSize: 11.5,
-                fontWeight: 700,
-                cursor: page >= totalPages ? 'not-allowed' : 'pointer',
-                opacity: page >= totalPages ? 0.5 : 1,
-              }}
-            >
-              Next →
-            </button>
-          </div>
+          <Pagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            totalItems={sortedClients.length}
+            pageSize={pageSize}
+          />
         </div>
       )}
     </div>

@@ -182,13 +182,6 @@ export default function DeploymentAssignmentPage() {
               {stats.total} personnel assigned &nbsp;·&nbsp; {clientDeploymentList.length} client accounts &nbsp;·&nbsp; Deployment &amp; Site Tracking
             </div>
           </div>
-
-          <button className="btn primary" onClick={() => setModalOpen(true)}>
-            <svg className="icon" viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            + New Deployment Schedule
-          </button>
         </div>
 
         {/* MASTER DRILL-DOWN WORKSPACE (LEVEL 1 vs LEVEL 2/3) */}
