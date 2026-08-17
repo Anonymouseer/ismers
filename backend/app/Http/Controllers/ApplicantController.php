@@ -1057,6 +1057,9 @@ class ApplicantController extends Controller
         $updates = [];
         if ($request->has('recruitment_stage')) {
             $updates['recruitment_stage'] = $request->recruitment_stage;
+            if ($request->recruitment_stage === 'client_interview' && !$request->has('client_endorsement_status')) {
+                $updates['client_endorsement_status'] = 'Pending Review';
+            }
         }
         if ($request->has('status')) {
             $updates['status'] = $request->status;

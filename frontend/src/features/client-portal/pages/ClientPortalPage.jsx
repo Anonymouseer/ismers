@@ -14,6 +14,8 @@ import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/
 import { CLIENTS } from '../../client-management/data/mockClients';
 import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
 import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService';
+import { getCachedApplications } from '../../recruitment-selection/services/RecruitmentSelectionService';
+import { APPLICATIONS } from '../../recruitment-selection/data/mockApplications';
 import './ClientPortalPage.css';
 
 const TODAY = new Date().toLocaleDateString('en-US', {
@@ -422,140 +424,7 @@ export default function ClientPortalPage() {
     }, 400);
   };
 
-  useEffect(() => {
-    // 1. Initial Session Load
-    const rawSession = localStorage.getItem('cp_session');
-    if (rawSession) {
-      try {
-        setSession(JSON.parse(rawSession));
-      } catch {
-        /* ignore */
-      }
-    }
 
-    // 2. Fetch candidates & synchronize endorsements
-    fetch('http://localhost:8000/api/v1/recruitment/applications')
-      .then((res) => (res.ok ? res.json() : []))
-      .then((dbApps) => {
-        if (dbApps && dbApps.length > 0) {
-          const clientCandidates = dbApps
-            .filter((a) => a.status === 'client_interview' || a.status === 'hr_requirements' || a.status === 're_pooling')
-            .map((a) => {
-              const cpStatus =
-                a.status === 're_pooling' && (!a.clientEndorsementStatus || a.clientEndorsementStatus === 'Pending Review')
-                  ? 'Declined'
-                  : a.clientEndorsementStatus ||
-                    localStorage.getItem(`cp_endorsement_${a.name}`) ||
-                    localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
-                    'Pending Review';
-
-              return {
-                id: `cand-${a.id}`,
-                dbId: a.id,
-                regId: a.regId,
-                name: a.name,
-                position: a.jobTitle || 'Operations Candidate',
-                jobRef: a.jobId ? `PRF-2026-${String(a.jobId).padStart(4, '0')}` : 'PRF-2026-0081',
-                matchScore: a.score || 88,
-                experience: a.experience || '3 years relevant industry experience',
-                skills: ['Technical Proficiency', 'Communications', 'Operations Protocol'],
-                endorsedDate: a.applied || 'Aug 14, 2026',
-                status: cpStatus,
-                recruiter: 'M. Dela Cruz (Lead Recruiter)',
-              };
-            });
-
-          if (clientCandidates.length > 0) {
-            setEndorsedCandidates((prev) => {
-              const existingMap = new Map(prev.map((c) => [c.name, c]));
-              clientCandidates.forEach((c) => {
-                existingMap.set(c.name, { ...(existingMap.get(c.name) || {}), ...c });
-              });
-              return Array.from(existingMap.values());
-            });
-          }
-        }
-      })
-      .catch(() => {});
-
-    // 3. Realtime Cross-Tab and Subsystem Synchronization
-    const handleSync = (data) => {
-      if (!data) return;
-
-      if (data.type === 'ENDORSEMENT_STATUS_CHANGED' || (data.type === 'STAGE_CHANGED' && data.payload?.stage === 'client_interview')) {
-        const { candidateId, dbId, regId, name, status, stage, applicant, candidate } = data.payload || {};
-        const cleanCandId = candidateId ? String(candidateId).replace(/^cand-/, '') : '';
-        const candName = name || applicant?.name || candidate?.name;
-        const resolvedStatus = status || 'Pending Review';
-
-        setEndorsedCandidates((prev) => {
-          const index = prev.findIndex(
-            (c) =>
-              (dbId && String(c.dbId) === String(dbId)) ||
-              (regId && c.regId && c.regId.toLowerCase() === regId.toLowerCase()) ||
-              (candName && c.name && c.name.toLowerCase().trim() === candName.toLowerCase().trim()) ||
-              (cleanCandId && (String(c.dbId) === cleanCandId || c.id === candidateId || c.id === `cand-${cleanCandId}`))
-          );
-
-          if (index !== -1) {
-            const copy = [...prev];
-            copy[index] = { ...copy[index], status: resolvedStatus };
-            return copy;
-          }
-
-          // If new candidate endorsed to Client Portal (0ms instant addition)
-          const newCand = candidate || {
-            id: candidateId ? (String(candidateId).startsWith('cand-') ? candidateId : `cand-${candidateId}`) : `cand-${dbId || Date.now()}`,
-            dbId: dbId || candidateId,
-            regId: regId || applicant?.regId,
-            name: candName || 'Candidate',
-            position: applicant?.jobTitle || 'Operations Candidate',
-            jobRef: applicant?.jobId ? `PRF-2026-${String(applicant.jobId).padStart(4, '0')}` : 'PRF-2026-0081',
-            matchScore: applicant?.score || 88,
-            experience: applicant?.experience || '3 years relevant industry experience',
-            skills: ['Technical Proficiency', 'Communications', 'Operations Protocol'],
-            endorsedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-            status: resolvedStatus,
-            recruiter: 'M. Dela Cruz (Lead Recruiter)',
-          };
-
-          return [newCand, ...prev];
-        });
-
-        setSelectedCandidate((prev) => {
-          if (!prev) return prev;
-          const matches =
-            (dbId && String(prev.dbId) === String(dbId)) ||
-            (regId && prev.regId && prev.regId.toLowerCase() === regId.toLowerCase()) ||
-            (candName && prev.name && prev.name.toLowerCase().trim() === candName.toLowerCase().trim()) ||
-            (cleanCandId && (String(prev.dbId) === cleanCandId || prev.id === candidateId || prev.id === `cand-${cleanCandId}`));
-          return matches ? { ...prev, status: resolvedStatus } : prev;
-        });
-      } else if (data.type === 'STAGE_CHANGED') {
-        const { candidateId, dbId, regId, name, stage } = data.payload || {};
-        const cleanCandId = candidateId ? String(candidateId).replace(/^cand-/, '') : '';
-
-        if (stage === 'pooling' || stage === 'area_manager') {
-          setEndorsedCandidates((prev) =>
-            prev.map((c) => {
-              const matches =
-                (dbId && String(c.dbId) === String(dbId)) ||
-                (regId && c.regId && c.regId.toLowerCase() === regId.toLowerCase()) ||
-                (name && c.name && c.name.toLowerCase().trim() === name.toLowerCase().trim()) ||
-                (cleanCandId && (String(c.dbId) === cleanCandId || c.id === candidateId || c.id === `cand-${cleanCandId}`));
-              if (matches) {
-                return { ...c, status: 'Pending Review' };
-              }
-              return c;
-            })
-          );
-        }
-      }
-    };
-
-    const unsub = subscribeRealtimeEvents(handleSync);
-    return () => unsub();
-  }, []);
 
   const handleEndorsementStatusChange = (candId, newStatus) => {
     const targetCand = endorsedCandidates.find((c) => c.id === candId || c.dbId === candId || c.regId === candId || c.name === candId);
@@ -918,65 +787,115 @@ export default function ClientPortalPage() {
         }
 
         // 3. Load Candidate Endorsements (Scoped to this Client only)
-        const companyKey = matchedCm?.name || clientCompName;
-        const clientJobTitles = (matchedCm?.jobs || []).map((j) => j.title.toLowerCase());
+        const companyKey = (matchedCm?.name || clientCompName || '').trim();
+        const clientJobTitles = (matchedCm?.jobs || []).map((j) => (j.title || '').toLowerCase().trim());
         const dynamicEndorsed = [];
 
         try {
-          const recRes = await fetch('http://localhost:8000/api/v1/recruitment/applications');
-          if (recRes.ok) {
-            const apps = await recRes.json();
-            const endorsedStages = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired'];
-            
-            // Filter strictly for this client
-            const matchedApps = apps.filter((a) => {
-              if (!endorsedStages.includes(a.status)) return false;
-              const candClient = (a.client || '').toLowerCase();
-              const candJob = (a.jobTitle || '').toLowerCase();
-              return (
-                candClient === companyKey.toLowerCase() ||
-                (companyKey && candClient.includes(companyKey.toLowerCase())) ||
-                clientJobTitles.includes(candJob)
-              );
-            });
-
-            matchedApps.forEach((a) => {
-              const skillsArr = Array.isArray(a.skills) && a.skills.length > 0
-                ? a.skills.map((s) => (typeof s === 'string' ? s : s.name))
-                : ['BOSH Certified', 'PPE Compliance', 'Hazard Inspection', 'OSHS'];
-              dynamicEndorsed.push({
-                id: `cand-${a.id || a.regId}`,
-                dbId: a.id,
-                regId: a.regId,
-                name: a.name,
-                position: a.jobTitle || 'Safety Officer',
-                jobRef: a.jobId ? `PRF-2026-${String(a.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
-                matchScore: a.score || 80,
-                experience: a.experience || '4 years accredited safety officer in construction site projects',
-                skills: skillsArr,
-                workHistory: a.workHistory || [],
-                education: a.education || [],
-                documents: a.documents || [],
-                breakdown: a.breakdown || null,
-                phone: a.phone || null,
-                email: a.email || null,
-                endorsedDate: a.applied || 'Aug 14, 2026',
-                status: (a.clientEndorsementStatus && a.clientEndorsementStatus !== 'Pending Review')
-                  ? a.clientEndorsementStatus
-                  : (localStorage.getItem(`cp_endorsement_${a.name}`) ||
-                     localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
-                     localStorage.getItem(`cp_endorsement_cand-${a.regId}`) ||
-                     localStorage.getItem(`cp_endorsement_${a.id}`) ||
-                     localStorage.getItem(`cp_endorsement_${a.regId}`) ||
-                     a.clientEndorsementStatus ||
-                     'Pending Review'),
-                recruiter: a.assignedManager || matchedCm?.am || 'PRIMEPOWER Recruitment',
-                client: a.client || companyKey,
-              });
-            });
+          let apps = [];
+          try {
+            const recRes = await fetch('http://localhost:8000/api/v1/recruitment/applications');
+            if (recRes.ok) {
+              const resJson = await recRes.json();
+              if (Array.isArray(resJson) && resJson.length > 0) {
+                apps = resJson;
+              }
+            }
+          } catch {
+            // Non-fatal, fallback to cached / mock
           }
-        } catch {
-          // fallback
+
+          if (!apps.length) {
+            apps = getCachedApplications() || APPLICATIONS || [];
+          }
+
+          // Read stored stages from localStorage to ensure immediate reflection
+          let storedStages = {};
+          try {
+            const rawStages = localStorage.getItem('ismers_recruitment_stages');
+            if (rawStages) storedStages = JSON.parse(rawStages);
+          } catch {}
+
+          const endorsedStages = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired', 're_pooling'];
+
+          // Filter candidates that are in an endorsed stage
+          const matchedApps = apps.filter((a) => {
+            const effectiveStage = storedStages[a.id] || (a.regId && storedStages[a.regId]) || storedStages[a.name] || a.status;
+            if (!endorsedStages.includes(effectiveStage)) return false;
+
+            const candClient = (a.client || '').toLowerCase().trim();
+            const candJob = (a.jobTitle || a.position || '').toLowerCase().trim();
+            const compLower = companyKey.toLowerCase();
+
+            // Match if no client constraint, client name matches, or job title matches client roster
+            const matchesClient =
+              !companyKey ||
+              !candClient ||
+              candClient === compLower ||
+              candClient.includes(compLower) ||
+              compLower.includes(candClient) ||
+              clientJobTitles.includes(candJob);
+
+            return matchesClient;
+          });
+
+          matchedApps.forEach((a) => {
+            const effectiveStage = storedStages[a.id] || (a.regId && storedStages[a.regId]) || storedStages[a.name] || a.status;
+            
+            // Resolve Endorsement Status:
+            // When candidate is in 'client_interview', they are actively awaiting client review.
+            // If they were previously declined and re-endorsed, status resets to 'Pending Review'.
+            let cpStatus = 'Pending Review';
+            const localStatus =
+              localStorage.getItem(`cp_endorsement_${a.name}`) ||
+              localStorage.getItem(`cp_endorsement_cand-${a.id}`) ||
+              (a.regId && localStorage.getItem(`cp_endorsement_cand-${a.regId}`)) ||
+              localStorage.getItem(`cp_endorsement_${a.id}`) ||
+              (a.regId && localStorage.getItem(`cp_endorsement_${a.regId}`));
+
+            if (effectiveStage === 'client_interview') {
+              if (localStatus === 'Accepted for Interview' || a.clientEndorsementStatus === 'Accepted for Interview' || a.interview) {
+                cpStatus = 'Accepted for Interview';
+              } else {
+                cpStatus = 'Pending Review';
+              }
+            } else if (['hr_requirements', 'contract_signing', 'for_deployment', 'hired'].includes(effectiveStage)) {
+              cpStatus = 'Passed Interview';
+            } else if (effectiveStage === 're_pooling') {
+              cpStatus = 'Declined';
+            } else {
+              cpStatus = localStatus || a.clientEndorsementStatus || 'Pending Review';
+            }
+
+            const skillsArr = Array.isArray(a.skills) && a.skills.length > 0
+              ? a.skills.map((s) => (typeof s === 'string' ? s : s.name))
+              : ['Technical Proficiency', 'Communications', 'Operations Protocol'];
+
+            dynamicEndorsed.push({
+              id: a.id ? (String(a.id).startsWith('cand-') ? a.id : `cand-${a.id}`) : `cand-${a.regId || Date.now()}`,
+              dbId: a.id,
+              regId: a.regId,
+              name: a.name,
+              position: a.jobTitle || a.position || 'Operations Candidate',
+              jobRef: a.jobId ? `PRF-2026-${String(a.jobId).replace(/\D/g, '').padStart(4, '0')}` : 'PRF-2026-0081',
+              matchScore: a.score || 88,
+              experience: a.experience || '3 years relevant industry experience',
+              skills: skillsArr,
+              workHistory: a.workHistory || [],
+              education: a.education || [],
+              documents: a.documents || [],
+              breakdown: a.breakdown || null,
+              phone: a.phone || null,
+              email: a.email || null,
+              endorsedDate: a.applied || 'Aug 14, 2026',
+              status: cpStatus,
+              recruiter: a.assignedManager || matchedCm?.am || 'M. Dela Cruz (Lead Recruiter)',
+              client: a.client || companyKey,
+              interview: a.interview || null,
+            });
+          });
+        } catch (err) {
+          console.warn('Could not load candidates in Client Portal:', err);
         }
 
         if (!cancelled) {
@@ -1009,54 +928,102 @@ export default function ClientPortalPage() {
       }
 
       // 2. Candidate Endorsements real-time update
-      if (data.type === 'CANDIDATE_ENDORSED' || data.type === 'STAGE_CHANGED') {
-        const { applicant } = data.payload || {};
-        if (applicant) {
-          const rawCurrent = localStorage.getItem('cp_session');
-          const currentSession = rawCurrent ? JSON.parse(rawCurrent) : null;
-          const currentCompany = currentSession?.company?.toLowerCase() || '';
+      if (
+        data.type === 'ENDORSEMENT_STATUS_CHANGED' ||
+        data.type === 'STAGE_CHANGED' ||
+        data.type === 'CANDIDATE_ENDORSED' ||
+        data.type === 'APPLICANT_STATUS_UPDATED'
+      ) {
+        const payload = data.payload || {};
+        const { candidateId, dbId, regId, name, status, stage, applicant, candidate, interview } = payload;
+        const cleanCandId = candidateId ? String(candidateId).replace(/^cand-/, '') : '';
+        const candName = name || applicant?.name || candidate?.name;
+        const effectiveStage = stage || applicant?.status || applicant?.recruitmentStage;
 
-          // Only accept realtime candidate events that match this client company
-          const candClient = (applicant.client || '').toLowerCase();
-          const isForThisClient = !currentCompany ||
-            candClient === currentCompany ||
-            candClient.includes(currentCompany) ||
-            currentCompany.includes(candClient);
-
-          if (!isForThisClient) return;
-
-          setEndorsedCandidates((prev) => {
-            if (prev.some((c) => c.name === applicant.name || (applicant.id && c.dbId === applicant.id))) {
-              return prev.map((c) => {
-                if (c.name === applicant.name || (applicant.id && c.dbId === applicant.id)) {
-                  return { ...c, status: applicant.clientEndorsementStatus || c.status };
-                }
-                return c;
-              });
-            }
-            const skillsArr = Array.isArray(applicant.skills) && applicant.skills.length > 0
-              ? applicant.skills.map((s) => (typeof s === 'string' ? s : s.name))
-              : ['BOSH Certified', 'PPE Compliance', 'Hazard Inspection', 'OSHS'];
-            return [
-              {
-                id: `cand-${applicant.id || applicant.regId || Date.now()}`,
-                dbId: applicant.id,
-                regId: applicant.regId,
-                name: applicant.name,
-                position: applicant.jobTitle || 'Candidate',
-                jobRef: applicant.jobId ? `PRF-2026-${String(applicant.jobId).replace('jo', '00')}` : 'PRF-2026-0035',
-                matchScore: applicant.score || 80,
-                experience: applicant.experience || 'Verified candidate for client final interview',
-                skills: skillsArr,
-                endorsedDate: applicant.applied || new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-                status: applicant.clientEndorsementStatus || 'Pending Review',
-                recruiter: applicant.assignedManager || 'PRIMEPOWER Recruitment',
-                client: applicant.client || currentSession?.company,
-              },
-              ...prev,
-            ];
-          });
+        // Compute resolved endorsement status
+        let resolvedStatus = status;
+        if (!resolvedStatus) {
+          if (effectiveStage === 'client_interview' || data.type === 'CANDIDATE_ENDORSED') {
+            resolvedStatus = 'Pending Review';
+          } else if (['hr_requirements', 'contract_signing', 'for_deployment', 'hired'].includes(effectiveStage)) {
+            resolvedStatus = 'Passed Interview';
+          } else if (effectiveStage === 're_pooling') {
+            resolvedStatus = 'Declined';
+          } else {
+            resolvedStatus = 'Pending Review';
+          }
         }
+
+        // If candidate stage changed to pooling or area_manager, reset status to Pending Review
+        if (effectiveStage === 'pooling' || effectiveStage === 'area_manager') {
+          resolvedStatus = 'Pending Review';
+        }
+
+        const isEndorsedStage = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired', 're_pooling'].includes(effectiveStage) || data.type === 'CANDIDATE_ENDORSED' || data.type === 'ENDORSEMENT_STATUS_CHANGED';
+
+        setEndorsedCandidates((prev) => {
+          const index = prev.findIndex(
+            (c) =>
+              (dbId && String(c.dbId) === String(dbId)) ||
+              (regId && c.regId && c.regId.toLowerCase() === regId.toLowerCase()) ||
+              (candName && c.name && c.name.toLowerCase().trim() === candName.toLowerCase().trim()) ||
+              (cleanCandId && (String(c.dbId) === cleanCandId || c.id === candidateId || c.id === `cand-${cleanCandId}`)) ||
+              (candidateId && (String(c.id) === String(candidateId) || String(c.dbId) === String(candidateId)))
+          );
+
+          if (index !== -1) {
+            const copy = [...prev];
+            copy[index] = {
+              ...copy[index],
+              status: resolvedStatus,
+              ...(interview !== undefined ? { interview } : {}),
+            };
+            return copy;
+          }
+
+          if (!isEndorsedStage) return prev;
+
+          // If new candidate endorsed to Client Portal (0ms instant addition)
+          const skillsArr = Array.isArray(applicant?.skills) && applicant.skills.length > 0
+            ? applicant.skills.map((s) => (typeof s === 'string' ? s : s.name))
+            : ['Technical Proficiency', 'Communications', 'Operations Protocol'];
+
+          const newCand = candidate || {
+            id: candidateId ? (String(candidateId).startsWith('cand-') ? candidateId : `cand-${candidateId}`) : `cand-${dbId || regId || Date.now()}`,
+            dbId: dbId || candidateId,
+            regId: regId || applicant?.regId,
+            name: candName || 'Candidate',
+            position: applicant?.jobTitle || applicant?.position || 'Operations Candidate',
+            jobRef: applicant?.jobId ? `PRF-2026-${String(applicant.jobId).replace(/\D/g, '').padStart(4, '0')}` : 'PRF-2026-0081',
+            matchScore: applicant?.score || 88,
+            experience: applicant?.experience || '3 years relevant industry experience',
+            skills: skillsArr,
+            workHistory: applicant?.workHistory || [],
+            education: applicant?.education || [],
+            documents: applicant?.documents || [],
+            breakdown: applicant?.breakdown || null,
+            phone: applicant?.phone || null,
+            email: applicant?.email || null,
+            endorsedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+            status: resolvedStatus,
+            recruiter: applicant?.assignedManager || 'M. Dela Cruz (Lead Recruiter)',
+            client: applicant?.client || session?.company || 'Client Organization',
+            interview: interview || applicant?.interview || null,
+          };
+
+          return [newCand, ...prev];
+        });
+
+        setSelectedCandidate((prev) => {
+          if (!prev) return prev;
+          const matches =
+            (dbId && String(prev.dbId) === String(dbId)) ||
+            (regId && prev.regId && prev.regId.toLowerCase() === regId.toLowerCase()) ||
+            (candName && prev.name && prev.name.toLowerCase().trim() === candName.toLowerCase().trim()) ||
+            (cleanCandId && (String(prev.dbId) === cleanCandId || prev.id === candidateId || prev.id === `cand-${cleanCandId}`)) ||
+            (candidateId && (String(prev.id) === String(candidateId) || String(prev.dbId) === String(candidateId)));
+          return matches ? { ...prev, status: resolvedStatus, ...(interview !== undefined ? { interview } : {}) } : prev;
+        });
       }
     };
 

@@ -3171,7 +3171,9 @@
    CLIENT FEEDBACK PAGE
    ============================================================ */
 
---cp-star-active: #f59e0b;
+:root {
+  --cp-star-active: #f59e0b;
+}
 
 /* METRICS ROW */
 .cp-feedback-metrics-row {
