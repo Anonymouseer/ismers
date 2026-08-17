@@ -9,6 +9,7 @@ import ClientPortalDashboardSidebar from '../components/ClientPortalDashboardSid
 import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import ClientCandidateModal from '../components/ClientCandidateModal';
 import ClientScheduleInterviewModal from '../components/ClientScheduleInterviewModal';
+import ClientFeedbackPage from '../components/ClientFeedbackPage';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import { CLIENTS } from '../../client-management/data/mockClients';
 import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
@@ -1886,6 +1887,14 @@ export default function ClientPortalPage() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ── VIEW: CLIENT FEEDBACK ── */}
+          {activeTab === 'feedback' && (
+            <ClientFeedbackPage
+              session={session}
+              deployedRoster={deployedRoster}
+            />
           )}
 
           {/* ── VIEW: SETTINGS ── */}
