@@ -267,7 +267,7 @@ export default function ApplicantProfilingBoard() {
                   {filtered.filter((c) => boardColumn(c) === viewMode).map((cand) => {
                     const job = targetById(cand.targetJobId);
                     const statusMeta = STATUS_META[cand.status] || STATUS_META.active;
-                    const aiScore = cand.aiScore ?? (job ? computeMatchScore(cand, job) : null);
+                    const aiScore = job ? computeMatchScore(cand, job) : (cand.aiScore ?? null);
                     const scoreClass = aiScore != null ? (aiScore >= 70 ? 'high' : aiScore >= 40 ? 'mid' : 'low') : '';
                     return (
                       <tr key={cand.regId} onClick={() => setOpenRegId(cand.regId)} className="stage-table-row">

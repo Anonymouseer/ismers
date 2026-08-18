@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Applicant;
+use App\Models\JobOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -155,26 +156,90 @@ class ApplicantController extends Controller
         'jo36' => ['heavy equipment', 'backhoe', 'excavator', 'operator license', 'grading'],
     ];
 
+    private function resolveJobOrder(?string $targetId): ?JobOrder
+    {
+        if (! $targetId) {
+            return null;
+        }
+
+        // Try exact ref match (e.g. JO-001, JO-018)
+        $job = JobOrder::whereRaw('LOWER(ref) = ?', [strtolower($targetId)])->first();
+        if ($job) {
+            return $job;
+        }
+
+        // If targetId is like 'jo18' or 'jo-18', extract number and match ref or id
+        if (preg_match('/(?:jo|jo-)?(\d+)/i', $targetId, $m)) {
+            $num = (int) $m[1];
+            $paddedRef = 'JO-'.str_pad((string) $num, 3, '0', STR_PAD_LEFT);
+            $job = JobOrder::whereRaw('LOWER(ref) = ?', [strtolower($paddedRef)])
+                ->orWhere('id', $num)
+                ->first();
+            if ($job) {
+                return $job;
+            }
+        }
+
+        if (is_numeric($targetId)) {
+            $job = JobOrder::find((int) $targetId);
+            if ($job) {
+                return $job;
+            }
+        }
+
+        return JobOrder::whereRaw('LOWER(title) = ?', [strtolower(trim($targetId))])->first();
+    }
+
     /**
-     * Compute AI match score based on Job Order keyword matching against applicant skills and work history.
+     * Compute AI match score based on direct Job Order keyword matching against applicant skills and work history.
      */
     private function computeAiScore(Applicant $applicant): int
     {
-        $targetId = $applicant->target_job_id ?? 'jo1';
-        $keywords = self::JOB_KEYWORDS[$targetId] ?? [];
+        $targetId = $applicant->target_job_id;
+        if (! $targetId) {
+            return 0;
+        }
+
+        $keywords = [];
+
+        // Dynamic JobOrder keyword extraction from database
+        $job = $this->resolveJobOrder($targetId);
+        if ($job) {
+            $words = preg_split('/[\s·,-\/()]+/', strtolower($job->title), -1, PREG_SPLIT_NO_EMPTY);
+            $keywords = array_values(array_filter($words, fn ($w) => strlen($w) > 2));
+            if (is_array($job->tags)) {
+                foreach ($job->tags as $t) {
+                    $keywords[] = strtolower($t);
+                }
+            }
+        }
+
+        if (empty($keywords) && isset(self::JOB_KEYWORDS[$targetId])) {
+            $keywords = self::JOB_KEYWORDS[$targetId];
+        }
+
         if (empty($keywords)) {
             return 0;
         }
 
+        $keywords = array_values(array_unique($keywords));
         $skills = $applicant->skills->pluck('name')->toArray();
         $work = $applicant->workHistory->map(fn ($w) => "{$w->role} {$w->company}")->toArray();
         $searchable = strtolower(implode(' ', array_merge($skills, $work)));
+
+        if (empty(trim($searchable))) {
+            return 0;
+        }
 
         $matched = 0;
         foreach ($keywords as $kw) {
             if (str_contains($searchable, strtolower($kw))) {
                 $matched++;
             }
+        }
+
+        if ($matched === 0) {
+            return 0;
         }
 
         return (int) round(($matched / count($keywords)) * 100);
@@ -915,20 +980,28 @@ class ApplicantController extends Controller
     public function recruitmentApplications(): JsonResponse
     {
         $applicants = Applicant::where('sent_to_recruitment', true)
-            ->with(['skills', 'workHistory', 'education', 'documents', 'references', 'history', 'jobOrder'])
+            ->with(['skills', 'workHistory', 'education', 'documents', 'references', 'history'])
             ->get()
             ->map(function ($applicant) {
                 $fullName = trim("{$applicant->first_name} {$applicant->last_name}");
-                $job = $applicant->jobOrder;
+                $job = $this->resolveJobOrder($applicant->target_job_id);
+                $score = $this->computeAiScore($applicant);
+
+                $skillsSub = $score > 0 ? min(98, max(40, (int) round($score * 1.02))) : min(95, max(30, $applicant->skills->count() * 20));
+                $expSub = $score > 0 ? min(98, max(35, (int) round($score * 0.96))) : min(95, max(30, $applicant->workHistory->count() * 25));
+                $screenSub = $score > 0 ? min(98, max(45, (int) round($score * 0.98))) : min(95, max(30, $applicant->education->count() * 25));
+                $availSub = $score > 0 ? min(98, max(50, (int) round($score * 0.94))) : min(95, max(30, $applicant->documents->count() * 20));
 
                 return [
                     'id' => (string) $applicant->id,
                     'name' => $fullName,
-                    'jobId' => $applicant->target_job_id ?? 'jo1',
+                    'jobId' => $job ? ($job->ref ?: $applicant->target_job_id) : ($applicant->target_job_id ?? 'jo1'),
+                    'targetJobId' => $applicant->target_job_id,
                     'jobTitle' => $job?->title,
                     'client' => $job?->client,
+                    'category' => $applicant->category,
                     'status' => $applicant->recruitment_stage ?? 'pooling',
-                    'score' => $this->computeAiScore($applicant),
+                    'score' => $score,
                     'applied' => $applicant->created_at->format('M d, Y'),
                     'experience' => $applicant->experience_summary ?: '—',
                     'location' => $applicant->city_address ?? '—',
@@ -955,10 +1028,10 @@ class ApplicantController extends Controller
                         'verified' => true,
                     ])->toArray(),
                     'breakdown' => [
-                        'skills' => min($applicant->skills->count() * 8, 25) * 4,
-                        'experience' => min($applicant->workHistory->count() * 12, 25) * 4,
-                        'screening' => min($applicant->education->count() * 12, 25) * 4,
-                        'availability' => min($applicant->documents->count() * 8, 25) * 4,
+                        'skills' => $skillsSub,
+                        'experience' => $expSub,
+                        'screening' => $screenSub,
+                        'availability' => $availSub,
                     ],
                     'interview' => $applicant->interview_schedule,
                     'notes' => $applicant->history->map(fn ($h) => [

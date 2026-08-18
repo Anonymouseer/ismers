@@ -1,5 +1,6 @@
 import { initials, scoreClass } from '../utils/recruitmentUtils';
 import { getHire, keyFor } from '../services/RecruitmentSelectionService';
+import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 
 const STAGE_LABELS = {
   assigned: 'Assigned', scheduled: 'Scheduled', reporting: 'Reporting',
@@ -17,6 +18,9 @@ function DeploymentBadge({ app, job }) {
 }
 
 export default function CandidateCard({ app, job, onSelect }) {
+  const targetJob = job || targetById(app.jobId) || targetById(app.targetJobId);
+  const currentScore = targetJob ? computeMatchScore(app, targetJob) : (app.score ?? 0);
+
   const preChecklist = app.preEmploymentChecklist || {};
   const preCount = Object.values(preChecklist).filter(Boolean).length;
   const isPreCleared = preCount === 7;
@@ -32,14 +36,14 @@ export default function CandidateCard({ app, job, onSelect }) {
       <div className="cand-top">
         <div className="cand-avatar">{initials(app.name)}</div>
         <div className="cand-name">{app.name}</div>
-        <div className={`score-badge ${scoreClass(app.score)}`}>{app.score}%</div>
+        <div className={`score-badge ${scoreClass(currentScore)}`}>{currentScore}%</div>
       </div>
       <div className="cand-jo">
         <svg className="icon" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>
-        {job?.title || app.jobTitle || app.jobId || 'Unassigned Job'}
+        {targetJob?.title || job?.title || app.jobTitle || app.jobId || 'Unassigned Job'}
       </div>
       <div className="cand-foot">
-        <span className="cand-client">{job?.client || app.client || '\u2014'}</span>
+        <span className="cand-client">{targetJob?.client || job?.client || app.client || '\u2014'}</span>
         <span className="cand-days">Applied {app.applied}</span>
       </div>
 

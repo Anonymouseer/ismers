@@ -4,7 +4,8 @@ import CandidateCard from '../components/CandidateCard';
 import CandidateModal from '../components/CandidateModal';
 import { APPLICATIONS, JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
 import { fetchRecruitmentApplications, updateRecruitmentStage, updateRecruitmentScreening, getStoredStages, saveStoredStage, saveCachedApplications } from '../services/RecruitmentSelectionService';
-import { initials, scoreClass } from '../utils/recruitmentUtils';
+import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
+import { initials, scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDate } from '../utils/recruitmentUtils';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import './RecruitmentSelectionPage.css';
 
@@ -211,14 +212,17 @@ export default function RecruitmentSelectionPage() {
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
+      const targetJob = targetById(app.jobId) || targetById(app.targetJobId) || jobById(app.jobId);
+      const appScore = targetJob ? computeMatchScore(app, targetJob) : (app.score ?? 0);
+
       if (stageFilter && app.status !== stageFilter) return false;
       if (jobFilter !== 'all' && app.jobId !== jobFilter) return false;
-      if (scoreFilter === 'high' && app.score < 70) return false;
-      if (scoreFilter === 'mid' && (app.score < 40 || app.score >= 70)) return false;
-      if (scoreFilter === 'low' && app.score >= 40) return false;
+      if (scoreFilter === 'high' && appScore < 70) return false;
+      if (scoreFilter === 'mid' && (appScore < 40 || appScore >= 70)) return false;
+      if (scoreFilter === 'low' && appScore >= 40) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
-        const job = jobById(app.jobId);
+        const job = targetJob || jobById(app.jobId);
         const nameMatch = app.name && app.name.toLowerCase().includes(q);
         const jobMatch = job && job.title.toLowerCase().includes(q);
         if (!nameMatch && !jobMatch) return false;
@@ -257,13 +261,32 @@ export default function RecruitmentSelectionPage() {
       } catch (e) {}
     }
 
+    let autoScheduledInterview = targetApp.interview;
+    if (nextKey === 'area_manager' && !targetApp.interview) {
+      const job = targetById(targetApp.jobId) || targetById(targetApp.targetJobId) || jobById(targetApp.jobId);
+      const recruiter = assignedRecruiter(job) || 'Area Supervisor';
+      const searchFrom = addDays(new Date(), 1);
+      const slot = findNextAvailableSlot(applications, recruiter, searchFrom);
+      if (slot) {
+        autoScheduledInterview = {
+          title: 'Area Manager 2nd Interview',
+          date: slot.date,
+          time: slot.time,
+          recruiter,
+        };
+      }
+    }
+
     updateApplication(appId, (a) => {
       let notes = a.notes || [];
       const nextStageObj = STAGES.find((s) => s.key === nextKey);
       const nextStageLabel = nextStageObj?.label || nextKey;
+      const extraNote = autoScheduledInterview
+        ? ` · Interview auto-scheduled: ${autoScheduledInterview.date} at ${autoScheduledInterview.time}`
+        : '';
       notes = [
         {
-          text: `Advanced to ${nextStageLabel}${isResettingToReview ? ' (Endorsement status reset to Pending Review)' : ''}`,
+          text: `Advanced to ${nextStageLabel}${isResettingToReview ? ' (Endorsement status reset to Pending Review)' : ''}${extraNote}`,
           meta: `System · ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`,
         },
         ...notes,
@@ -272,6 +295,7 @@ export default function RecruitmentSelectionPage() {
         ...a,
         status: nextKey,
         clientEndorsementStatus: nextCpStatus,
+        interview: autoScheduledInterview || a.interview,
         notes,
       };
     });
@@ -284,6 +308,10 @@ export default function RecruitmentSelectionPage() {
     updateRecruitmentStage(persistId, nextKey, null, targetApp.name).catch((err) => {
       console.warn('Could not persist recruitment stage to backend:', err);
     });
+
+    if (autoScheduledInterview) {
+      updateRecruitmentScreening(persistId, { interview_schedule: autoScheduledInterview }, targetApp.name).catch(() => {});
+    }
 
     if (isResettingToReview) {
       updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, targetApp.name).catch(() => {});
@@ -445,10 +473,17 @@ export default function RecruitmentSelectionPage() {
                   <tbody>
                     {filtered
                       .slice()
-                      .sort((a, b) => b.score - a.score)
+                      .sort((a, b) => {
+                        const jobA = targetById(a.jobId) || targetById(a.targetJobId) || jobById(a.jobId);
+                        const jobB = targetById(b.jobId) || targetById(b.targetJobId) || jobById(b.jobId);
+                        const scoreA = jobA ? computeMatchScore(a, jobA) : (a.score ?? 0);
+                        const scoreB = jobB ? computeMatchScore(b, jobB) : (b.score ?? 0);
+                        return scoreB - scoreA;
+                      })
                       .map((app) => {
-                        const job = jobById(app.jobId);
-                        const cls = scoreClass(app.score);
+                        const job = targetById(app.jobId) || targetById(app.targetJobId) || jobById(app.jobId);
+                        const currentScore = job ? computeMatchScore(app, job) : (app.score ?? 0);
+                        const cls = scoreClass(currentScore);
                         const isClientInterview = app.status === 'client_interview';
 
                         const cpStatus =
@@ -509,7 +544,7 @@ export default function RecruitmentSelectionPage() {
                               </div>
                             </td>
                             <td>
-                              <span className={`score-badge ${cls}`}>{app.score}%</span>
+                              <span className={`score-badge ${cls}`}>{currentScore}%</span>
                             </td>
                             <td>
                               {(() => {

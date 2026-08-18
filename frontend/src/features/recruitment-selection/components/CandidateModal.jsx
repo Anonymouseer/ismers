@@ -6,6 +6,7 @@ import {
 import { initials, scoreColor, formatDate, addDays, assignedRecruiter, findNextAvailableSlot } from '../utils/recruitmentUtils';
 import { upsertHire, keyFor, updateRecruitmentStage, updateRecruitmentScreening } from '../services/RecruitmentSelectionService';
 import DocViewerModal, { DOC_ICONS } from './DocViewerModal';
+import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import MedicalReferralModal from './MedicalReferralModal';
 import ContractSigningModal from './ContractSigningModal';
 import OrientationModal from './OrientationModal';
@@ -62,6 +63,9 @@ export const PRE_EMPLOYMENT_ITEMS = [
 ];
 
 export default function CandidateModal({ app, job, applications, onClose, onUpdate }) {
+  const targetJob = job || targetById(app?.jobId) || targetById(app?.targetJobId);
+  const currentScore = targetJob ? computeMatchScore(app, targetJob) : (app?.score ?? 0);
+
   const [docViewerType, setDocViewerType] = useState(null);
   const [showMedReferralModal, setShowMedReferralModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
@@ -258,32 +262,12 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   }
 
   function handleDeployHandover() {
-    const resolvedJob = job || (app.jobId ? jobById(app.jobId) : null) || (app.targetJobId ? jobById(app.targetJobId) : null);
+    const targetJob = job || targetById(app.jobId) || targetById(app.targetJobId) || (app.jobId ? jobById(app.jobId) : null);
 
-    let clientName = resolvedJob?.client || app.client || app.deploymentDetails?.client;
-    let positionTitle = resolvedJob?.title || app.jobTitle || app.position || app.category || 'Operations Associate';
-    let siteLocation = resolvedJob?.site || resolvedJob?.location || app.site || app.location || app.deploymentDetails?.site;
-    let jobOrderRef = resolvedJob?.depRef || resolvedJob?.ref || app.jobOrderRef || 'JO-001';
-
-    // Intelligent fallback for category alignment
-    const expText = `${app.category || ''} ${app.experienceSummary || ''} ${app.experience || ''} ${positionTitle}`.toLowerCase();
-    if (!clientName || clientName === 'Sunrise Hospitality Group' || clientName === 'Client Operations') {
-      if (expText.includes('warehouse') || expText.includes('forklift') || expText.includes('logistics') || expText.includes('inventory')) {
-        clientName = 'ABC Logistics';
-        siteLocation = siteLocation || 'Valenzuela Logistics Hub, NCR';
-        jobOrderRef = jobOrderRef || 'JO-001';
-      } else if (expText.includes('hospitality') || expText.includes('housekeeping') || expText.includes('hotel')) {
-        clientName = 'Seda Vertis North';
-        siteLocation = siteLocation || 'Vertis North, Astra cor. Lux Drive, QC';
-        jobOrderRef = jobOrderRef || 'JO-011';
-      } else if (expText.includes('food') || expText.includes('cook') || expText.includes('beverage') || expText.includes('dining')) {
-        clientName = 'Vikings Luxury Buffet';
-        siteLocation = siteLocation || 'SM Mall of Asia, Seaside Blvd, Pasay City';
-        jobOrderRef = jobOrderRef || 'JO-003';
-      } else {
-        clientName = 'ABC Logistics';
-      }
-    }
+    const clientName = targetJob?.client || app.client || app.deploymentDetails?.client || 'Sunrise Hospitality Group';
+    const positionTitle = targetJob?.title || app.jobTitle || app.position || app.category || 'Operations Associate';
+    const siteLocation = targetJob?.site || targetJob?.location || app.site || app.location || app.deploymentDetails?.site || 'NCR';
+    const jobOrderRef = targetJob?.ref || targetJob?.depRef || app.jobOrderRef || 'JO-018';
 
     const signatureData = app.employmentContract?.signatureData || (typeof window !== 'undefined' ? (localStorage.getItem(`contract_signature_${app.name}`) || localStorage.getItem(`contract_signature_${persistId}`)) : null);
 
@@ -1142,17 +1126,17 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           <div className="modal-section">
             <div className="modal-section-label">AI Candidate Score</div>
             <div className="score-overall">
-              <div><div className="score-overall-num" style={{ color: scoreColor(app.score) }}>{app.score}</div></div>
-              <div><div className="score-overall-label">Composite match score, weighted across skills, experience, and screening signals.</div></div>
+              <div><div className="score-overall-num" style={{ color: scoreColor(currentScore) }}>{currentScore}%</div></div>
+              <div><div className="score-overall-label">Direct keyword and requirement match percentage for the assigned job order.</div></div>
             </div>
             <div>
               {SCORE_ROWS.map((r) => {
-                const val = app.breakdown[r.key];
+                const val = app.breakdown?.[r.key] ?? currentScore ?? 75;
                 return (
                   <div key={r.key} className="score-row">
                     <div className="score-label">{r.label}</div>
                     <div className="score-track"><div className="score-fill" style={{ width: `${val}%`, background: scoreColor(val) }} /></div>
-                    <div className="score-num">{val}</div>
+                    <div className="score-num">{val}%</div>
                   </div>
                 );
               })}

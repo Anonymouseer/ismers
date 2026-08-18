@@ -42,30 +42,44 @@ class JobOrderController extends Controller
      */
     private function format(JobOrder $j): array
     {
+        $requirements = $j->requirements;
+        if (is_string($requirements)) {
+            $decoded = json_decode($requirements, true);
+            $requirements = is_array($decoded) ? $decoded : array_values(array_filter(array_map('trim', explode("\n", $requirements))));
+        }
+
+        $tags = $j->tags;
+        if (is_string($tags)) {
+            $decoded = json_decode($tags, true);
+            $tags = is_array($decoded) ? $decoded : array_values(array_filter(array_map('trim', explode(',', $tags))));
+        }
+
+        $applicants = $j->applicants;
+        if (is_string($applicants)) {
+            $decoded = json_decode($applicants, true);
+            $applicants = is_array($decoded) ? $decoded : [];
+        }
+
         return [
-            'ref'             => $j->ref,
+            'ref'             => $j->ref ?: $j->dep_ref,
             'id'              => $j->id,
             'client'          => $j->client,
             'client_account_id' => $j->client_account_id,
             'title'           => $j->title,
             'location'        => $j->location ?? '',
-            'type'            => $j->type ?? '',
-            'rate'            => $j->rate ?? '',
+            'type'            => $j->type ?? 'Full-time · Contractual',
+            'rate'            => $j->rate ?? '₱610/day',
             'deadline'        => $j->deadline ?? '',
-            'filled'          => $j->filled,
-            'total'           => $j->total,
-            'status'          => $j->status,
-            'stage'           => $j->stage,
-            'priority'        => $j->priority,
+            'filled'          => (int) $j->filled,
+            'total'           => (int) ($j->total ?: 1),
+            'status'          => $j->status ?? 'open',
+            'stage'           => $j->stage ?? 'created',
+            'priority'        => $j->priority ?? 'normal',
             'description'     => $j->description ?? '',
-            'requirements'    => $j->requirements
-                ? (is_string($j->requirements)
-                    ? array_filter(array_map('trim', explode("\n", $j->requirements)))
-                    : $j->requirements)
-                : [],
-            'source'          => $j->source,
-            'tags'            => [],
-            'recruiter'       => 'Unassigned',
+            'requirements'    => is_array($requirements) ? $requirements : [],
+            'tags'            => is_array($tags) ? $tags : [],
+            'source'          => $j->source ?? 'internal',
+            'recruiter'       => 'Karla Reyes',
             'activityLog'     => [
                 [
                     'date' => $j->created_at
@@ -77,7 +91,7 @@ class JobOrderController extends Controller
                     'type' => 'system',
                 ],
             ],
-            'applicants'      => [],
+            'applicants'      => is_array($applicants) ? $applicants : [],
             'createdAt'       => $j->created_at?->toISOString(),
         ];
     }
@@ -86,7 +100,7 @@ class JobOrderController extends Controller
 
     /**
      * GET /api/v1/job-orders
-     * Optional query param: ?client_account_id=<id>
+     * Optional query params: ?client_account_id=<id>&client=<name>&status=<status>
      */
     public function index(Request $request): JsonResponse
     {
@@ -96,7 +110,20 @@ class JobOrderController extends Controller
             $query->where('client_account_id', $request->integer('client_account_id'));
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->get();
+        if ($clientName = $request->query('client')) {
+            $c = strtolower(trim($clientName));
+            $query->where(function ($q) use ($c) {
+                $q->whereRaw('LOWER(client) LIKE ?', ["%{$c}%"]);
+            });
+        }
+
+        if ($status = $request->query('status')) {
+            if ($status !== 'all') {
+                $query->where('status', $status);
+            }
+        }
+
+        $orders = $query->orderBy('created_at', 'asc')->get();
 
         return response()->json($orders->map(fn ($j) => $this->format($j))->values());
     }
@@ -116,11 +143,22 @@ class JobOrderController extends Controller
             'rate'              => 'nullable|string|max:100',
             'deadline'          => 'required|string|max:50',
             'total'             => 'required|integer|min:1',
+            'status'            => 'nullable|string|max:50',
+            'stage'             => 'nullable|string|max:50',
             'priority'          => 'required|in:normal,medium,high,urgent',
             'description'       => 'required|string',
-            'requirements'      => 'nullable|string',
+            'requirements'      => 'nullable',
+            'tags'              => 'nullable',
             'source'            => 'nullable|string|in:internal,client_portal',
         ]);
+
+        $reqs = $data['requirements'] ?? null;
+        if (is_array($reqs)) {
+            $reqs = json_encode($reqs);
+        }
+
+        $status = $data['status'] ?? 'review';
+        $stage = $data['stage'] ?? 'review';
 
         $job = JobOrder::create([
             'id'                => $this->nextId(),
@@ -134,11 +172,12 @@ class JobOrderController extends Controller
             'deadline'          => $data['deadline'],
             'filled'            => 0,
             'total'             => $data['total'],
-            'status'            => ($data['source'] ?? '') === 'client_portal' ? 'review' : 'open',
-            'stage'             => ($data['source'] ?? '') === 'client_portal' ? 'review' : 'created',
+            'status'            => $status,
+            'stage'             => $stage,
             'priority'          => $data['priority'],
             'description'       => $data['description'],
-            'requirements'      => $data['requirements'] ?? null,
+            'requirements'      => $reqs,
+            'tags'              => is_array($data['tags'] ?? null) ? $data['tags'] : ['New Requisition', 'Under Review'],
             'source'            => $data['source'] ?? 'internal',
         ]);
 
@@ -150,7 +189,7 @@ class JobOrderController extends Controller
      */
     public function show(string $ref): JsonResponse
     {
-        $job = JobOrder::where('ref', $ref)->firstOrFail();
+        $job = JobOrder::where('ref', $ref)->orWhere('id', $ref)->firstOrFail();
         return response()->json($this->format($job));
     }
 
@@ -159,23 +198,29 @@ class JobOrderController extends Controller
      */
     public function update(Request $request, string $ref): JsonResponse
     {
-        $job = JobOrder::where('ref', $ref)->firstOrFail();
+        $job = JobOrder::where('ref', $ref)->orWhere('id', $ref)->firstOrFail();
 
         $data = $request->validate([
-            'title'       => 'sometimes|string|max:255',
-            'client'      => 'sometimes|string|max:255',
-            'location'    => 'sometimes|string|max:255',
-            'type'        => 'sometimes|string|max:100',
-            'rate'        => 'nullable|string|max:100',
-            'deadline'    => 'sometimes|string|max:50',
-            'total'       => 'sometimes|integer|min:1',
-            'filled'      => 'sometimes|integer|min:0',
-            'status'      => 'sometimes|in:open,filling,urgent,filled',
-            'stage'       => 'sometimes|string|max:50',
-            'priority'    => 'sometimes|in:normal,medium,high,urgent',
-            'description' => 'sometimes|string',
-            'requirements'=> 'nullable|string',
+            'title'        => 'sometimes|string|max:255',
+            'client'       => 'sometimes|string|max:255',
+            'location'     => 'sometimes|string|max:255',
+            'type'         => 'sometimes|string|max:100',
+            'rate'         => 'nullable|string|max:100',
+            'deadline'     => 'sometimes|string|max:50',
+            'total'        => 'sometimes|integer|min:1',
+            'filled'       => 'sometimes|integer|min:0',
+            'status'       => 'sometimes|string|max:50',
+            'stage'        => 'sometimes|string|max:50',
+            'priority'     => 'sometimes|string|max:50',
+            'description'  => 'sometimes|string',
+            'requirements' => 'nullable',
+            'tags'         => 'nullable',
+            'applicants'   => 'nullable',
         ]);
+
+        if (isset($data['requirements']) && is_array($data['requirements'])) {
+            $data['requirements'] = json_encode($data['requirements']);
+        }
 
         $job->update($data);
 
@@ -187,7 +232,7 @@ class JobOrderController extends Controller
      */
     public function destroy(string $ref): JsonResponse
     {
-        $job = JobOrder::where('ref', $ref)->firstOrFail();
+        $job = JobOrder::where('ref', $ref)->orWhere('id', $ref)->firstOrFail();
         $job->delete();
 
         return response()->json(['ref' => $ref, 'deleted' => true]);

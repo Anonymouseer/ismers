@@ -4,7 +4,7 @@ export default function CandidateCard({ candidate, onOpen }) {
   const job = targetById(candidate.targetJobId);
   const statusMeta = STATUS_META[candidate.status] || STATUS_META.active;
   const showStatusFlag = candidate.status !== 'active';
-  const aiScore = candidate.aiScore ?? (job ? computeMatchScore(candidate, job) : null);
+  const aiScore = job ? computeMatchScore(candidate, job) : (candidate.aiScore ?? null);
   const scoreClass = aiScore != null ? (aiScore >= 70 ? 'high' : aiScore >= 40 ? 'mid' : 'low') : '';
 
   return (

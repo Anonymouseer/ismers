@@ -1,19 +1,7 @@
 // RecruitmentSelectionService.js
-// Talks to /api/v1/applications once the Laravel backend is wired up.
-// For now these wrap the local mock data so the page can run standalone.
-//
-// NOTE on cross-feature sync: the original prototype used a page-level
-// "ISMERSBridge" (localStorage + events) to let Applicant Registration push
-// candidates into this board, and to let Deployment & Assignment report
-// deployment status back onto a hired candidate's card. In the SPA, that
-// becomes: call ApplicantRegistrationService/DeploymentAssignmentService
-// directly for reads, and let each subsystem own writes to its own table
-// (see the ISMERS "shared entity ownership" rule). Below is a minimal
-// in-memory placeholder so the UI has something to render — swap the
-// body of each function for a real service/store call when that
-// subsystem's service file exists.
-
-import { APPLICATIONS, PIPELINE_ORDER } from '../data/mockApplications';
+// Handles Recruitment & Selection candidate pipeline and stage mutations.
+import api from '../../../services/apiClient';
+import { APPLICATIONS } from '../data/mockApplications';
 import { ISMERSBridge } from '../../deployment-assignment/services/ismersBridge';
 
 export function keyFor(name, depRef) {
@@ -27,7 +15,6 @@ export function getHire(key) {
 export function upsertHire(key, data) {
   ISMERSBridge.upsertHire(key, data);
 }
-
 
 const STAGE_CACHE_KEY = 'ismers_recruitment_stages_v5';
 const APPS_CACHE_KEY = 'ismers_recruitment_apps_cache_v5';
@@ -70,27 +57,24 @@ export function saveCachedApplications(apps) {
 
 export async function fetchRecruitmentApplications() {
   try {
-    const res = await fetch('http://localhost:8000/api/v1/recruitment/applications');
-    if (!res.ok) throw new Error('Failed to fetch recruitment applications');
-    const data = await res.json();
+    const res = await api.get('/recruitment/applications');
+    const data = res.data;
 
-    const mappedDb = data.map((app) => {
+    const mappedDb = (Array.isArray(data) ? data : []).map((app) => {
       return {
         ...app,
         status: app.status || 'pooling',
         clientEndorsementStatus: app.clientEndorsementStatus || 'Pending Review',
         checklist: app.checklist || {
-          resumeVerified: false,
-          contactVerified: false,
-          locationFit: false,
-          skillsMatched: false,
-          notesAdded: false,
+          requirements: false,
+          identity: false,
+          history: false,
+          reference: false,
         },
         docStatus: app.docStatus || {
           resume: false,
-          id: false,
-          nbi: false,
-          med: false,
+          certificate: false,
+          portfolio: false,
         },
         preEmploymentChecklist: app.preEmploymentChecklist || {
           medical_exam: false,
@@ -160,25 +144,24 @@ export async function updateRecruitmentStage(applicantId, stage, status = null, 
 
   const target = encodeURIComponent(appName || applicantId);
   try {
-    const res = await fetch(`http://localhost:8000/api/v1/applicants/${target}/recruitment-stage`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ recruitment_stage: stage, ...(status ? { status } : {}) }),
+    const res = await api.patch(`/applicants/${target}/recruitment-stage`, {
+      recruitment_stage: stage,
+      ...(status ? { status } : {}),
     });
-    if (res.ok) {
-      return await res.json();
-    } else if (applicantId && applicantId !== appName) {
-      const fallbackTarget = encodeURIComponent(applicantId);
-      const res2 = await fetch(`http://localhost:8000/api/v1/applicants/${fallbackTarget}/recruitment-stage`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ recruitment_stage: stage, ...(status ? { status } : {}) }),
-      });
-      return res2.ok ? await res2.json() : { ok: false };
-    }
-    return { ok: false };
+    return res.data;
   } catch (err) {
-    console.warn('Network error updating recruitment stage to server:', err);
+    if (applicantId && applicantId !== appName) {
+      try {
+        const fallbackTarget = encodeURIComponent(applicantId);
+        const res2 = await api.patch(`/applicants/${fallbackTarget}/recruitment-stage`, {
+          recruitment_stage: stage,
+          ...(status ? { status } : {}),
+        });
+        return res2.data;
+      } catch {
+        return { ok: false };
+      }
+    }
     return { ok: false };
   }
 }
@@ -275,35 +258,18 @@ export async function updateRecruitmentScreening(applicantId, fields, appName = 
 
   const target = encodeURIComponent(appName || applicantId);
   try {
-    const res = await fetch(`http://localhost:8000/api/v1/applicants/${target}/recruitment-screening`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) {
-      return await res.json();
-    } else if (applicantId && applicantId !== appName) {
-      const fallbackTarget = encodeURIComponent(applicantId);
-      const res2 = await fetch(`http://localhost:8000/api/v1/applicants/${fallbackTarget}/recruitment-screening`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      return res2.ok ? await res2.json() : { ok: false };
-    }
-    return { ok: false };
+    const res = await api.patch(`/applicants/${target}/recruitment-screening`, body);
+    return res.data;
   } catch (err) {
-    console.warn('Network error updating recruitment screening to server:', err);
+    if (applicantId && applicantId !== appName) {
+      try {
+        const fallbackTarget = encodeURIComponent(applicantId);
+        const res2 = await api.patch(`/applicants/${fallbackTarget}/recruitment-screening`, body);
+        return res2.data;
+      } catch {
+        return { ok: false };
+      }
+    }
     return { ok: false };
   }
 }
-
-// Example real-API shape for later:
-// export async function getApplications() {
-//   const res = await apiClient.get('/applications');
-//   return res.data.data;
-// }
-// export async function updateApplicationStatus(id, status) {
-//   const res = await apiClient.patch(`/applications/${id}`, { status });
-//   return res.data.data;
-// }

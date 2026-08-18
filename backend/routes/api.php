@@ -53,6 +53,13 @@ Route::prefix('v1')->group(function () {
     Route::patch('/applicants/{id}/recruitment-screening', [ApplicantController::class, 'updateRecruitmentScreening']);
     Route::patch('/applicants/{id}/client-endorsement-status', [ApplicantController::class, 'updateClientEndorsementStatus']);
 
+    // ── Client Management / CRM ──
+    Route::get('/clients',              [ClientAccountController::class, 'index']);
+    Route::post('/clients',             [ClientAccountController::class, 'store']);
+    Route::get('/clients/{id}',         [ClientAccountController::class, 'show']);
+    Route::put('/clients/{id}',         [ClientAccountController::class, 'update']);
+    Route::delete('/clients/{id}',      [ClientAccountController::class, 'destroy']);
+
     // ── Client Portal Auth ──
     Route::prefix('client-portal')->group(function () {
         Route::post('/login', [ClientAccountController::class, 'login']);
@@ -74,3 +81,10 @@ Route::prefix('v1')->group(function () {
     Route::patch('/deployments/{id}/stage',        [DeploymentController::class, 'updateStage']);
     Route::patch('/deployments/{id}/compliance',   [DeploymentController::class, 'updateCompliance']);
 });
+
+// ── Direct CRM Integration Endpoints (Top-level Aliases) ──
+Route::get('/clients',              [ClientAccountController::class, 'index']);
+Route::post('/clients',             [ClientAccountController::class, 'store']);
+Route::get('/clients/{id}',         [ClientAccountController::class, 'show']);
+Route::put('/clients/{id}',         [ClientAccountController::class, 'update']);
+Route::delete('/clients/{id}',      [ClientAccountController::class, 'destroy']);

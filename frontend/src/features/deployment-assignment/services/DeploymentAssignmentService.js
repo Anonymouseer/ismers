@@ -1,6 +1,5 @@
+import api from '../../../services/apiClient';
 import { ISMERSBridge } from './ismersBridge';
-
-const API_BASE = 'http://localhost:8000/api/v1';
 
 // Reference date used throughout the mock data (matches the rest of the app's "today").
 export const TODAY = new Date(2026, 6, 24); // Jul 24, 2026
@@ -94,7 +93,6 @@ export const STAGE_INDEX = {
   closed: 6,
 };
 
-// Job orders referenced by deployments
 // Job orders referenced by deployments across all client accounts
 export const JOB_ORDER_OPTIONS = [
   { ref: 'JO-001', client: 'ABC Logistics', title: 'Warehouse Associate', site: 'Valenzuela City, NCR', supervisor: 'Karla Reyes (Account Manager)' },
@@ -119,6 +117,38 @@ export const JOB_ORDER_OPTIONS = [
   { ref: 'JO-020', client: 'Nordic Freight Co.', title: 'Bonded Logistics Handler', site: 'North Harbor, Port Area, Manila', supervisor: 'Karla Reyes (Account Manager)' },
   { ref: 'JO-021', client: 'Coastline Retail Group', title: 'Store Merchandiser', site: 'Ayala Center, Makati City, Metro Manila', supervisor: 'Dennis Ocampo (Account Manager)' },
 ];
+
+export function getJobOrderOptions() {
+  const map = new Map();
+
+  JOB_ORDER_OPTIONS.forEach((j) => {
+    map.set(j.ref, j);
+  });
+
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ismers_client_job_orders');
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) {
+          list.forEach((j) => {
+            const ref = j.ref || j.id;
+            if (!ref) return;
+            map.set(ref, {
+              ref,
+              client: j.client || j.company || 'ABC Logistics',
+              title: j.title || j.position || 'Requisition Position',
+              site: j.location || j.site || 'Valenzuela Logistics Hub, NCR',
+              supervisor: j.recruiter ? `${j.recruiter} (Account Manager)` : 'Karla Reyes (Account Manager)',
+            });
+          });
+        }
+      }
+    } catch {}
+  }
+
+  return Array.from(map.values());
+}
 
 // ---- MOCK DATA (Primepower Client Deployments Fallback) ----
 const MOCK_DEPLOYMENTS = [
@@ -432,9 +462,8 @@ const MOCK_DEPLOYMENTS = [
 
 export async function fetchDeploymentsApi() {
   try {
-    const res = await fetch(`${API_BASE}/deployments`);
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return await res.json();
+    const res = await api.get('/deployments');
+    return res.data;
   } catch (err) {
     console.warn('Backend API offline or loading; using local fallback dataset.', err);
     return getDeployments();
@@ -443,9 +472,8 @@ export async function fetchDeploymentsApi() {
 
 export async function fetchPendingHiresApi() {
   try {
-    const res = await fetch(`${API_BASE}/deployments/pending-hires`);
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return await res.json();
+    const res = await api.get('/deployments/pending-hires');
+    return res.data;
   } catch (err) {
     console.warn('Backend API offline; using bridge pending hires.', err);
     return ISMERSBridge.getPendingHires();
@@ -454,13 +482,8 @@ export async function fetchPendingHiresApi() {
 
 export async function createDeploymentApi(payload) {
   try {
-    const res = await fetch(`${API_BASE}/deployments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return await res.json();
+    const res = await api.post('/deployments', payload);
+    return res.data;
   } catch (err) {
     console.warn('Backend API offline; storing locally.', err);
     return null;
@@ -469,13 +492,8 @@ export async function createDeploymentApi(payload) {
 
 export async function updateDeploymentStageApi(id, stage) {
   try {
-    const res = await fetch(`${API_BASE}/deployments/${id}/stage`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ stage }),
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return await res.json();
+    const res = await api.patch(`/deployments/${id}/stage`, { stage });
+    return res.data;
   } catch (err) {
     console.warn('Backend API offline; updating locally.', err);
     return null;
@@ -484,13 +502,8 @@ export async function updateDeploymentStageApi(id, stage) {
 
 export async function toggleDeploymentComplianceApi(id, reqKey) {
   try {
-    const res = await fetch(`${API_BASE}/deployments/${id}/compliance`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ key: reqKey }),
-    });
-    if (!res.ok) throw new Error(`API error: ${res.status}`);
-    return await res.json();
+    const res = await api.patch(`/deployments/${id}/compliance`, { key: reqKey });
+    return res.data;
   } catch (err) {
     console.warn('Backend API offline; updating locally.', err);
     return null;

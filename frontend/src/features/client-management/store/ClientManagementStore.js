@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { CLIENTS } from '../data/mockClients.js';
+import clientManagementService from '../services/ClientManagementService.js';
 import { ISMERSBridge } from '../../deployment-assignment/services/ismersBridge.js';
 import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService.js';
 import { subscribeRealtimeEvents } from '../../../utils/realtimeSync.js';
@@ -57,8 +58,8 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
     }
   }
 
-  return baseClients.map((client) => {
-    const clientNameNorm = (client.name || '').trim().toLowerCase();
+  return (baseClients || []).map((client) => {
+    const clientNameNorm = (client.name || client.company || '').trim().toLowerCase();
 
     // 1. Gather all deployments for this client
     const matchedDeployments = deploymentsList.filter((d) => {
@@ -147,7 +148,6 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
           existingApplicants[existingIdx] = {
             ...existingApplicants[existingIdx],
             ...hireRecord,
-            status: 'hired',
           };
         } else {
           existingApplicants.unshift(hireRecord);
@@ -156,45 +156,48 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
 
       // Merge bridge hires into applicants
       jobHires.forEach((hire) => {
-        const empName = (hire.name || '').trim();
-        if (!empName) return;
+        const hireName = (hire.name || '').trim();
+        if (!hireName) return;
 
         const existingIdx = existingApplicants.findIndex(
-          (a) => (a.name || '').trim().toLowerCase() === empName.toLowerCase()
+          (a) => (a.name || '').trim().toLowerCase() === hireName.toLowerCase()
         );
 
         const hireRecord = {
-          name: empName,
+          name: hireName,
           score: hire.score || 90,
-          status: 'hired',
-          applied: hire.hiredDate || 'Jul 2026',
-          deployedDate: hire.hiredDate || null,
-          stage: hire.stage || 'on_site',
-          deploymentId: hire.linkedDeploymentId || null,
+          status: hire.status || 'hired',
+          applied: hire.applied || hire.hiredDate || 'Jul 2026',
+          deployedDate: hire.deployedDate || hire.start || null,
+          stage: hire.stage || 'hired',
         };
 
         if (existingIdx >= 0) {
           existingApplicants[existingIdx] = {
             ...existingApplicants[existingIdx],
             ...hireRecord,
-            status: 'hired',
           };
         } else {
           existingApplicants.unshift(hireRecord);
         }
       });
 
-      // Count total hired
-      const hiredCount = existingApplicants.filter((a) => a.status === 'hired').length;
-      const filled = Math.max(hiredCount, job.filled || 0);
-      const total = Math.max(job.total || 1, filled);
-      const badge = filled >= total ? 'filled' : filled > 0 ? 'filling' : 'open';
+      // Calculate filled count from hired applicants
+      const actualHiredCount = existingApplicants.filter(
+        (a) => a.status === 'hired' || a.stage === 'on_site' || a.stage === 'deployed' || a.deployedDate
+      ).length;
+
+      const dynamicFilled = Math.max(job.filled || 0, actualHiredCount);
+      const total = job.total || 1;
+      const isFilled = dynamicFilled >= total;
+      const dynamicBadge = isFilled ? 'filled' : (dynamicFilled > 0 ? 'filling' : (job.badge || 'open'));
+      const dynamicColor = isFilled ? 'var(--green)' : (dynamicFilled > 0 ? 'var(--amber)' : (job.color || 'var(--blue)'));
 
       return {
         ...job,
-        filled,
-        total,
-        badge,
+        filled: dynamicFilled,
+        badge: dynamicBadge,
+        color: dynamicColor,
         applicants: existingApplicants,
       };
     });
@@ -223,7 +226,7 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
           type: 'Full-time · Contractual',
           rate: '₱610/day',
           deadline: dep.end || 'Dec 31, 2026',
-          description: `Active deployment for ${dep.position} at ${client.name} (${dep.jobOrderRef || 'Direct Placement'}).`,
+          description: `Active deployment for ${dep.position} at ${client.name || client.company} (${dep.jobOrderRef || 'Direct Placement'}).`,
           requirements: [
             'DOLE DO-174 Compliant Employment Contract',
             'Pre-Employment Medical Fit-to-Work Clearance',
@@ -293,7 +296,7 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
           type: cj.type || 'Full-time · Contractual',
           rate: cj.rate || client.rate || '₱20,000/mo',
           deadline: cj.deadline || 'TBD',
-          description: cj.description || `New job order submitted from Client Portal for ${client.name}.`,
+          description: cj.description || `New job order submitted from Client Portal for ${client.name || client.company}.`,
           requirements: Array.isArray(cj.requirements) ? cj.requirements : [cj.requirements || 'DOLE DO-174 Compliant Requirements'],
           tags: ['Client Portal', isReview ? 'Under Review' : 'Active Requisition', cj.priority || 'Normal'],
           applicants: cj.applicants || [],
@@ -303,6 +306,7 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
 
     return {
       ...client,
+      name: client.name || client.company,
       jobs: updatedJobs,
     };
   });
@@ -310,12 +314,34 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
 
 export function useClientManagementStore() {
   const [deployments, setDeployments] = useState(loadStoredDeployments);
+  const [rawClients, setRawClients] = useState(CLIENTS);
+  const [loading, setLoading] = useState(false);
   const [triggerCount, setTriggerCount] = useState(0);
+
+  const fetchLiveClients = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await clientManagementService.getAll();
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        setRawClients(res.data);
+      }
+    } catch (err) {
+      // Fallback silently to client dataset without breaking UI flow
+      console.warn('API fetch fell back to local client state:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const reloadData = useCallback(() => {
     setDeployments(loadStoredDeployments());
     setTriggerCount((c) => c + 1);
-  }, []);
+    fetchLiveClients();
+  }, [fetchLiveClients]);
+
+  useEffect(() => {
+    fetchLiveClients();
+  }, [fetchLiveClients]);
 
   useEffect(() => {
     // 1. Listen to storage events across tabs
@@ -347,7 +373,8 @@ export function useClientManagementStore() {
         msg.type === 'EMPLOYEE_DEPLOYED' ||
         msg.type === 'STAGE_CHANGED' ||
         msg.type === 'candidate_deployed' ||
-        msg.type === 'JOB_ORDER_CREATED'
+        msg.type === 'JOB_ORDER_CREATED' ||
+        msg.type === 'CLIENT_UPDATED'
       ) {
         reloadData();
       }
@@ -362,15 +389,17 @@ export function useClientManagementStore() {
   }, [reloadData]);
 
   const clients = useMemo(() => {
-    // Trigger recalculation on state/trigger changes
     // eslint-disable-next-line no-unused-expressions
     triggerCount;
-    return mergeClientsWithDeployments(CLIENTS, deployments);
-  }, [deployments, triggerCount]);
+    return mergeClientsWithDeployments(rawClients, deployments);
+  }, [rawClients, deployments, triggerCount]);
 
   return {
     clients,
     deployments,
+    loading,
     refreshClients: reloadData,
   };
 }
+
+export default useClientManagementStore;

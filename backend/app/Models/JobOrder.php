@@ -17,7 +17,6 @@ class JobOrder extends Model
         'id',
         'ref',
         'client_account_id',
-        'title',
         'client',
         'category',
         'dep_ref',
@@ -32,12 +31,16 @@ class JobOrder extends Model
         'priority',
         'description',
         'requirements',
+        'tags',
+        'applicants',
         'source',
     ];
 
     protected $casts = [
-        'filled' => 'integer',
-        'total'  => 'integer',
+        'filled'     => 'integer',
+        'total'      => 'integer',
+        'tags'       => 'array',
+        'applicants' => 'array',
     ];
 
     public function clientAccount(): BelongsTo

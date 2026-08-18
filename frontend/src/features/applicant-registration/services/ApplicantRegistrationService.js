@@ -1,181 +1,119 @@
-// ApplicantRegistrationService.js
-//
-// Service layer for Applicant Registration & Profiling. Communicates with the
-// Laravel REST API (/api/v1/applicants) for persistence while maintaining
-// pure helper functions for match scoring, status metadata, and permission checks.
-
-const API_BASE = 'http://localhost:8000/api/v1/applicants';
+import api from '../../../services/apiClient';
 
 // ── API CLIENT FUNCTIONS ──
 
 export async function fetchApplicantsApi() {
-  const res = await fetch(API_BASE);
-  if (!res.ok) throw new Error('Failed to fetch applicants');
-  return res.json();
+  const res = await api.get('/applicants');
+  return res.data;
 }
 
 export async function fetchApplicantApi(regId) {
-  const res = await fetch(`${API_BASE}/${regId}`);
-  if (!res.ok) throw new Error(`Failed to fetch applicant ${regId}`);
-  return res.json();
+  const res = await api.get(`/applicants/${regId}`);
+  return res.data;
 }
 
 export async function createApplicantApi(formData) {
-  const res = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(formData),
-  });
-  const data = await res.json();
-  if (!res.ok) {
+  try {
+    const res = await api.post('/applicants', formData);
+    return res.data;
+  } catch (err) {
+    const data = err.response?.data || {};
     return { ok: false, duplicate: data.duplicate, message: data.message || 'Error creating applicant' };
   }
-  return data;
 }
 
 export async function updateBasicInfoApi(regId, patchData) {
-  const res = await fetch(`${API_BASE}/${regId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(patchData),
-  });
-  const data = await res.json();
-  if (!res.ok) {
+  try {
+    const res = await api.put(`/applicants/${regId}`, patchData);
+    return res.data;
+  } catch (err) {
+    const data = err.response?.data || {};
     return { ok: false, duplicate: data.duplicate, message: data.message || 'Error updating applicant' };
   }
-  return data;
 }
 
 export async function deleteApplicantApi(regId) {
-  const res = await fetch(`${API_BASE}/${regId}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Failed to delete applicant');
-  return res.json();
+  const res = await api.delete(`/applicants/${regId}`);
+  return res.data;
 }
 
 // ── Sub-resource API Calls ──
 
 export async function addSkillApi(regId, skill) {
-  const res = await fetch(`${API_BASE}/${regId}/skills`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ skill }),
-  });
-  return res.json();
+  const res = await api.post(`/applicants/${regId}/skills`, { skill });
+  return res.data;
 }
 
 export async function removeSkillApi(regId, skillId) {
-  const res = await fetch(`${API_BASE}/${regId}/skills/${skillId}`, { method: 'DELETE' });
-  return res.json();
+  const res = await api.delete(`/applicants/${regId}/skills/${skillId}`);
+  return res.data;
 }
 
 export async function addWorkHistoryApi(regId, entry) {
-  const res = await fetch(`${API_BASE}/${regId}/work-history`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry),
-  });
-  return res.json();
+  const res = await api.post(`/applicants/${regId}/work-history`, entry);
+  return res.data;
 }
 
 export async function removeWorkHistoryApi(regId, workId) {
-  const res = await fetch(`${API_BASE}/${regId}/work-history/${workId}`, { method: 'DELETE' });
-  return res.json();
+  const res = await api.delete(`/applicants/${regId}/work-history/${workId}`);
+  return res.data;
 }
 
 export async function addEducationApi(regId, entry) {
-  const res = await fetch(`${API_BASE}/${regId}/education`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry),
-  });
-  return res.json();
+  const res = await api.post(`/applicants/${regId}/education`, entry);
+  return res.data;
 }
 
 export async function removeEducationApi(regId, eduId) {
-  const res = await fetch(`${API_BASE}/${regId}/education/${eduId}`, { method: 'DELETE' });
-  return res.json();
+  const res = await api.delete(`/applicants/${regId}/education/${eduId}`);
+  return res.data;
 }
 
 export async function addDocumentApi(regId, docData) {
-  // Supports either JSON or FormData (for real file upload)
-  let body;
-  let headers = {};
-
-  if (docData instanceof FormData) {
-    body = docData;
-  } else {
-    headers['Content-Type'] = 'application/json';
-    body = JSON.stringify(docData);
-  }
-
-  const res = await fetch(`${API_BASE}/${regId}/documents`, {
-    method: 'POST',
-    headers,
-    body,
-  });
-  return res.json();
+  const res = await api.post(`/applicants/${regId}/documents`, docData);
+  return res.data;
 }
 
 export async function removeDocumentApi(regId, docId) {
-  const res = await fetch(`${API_BASE}/${regId}/documents/${docId}`, { method: 'DELETE' });
-  return res.json();
+  const res = await api.delete(`/applicants/${regId}/documents/${docId}`);
+  return res.data;
 }
 
 export async function addReferenceApi(regId, entry) {
-  const res = await fetch(`${API_BASE}/${regId}/references`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry),
-  });
-  return res.json();
+  const res = await api.post(`/applicants/${regId}/references`, entry);
+  return res.data;
 }
 
 export async function removeReferenceApi(regId, refId) {
-  const res = await fetch(`${API_BASE}/${regId}/references/${refId}`, { method: 'DELETE' });
-  return res.json();
+  const res = await api.delete(`/applicants/${regId}/references/${refId}`);
+  return res.data;
 }
 
 // ── Workflow Stage & Status API Calls ──
 
 export async function updateStageApi(regId, stage) {
-  const res = await fetch(`${API_BASE}/${regId}/stage`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ stage }),
-  });
-  return res.json();
+  const res = await api.patch(`/applicants/${regId}/stage`, { stage });
+  return res.data;
 }
 
 export async function updateStatusApi(regId, status) {
-  const res = await fetch(`${API_BASE}/${regId}/status`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  });
-  return res.json();
+  const res = await api.patch(`/applicants/${regId}/status`, { status });
+  return res.data;
 }
 
 export async function updateCategoryApi(regId, category) {
-  const res = await fetch(`${API_BASE}/${regId}/category`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ category }),
-  });
-  return res.json();
+  const res = await api.patch(`/applicants/${regId}/category`, { category });
+  return res.data;
 }
 
 export async function updateTargetJobApi(regId, targetJobId, jobLabel) {
-  const res = await fetch(`${API_BASE}/${regId}/target-job`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ targetJobId, jobLabel }),
-  });
-  return res.json();
+  const res = await api.patch(`/applicants/${regId}/target-job`, { targetJobId, jobLabel });
+  return res.data;
 }
 
 export async function sendToRecruitmentApi(regId) {
-  const res = await fetch(`${API_BASE}/${regId}/send-to-recruitment`, { method: 'POST' });
-  return res.json();
+  const res = await api.post(`/applicants/${regId}/send-to-recruitment`);
+  return res.data;
 }
 
 export async function returnToProfilingApi(regId) {
@@ -327,6 +265,8 @@ export function getAllJobTargets() {
 export const JOB_TARGETS = getAllJobTargets();
 
 export function computeMatchScore(candidate, job) {
+  if (!job) return 0;
+
   const keywords = (job.keywords && job.keywords.length > 0)
     ? job.keywords
     : (job.title || '').toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2);
@@ -334,8 +274,8 @@ export function computeMatchScore(candidate, job) {
   if (!keywords || !keywords.length) return 0;
 
   const searchable = [
-    ...(candidate.skills || []),
-    ...(candidate.workHistory || []).map((w) => `${w.role} ${w.company}`),
+    ...(candidate?.skills || []),
+    ...(candidate?.workHistory || []).map((w) => `${w.role} ${w.company}`),
   ].join(' ').toLowerCase();
 
   if (!searchable.trim()) return 0;

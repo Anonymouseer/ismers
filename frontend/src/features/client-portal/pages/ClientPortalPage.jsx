@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../services/apiClient';
 import { clientPortalService } from '../services/ClientPortalService';
 import ClientPortalSidebar from '../components/ClientPortalSidebar';
 import ClientPortalTopbar from '../components/ClientPortalTopbar';
@@ -16,6 +17,7 @@ import { mergeClientsWithDeployments } from '../../client-management/store/Clien
 import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService';
 import { getCachedApplications } from '../../recruitment-selection/services/RecruitmentSelectionService';
 import { APPLICATIONS } from '../../recruitment-selection/data/mockApplications';
+import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import './ClientPortalPage.css';
 
 const TODAY = new Date().toLocaleDateString('en-US', {
@@ -516,13 +518,9 @@ export default function ClientPortalPage() {
     });
 
     const lookupKey = targetCand?.name || targetCand?.regId || targetCand?.dbId || String(candId).replace(/^cand-/, '');
-    fetch(`http://localhost:8000/api/v1/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ 
-        client_endorsement_status: newStatus,
-        stage: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : undefined
-      }),
+    api.patch(`/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
+      client_endorsement_status: newStatus,
+      stage: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : undefined
     }).catch((err) => {
       console.warn('Could not sync endorsement status to backend:', err);
     });
@@ -871,6 +869,9 @@ export default function ClientPortalPage() {
               ? a.skills.map((s) => (typeof s === 'string' ? s : s.name))
               : ['Technical Proficiency', 'Communications', 'Operations Protocol'];
 
+            const targetJob = targetById(a.jobId) || targetById(a.targetJobId);
+            const computedScore = targetJob ? computeMatchScore(a, targetJob) : (typeof a.score === 'number' ? a.score : 0);
+
             dynamicEndorsed.push({
               id: a.id ? (String(a.id).startsWith('cand-') ? a.id : `cand-${a.id}`) : `cand-${a.regId || Date.now()}`,
               dbId: a.id,
@@ -878,7 +879,9 @@ export default function ClientPortalPage() {
               name: a.name,
               position: a.jobTitle || a.position || 'Operations Candidate',
               jobRef: a.jobId ? `PRF-2026-${String(a.jobId).replace(/\D/g, '').padStart(4, '0')}` : 'PRF-2026-0081',
-              matchScore: a.score || 88,
+              jobId: a.jobId,
+              targetJobId: a.targetJobId,
+              matchScore: computedScore,
               experience: a.experience || '3 years relevant industry experience',
               skills: skillsArr,
               workHistory: a.workHistory || [],
@@ -988,6 +991,9 @@ export default function ClientPortalPage() {
             ? applicant.skills.map((s) => (typeof s === 'string' ? s : s.name))
             : ['Technical Proficiency', 'Communications', 'Operations Protocol'];
 
+          const targetJob = targetById(applicant?.jobId) || targetById(applicant?.targetJobId);
+          const computedScore = targetJob ? computeMatchScore(applicant, targetJob) : (typeof applicant?.score === 'number' ? applicant.score : 0);
+
           const newCand = candidate || {
             id: candidateId ? (String(candidateId).startsWith('cand-') ? candidateId : `cand-${candidateId}`) : `cand-${dbId || regId || Date.now()}`,
             dbId: dbId || candidateId,
@@ -995,7 +1001,9 @@ export default function ClientPortalPage() {
             name: candName || 'Candidate',
             position: applicant?.jobTitle || applicant?.position || 'Operations Candidate',
             jobRef: applicant?.jobId ? `PRF-2026-${String(applicant.jobId).replace(/\D/g, '').padStart(4, '0')}` : 'PRF-2026-0081',
-            matchScore: applicant?.score || 88,
+            jobId: applicant?.jobId,
+            targetJobId: applicant?.targetJobId,
+            matchScore: computedScore,
             experience: applicant?.experience || '3 years relevant industry experience',
             skills: skillsArr,
             workHistory: applicant?.workHistory || [],

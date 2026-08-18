@@ -6,7 +6,7 @@ import {
   initials,
   STATUS_META,
   stageToStatus,
-  JOB_ORDER_OPTIONS,
+  getJobOrderOptions,
   PRE_DEPLOYMENT_ITEMS,
 } from '../services/DeploymentAssignmentService';
 
@@ -68,7 +68,23 @@ export default function ClientDeploymentProfile({
   // Job orders available for this client
   const clientJobOrders = useMemo(() => {
     const clientNameNorm = (clientData.name || '').trim().toLowerCase();
-    const list = JOB_ORDER_OPTIONS.filter((j) => (j.client || '').trim().toLowerCase() === clientNameNorm);
+    const allJOs = getJobOrderOptions();
+    const list = allJOs.filter((j) => (j.client || '').trim().toLowerCase() === clientNameNorm);
+
+    // Also include any clientData.jobs from client management
+    (clientData.jobs || []).forEach((j) => {
+      const ref = j.ref || j.id;
+      if (!list.some((item) => (ref && item.ref === ref) || (item.title && j.title && item.title.toLowerCase() === j.title.toLowerCase()))) {
+        list.push({
+          ref: ref || `JO-${String(list.length + 1).padStart(3, '0')}`,
+          client: clientData.name,
+          title: j.title || j.position || 'Assigned Role',
+          site: j.location || clientData.site || 'Valenzuela City, NCR',
+          supervisor: j.recruiter || clientData.supervisor || 'Operations Supervisor',
+        });
+      }
+    });
+
     // Dynamically append any distinct job orders from live deployments
     clientDeployments.forEach((d) => {
       if (d.jobOrderRef && !list.some((j) => j.ref === d.jobOrderRef)) {

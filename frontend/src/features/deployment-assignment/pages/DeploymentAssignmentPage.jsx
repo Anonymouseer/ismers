@@ -6,7 +6,7 @@ import DeploymentSlipModal from '../components/DeploymentSlipModal';
 import RecordDetailsModal from '../components/RecordDetailsModal';
 import NewDeploymentModal from '../components/NewDeploymentModal';
 import { useDeploymentAssignmentStore } from '../store/DeploymentAssignmentStore';
-import { JOB_ORDER_OPTIONS } from '../services/DeploymentAssignmentService';
+import { getJobOrderOptions } from '../services/DeploymentAssignmentService';
 import { CLIENTS as CLIENT_MANAGEMENT_CLIENTS } from '../../client-management/data/mockClients';
 import '../pages/DeploymentAssignmentPage.css';
 import '../../client-management/pages/ClientManagementPage.css';
@@ -69,7 +69,8 @@ export default function DeploymentAssignmentPage() {
         }
         return false;
       });
-      const joList = JOB_ORDER_OPTIONS.filter((j) => (j.client || '').trim().toLowerCase() === clientNameNorm);
+      const allJOs = getJobOrderOptions();
+      const joList = allJOs.filter((j) => (j.client || '').trim().toLowerCase() === clientNameNorm);
       const activeOnSite = assignedStaff.filter((d) => d.stage === 'on_site').length;
 
       return {

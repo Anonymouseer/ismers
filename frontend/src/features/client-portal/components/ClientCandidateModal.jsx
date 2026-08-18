@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 
 /**
  * ClientCandidateModal - Comprehensive Candidate Profile & AI Match Dossier for Client Portal.
@@ -23,7 +24,8 @@ export default function ClientCandidateModal({
 
   if (!candidate) return null;
 
-  const score = candidate.matchScore || 80;
+  const targetJob = targetById(candidate.jobId) || targetById(candidate.targetJobId) || targetById(candidate.jobRef);
+  const score = targetJob ? computeMatchScore(candidate, targetJob) : (typeof candidate.matchScore === 'number' ? candidate.matchScore : 0);
   const isAccepted = candidate.status === 'Accepted for Interview';
   const isPassed = candidate.status === 'Passed Interview' || candidate.status === 'Passed Client Interview' || candidate.status === 'Hired';
   const isDeclined = candidate.status === 'Declined';

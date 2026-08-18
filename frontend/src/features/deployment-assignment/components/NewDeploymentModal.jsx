@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { JOB_ORDER_OPTIONS, fetchPendingHiresApi } from '../services/DeploymentAssignmentService';
+import { getJobOrderOptions, fetchPendingHiresApi } from '../services/DeploymentAssignmentService';
 import { ISMERSBridge } from '../services/ismersBridge';
 
 const emptyForm = {
@@ -19,12 +19,14 @@ const emptyForm = {
 export default function NewDeploymentModal({ open, onClose, onSubmit, initialJobOrder = null }) {
   const [form, setForm] = useState(emptyForm);
   const [pendingHires, setPendingHires] = useState([]);
-  const clients = [...new Set(JOB_ORDER_OPTIONS.map((j) => j.client))].sort();
+  const jobOrderList = getJobOrderOptions();
+  const clients = [...new Set(jobOrderList.map((j) => j.client))].sort();
 
   useEffect(() => {
     if (!open) return;
+    const currentList = getJobOrderOptions();
     const defaultClient = initialJobOrder ? initialJobOrder.client : (clients[0] || '');
-    const defaultJO = initialJobOrder || JOB_ORDER_OPTIONS.find((j) => j.client === defaultClient);
+    const defaultJO = initialJobOrder || currentList.find((j) => j.client === defaultClient);
     setForm({
       ...emptyForm,
       client: defaultClient,
@@ -57,7 +59,8 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
 
   if (!open) return null;
 
-  const jobOrdersForClient = JOB_ORDER_OPTIONS.filter((j) => j.client === form.client);
+  const allJobOrders = getJobOrderOptions();
+  const jobOrdersForClient = allJobOrders.filter((j) => j.client === form.client);
   const employeeIsLocked = Boolean(form.hireKey);
 
   function update(field, value) {
@@ -65,7 +68,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
   }
 
   function handleClientChange(clientName) {
-    const matchedJO = JOB_ORDER_OPTIONS.find((j) => j.client === clientName);
+    const matchedJO = allJobOrders.find((j) => j.client === clientName);
     setForm((f) => ({
       ...f,
       client: clientName,
@@ -76,7 +79,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
   }
 
   function handleJobOrderChange(joRef) {
-    const matchedJO = JOB_ORDER_OPTIONS.find((j) => j.ref === joRef);
+    const matchedJO = allJobOrders.find((j) => j.ref === joRef);
     setForm((f) => ({
       ...f,
       jobOrderRef: joRef,
@@ -95,7 +98,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
     // Check if it matches a pending hire from live API
     const liveMatch = pendingHires.find((h) => String(h.applicantId || h.id || h.key) === String(value));
     if (liveMatch) {
-      const matchedJO = liveMatch.jobOrderRef ? JOB_ORDER_OPTIONS.find((j) => j.ref === liveMatch.jobOrderRef) : null;
+      const matchedJO = liveMatch.jobOrderRef ? allJobOrders.find((j) => j.ref === liveMatch.jobOrderRef) : null;
       setForm((f) => ({
         ...f,
         hireKey: liveMatch.key || `cand-${liveMatch.applicantId}`,
@@ -111,7 +114,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
     }
 
     const hire = ISMERSBridge.getHire(value);
-    const matchedJO = hire && hire.jobOrderRef ? JOB_ORDER_OPTIONS.find((j) => j.ref === hire.jobOrderRef) : null;
+    const matchedJO = hire && hire.jobOrderRef ? allJobOrders.find((j) => j.ref === hire.jobOrderRef) : null;
     setForm((f) => ({
       ...f,
       hireKey: value,
@@ -135,7 +138,7 @@ export default function NewDeploymentModal({ open, onClose, onSubmit, initialJob
 
   function handleSubmit(e) {
     e.preventDefault();
-    const jobOrder = JOB_ORDER_OPTIONS.find((j) => j.ref === form.jobOrderRef);
+    const jobOrder = allJobOrders.find((j) => j.ref === form.jobOrderRef);
     onSubmit({
       employee: form.employee.trim(),
       client: form.client,
