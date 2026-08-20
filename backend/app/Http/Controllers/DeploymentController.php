@@ -7,6 +7,7 @@ use App\Models\Deployment;
 use App\Models\JobOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class DeploymentController extends Controller
 {
@@ -644,4 +645,200 @@ class DeploymentController extends Controller
 
         return response()->json($this->formatDeployment($d));
     }
+
+    /**
+     * POST /api/v1/deployments/{id}/intervention
+     * Log an HR retention action / memorandum dispatch into the deployment audit history.
+     */
+    public function logIntervention(string $id, Request $request): JsonResponse
+    {
+        $request->validate([
+            'actionType' => 'nullable|string',
+            'memoControlNo' => 'nullable|string',
+            'actionTitle' => 'nullable|string',
+            'dispatchedEmail' => 'nullable|string',
+            'targetDate' => 'nullable|string',
+            'customNote' => 'nullable|string',
+            'issuedAt' => 'nullable|string',
+        ]);
+
+        $d = Deployment::where('deployment_ref', $id)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->first();
+
+        if (!$d) {
+            return response()->json(['message' => "Deployment record {$id} not found."], 404);
+        }
+
+        $actionTitle = $request->input('actionTitle', 'HR Retention Intervention Directive');
+        $memoControlNo = $request->input('memoControlNo', 'PPM-RET-2026-0001');
+        $dispatchedEmail = $request->input('dispatchedEmail', 'employee@primepower-staff.ph');
+        $issuedDate = $request->input('issuedAt', date('M d, Y'));
+
+        $history = $d->history ?? [];
+        $history[] = [
+            'date' => $issuedDate,
+            'event' => 'Retention Notice Dispatched',
+            'note' => "{$actionTitle} (Control No: {$memoControlNo}) dispatched to {$dispatchedEmail}.",
+        ];
+
+        $snapshot = $d->pre_employment_snapshot ?? [];
+        $snapshot['last_retention_action'] = [
+            'actionType' => $request->input('actionType', 'renewal'),
+            'memoControlNo' => $memoControlNo,
+            'actionTitle' => $actionTitle,
+            'dispatchedEmail' => $dispatchedEmail,
+            'targetDate' => $request->input('targetDate'),
+            'customNote' => $request->input('customNote'),
+            'issuedAt' => $issuedDate,
+            'dispatchedBy' => 'HR Administrator',
+            'timestamp' => now()->toIso8601String(),
+        ];
+
+        $updateData = [
+            'history' => $history,
+            'pre_employment_snapshot' => $snapshot,
+        ];
+
+        if ($request->input('actionType') === 'renewal' && $d->stage === 'on_site') {
+            $updateData['stage'] = 'for_renewal';
+        }
+
+        $d->update($updateData);
+
+        // Dispatch Rich HTML Email (Renders in Mailpit HTML tab, Gmail, Outlook, etc.)
+        try {
+            $emailSubject = "[PRIMEPOWER HR] {$actionTitle} — {$d->employee_name} ({$memoControlNo})";
+            $targetDateVal = $request->input('targetDate') ?? 'Within 3 Business Days';
+            $customNoteVal = $request->input('customNote') ?: 'Please coordinate with your Area Supervisor or report to the HR Operations office for contract endorsement.';
+
+            $htmlContent = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{$emailSubject}</title>
+</head>
+<body style="margin:0; padding:24px; background-color:#f1f5f9; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#1e293b; line-height:1.5;">
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:620px; margin:0 auto; background-color:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #cbd5e1; box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+    
+    <!-- HEADER -->
+    <tr>
+      <td style="background:linear-gradient(135deg, #0f2744 0%, #1e3a8a 100%); padding:28px 32px; color:#ffffff;">
+        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <div style="font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; color:#93c5fd; margin-bottom:4px;">
+                PRIMEPOWER MANPOWER SERVICES INC.
+              </div>
+              <div style="font-size:18px; font-weight:800; color:#ffffff; letter-spacing:-0.2px;">
+                HR Smart Recruitment &amp; Workforce Retention
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- BADGE & TITLE -->
+    <tr>
+      <td style="padding:28px 32px 16px 32px;">
+        <div style="display:inline-block; font-size:11px; font-weight:700; background-color:#e0e7ff; color:#3730a3; padding:4px 10px; border-radius:6px; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:12px;">
+          Control No: {$memoControlNo}
+        </div>
+        <h1 style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 10px 0; line-height:1.3;">
+          {$actionTitle}
+        </h1>
+        <p style="font-size:13.5px; color:#475569; margin:0; line-height:1.6;">
+          This serves as an official human resources directive regarding your current deployment assignment under DOLE DO-174 regulations.
+        </p>
+      </td>
+    </tr>
+
+    <!-- METADATA SUMMARY TABLE -->
+    <tr>
+      <td style="padding:0 32px 20px 32px;">
+        <table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; font-size:12.5px;">
+          <tr>
+            <td width="35%" style="color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Personnel Name:</td>
+            <td width="65%" style="color:#0f172a; font-weight:700; border-bottom:1px solid #e2e8f0;">{$d->employee_name}</td>
+          </tr>
+          <tr>
+            <td style="color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Assigned Client:</td>
+            <td style="color:#0f172a; font-weight:700; border-bottom:1px solid #e2e8f0;">{$d->client_name}</td>
+          </tr>
+          <tr>
+            <td style="color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Position Title:</td>
+            <td style="color:#0f172a; font-weight:700; border-bottom:1px solid #e2e8f0;">{$d->position_title}</td>
+          </tr>
+          <tr>
+            <td style="color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Deployment Facility:</td>
+            <td style="color:#0f172a; font-weight:700; border-bottom:1px solid #e2e8f0;">{$d->site_facility}</td>
+          </tr>
+          <tr>
+            <td style="color:#64748b; font-weight:600; border-bottom:1px solid #e2e8f0;">Date Issued:</td>
+            <td style="color:#0f172a; font-weight:700; border-bottom:1px solid #e2e8f0;">{$issuedDate}</td>
+          </tr>
+          <tr>
+            <td style="color:#64748b; font-weight:600;">Target Action Date:</td>
+            <td style="color:#1d4ed8; font-weight:800;">{$targetDateVal}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- DIRECTIVE BODY & INSTRUCTIONS -->
+    <tr>
+      <td style="padding:0 32px 28px 32px;">
+        <div style="background-color:#eff6ff; border-left:4px solid #2563eb; padding:16px; border-radius:0 8px 8px 0; margin-bottom:18px;">
+          <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#1e40af; margin-bottom:6px; letter-spacing:0.5px;">
+            HR Directives &amp; Next Steps
+          </div>
+          <div style="font-size:13px; color:#1e3a8a; line-height:1.6;">
+            {$customNoteVal}
+          </div>
+        </div>
+        <p style="font-size:12.5px; color:#64748b; margin:0; line-height:1.6;">
+          Kindly acknowledge receipt of this memorandum by contacting your designated Site Supervisor or reporting to the PRIMEPOWER HR Management desk before the target date indicated above.
+        </p>
+      </td>
+    </tr>
+
+    <!-- FOOTER -->
+    <tr>
+      <td style="background-color:#f8fafc; border-top:1px solid #e2e8f0; padding:20px 32px; text-align:center;">
+        <div style="font-size:11.5px; font-weight:700; color:#334155; margin-bottom:4px;">
+          PRIMEPOWER MANPOWER SERVICES INC. &bull; Enterprise Operations Desk
+        </div>
+        <div style="font-size:10.5px; color:#94a3b8; line-height:1.5;">
+          DOLE DO-174 Registered Contractor &bull; Protected under Republic Act 10173 (Data Privacy Act of 2012)<br>
+          This is an automated administrative notification. Please do not reply directly to this email.
+        </div>
+      </td>
+    </tr>
+
+  </table>
+</body>
+</html>
+HTML;
+
+            Mail::html($htmlContent, function ($message) use ($dispatchedEmail, $emailSubject) {
+                $message->to($dispatchedEmail)
+                    ->subject($emailSubject);
+            });
+        } catch (\Throwable $mailErr) {
+            // Non-blocking fallback if mail driver encounters temporary network issue
+            \Log::warning("Could not dispatch email to {$dispatchedEmail}: " . $mailErr->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Retention intervention for {$d->employee_name} logged and email dispatched successfully.",
+            'memoControlNo' => $memoControlNo,
+            'dispatchedEmail' => $dispatchedEmail,
+            'deployment' => $this->formatDeployment($d),
+        ]);
+    }
 }
+

@@ -3,6 +3,7 @@ import { CLIENTS } from '../../client-management/data/mockClients';
 import { logoUrl, initials, colorFor, softFor } from '../../client-management/utils/clientDisplay';
 import { PIPELINE_ANALYTICS } from '../data/mockAiAnalyticsData';
 import Pagination from '../../../components/common/Pagination';
+import AnalyticsService from '../services/AnalyticsService';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ANIMATION HOOK (Frame-by-frame Ease-out Cubic Tween from 0 to 100%)
@@ -203,7 +204,24 @@ function PieChart({ slices = [], size = 180, progress = 1 }) {
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 export default function PipelineAnalyticsTab() {
-  const { recruiterPerformance, sourcingChannels } = PIPELINE_ANALYTICS;
+  const [livePipelineData, setLivePipelineData] = useState(PIPELINE_ANALYTICS);
+  const recruiterPerformance = livePipelineData?.recruiterPerformance || PIPELINE_ANALYTICS.recruiterPerformance;
+  const sourcingChannels = livePipelineData?.sourcingChannels || PIPELINE_ANALYTICS.sourcingChannels;
+
+  useEffect(() => {
+    let active = true;
+    AnalyticsService.getPipelineMetrics()
+      .then((data) => {
+        if (active && data) {
+          setLivePipelineData((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch((err) => console.warn('Could not load live pipeline analytics:', err));
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // State
   const [selectedClientName, setSelectedClientName] = useState(null);

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientAccountController;
 use App\Http\Controllers\DeploymentController;
 use App\Http\Controllers\JobOrderController;
@@ -15,8 +17,21 @@ Route::get('/ping', function () {
     return response()->json(['message' => 'Laravel is connected!']);
 });
 
-// ── Applicant Registration & Profiling API (v1) ──
+// ── Application API (v1) ──
 Route::prefix('v1')->group(function () {
+    // ── Authentication (Admin / HR) ──
+    Route::prefix('auth')->group(function () {
+        Route::post('/login',  [AuthController::class, 'login']);
+        Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+        Route::get('/me',      [AuthController::class, 'me'])->middleware('auth:sanctum');
+    });
+
+    // ── AI Analytics & Intelligence ──
+    Route::prefix('analytics')->group(function () {
+        Route::get('/scoring',   [AnalyticsController::class, 'scoring']);
+        Route::get('/pipeline',  [AnalyticsController::class, 'pipeline']);
+        Route::get('/retention', [AnalyticsController::class, 'retention']);
+    });
     Route::get('/applicants', [ApplicantController::class, 'index']);
     Route::post('/applicants', [ApplicantController::class, 'store']);
     Route::get('/applicants/{regId}', [ApplicantController::class, 'show']);
@@ -80,6 +95,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/deployments/{id}',               [DeploymentController::class, 'show']);
     Route::patch('/deployments/{id}/stage',        [DeploymentController::class, 'updateStage']);
     Route::patch('/deployments/{id}/compliance',   [DeploymentController::class, 'updateCompliance']);
+    Route::post('/deployments/{id}/intervention',  [DeploymentController::class, 'logIntervention']);
+    Route::patch('/deployments/{id}/intervention', [DeploymentController::class, 'logIntervention']);
 });
 
 // ── Direct CRM Integration Endpoints (Top-level Aliases) ──

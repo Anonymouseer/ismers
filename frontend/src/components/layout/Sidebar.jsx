@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../features/auth/store/AuthStore';
 import './Sidebar.css';
 import primepowerLogo from '../../assets/primepower-logo.svg';
 
@@ -13,10 +14,11 @@ export default function Sidebar({
   onToggleCollapse = () => { },
   mobileOpen = false,
   onCloseMobile = () => { },
-  adminName = 'Name of Administrator',
-  adminEmail = 'admin@example.com',
 }) {
   const location = useLocation();
+  const { user, logout } = useAuth();
+  const adminName = user?.name || 'HR Administrator';
+  const adminEmail = user?.email || 'admin@primepower.ph';
 
   // Persistent Collapsible Sub-menu States in localStorage
   const [openMenus, setOpenMenus] = useState(() => {
@@ -441,14 +443,14 @@ export default function Sidebar({
           </div>
         </div>
 
-        <Link to="/settings" className="signout">
+        <button type="button" onClick={logout} className="signout" style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
           <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}>
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
           <span className="label">Sign Out</span>
-        </Link>
+        </button>
       </aside>
 
       {/* COLLAPSE TOGGLE BUTTON WITH SMOOTH SLIDE */}

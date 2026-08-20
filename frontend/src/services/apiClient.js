@@ -7,4 +7,16 @@ const api = axios.create({
   },
 });
 
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('primepower_admin_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // ignore
+  }
+  return config;
+});
+
 export default api;

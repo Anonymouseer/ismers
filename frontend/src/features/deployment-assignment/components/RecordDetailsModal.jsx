@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { complianceReadiness, PRE_DEPLOYMENT_ITEMS } from '../services/DeploymentAssignmentService';
+import { maskGovId } from '../../../utils/masking';
 import MedicalReferralModal from '../../recruitment-selection/components/MedicalReferralModal';
 import ContractSigningModal from '../../recruitment-selection/components/ContractSigningModal';
 import OrientationModal from '../../recruitment-selection/components/OrientationModal';
@@ -56,10 +57,10 @@ export default function RecordDetailsModal({
   const missingItems = PRE_DEPLOYMENT_ITEMS.filter((item) => !effectiveCompliance[item.key]);
   const isReady = read.isReady;
 
-  const displaySss = pre.sss && pre.sss !== '—' ? pre.sss : '34-8901234-5';
-  const displayTin = pre.tin && pre.tin !== '—' ? pre.tin : '345-678-901-000';
-  const displayPhilhealth = pre.philhealth && pre.philhealth !== '—' ? pre.philhealth : '12-050678901-2';
-  const displayPagibig = pre.pagibig && pre.pagibig !== '—' ? pre.pagibig : '1210-9876-5432';
+  const displaySss = maskGovId(pre.sss && pre.sss !== '—' ? pre.sss : '34-8901234-5');
+  const displayTin = maskGovId(pre.tin && pre.tin !== '—' ? pre.tin : '345-678-901-000');
+  const displayPhilhealth = maskGovId(pre.philhealth && pre.philhealth !== '—' ? pre.philhealth : '12-050678901-2');
+  const displayPagibig = maskGovId(pre.pagibig && pre.pagibig !== '—' ? pre.pagibig : '1210-9876-5432');
 
 
 

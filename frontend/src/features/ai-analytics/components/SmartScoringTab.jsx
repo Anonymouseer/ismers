@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CLIENT_REQUISITIONS } from '../data/mockAiAnalyticsData';
 import { CLIENTS } from '../../client-management/data/mockClients';
 import { logoUrl } from '../../client-management/utils/clientDisplay';
@@ -6,8 +6,11 @@ import ClientsAiScoringTable from './ClientsAiScoringTable';
 import Pagination from '../../../components/common/Pagination';
 import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
 import { saveStoredStage, getCachedApplications, saveCachedApplications } from '../../recruitment-selection/services/RecruitmentSelectionService';
+import AnalyticsService from '../services/AnalyticsService';
 
 export default function SmartScoringTab() {
+  const [liveRequisitions, setLiveRequisitions] = useState(CLIENT_REQUISITIONS);
+  const [loading, setLoading] = useState(false);
   const [selectedClientName, setSelectedClientName] = useState(null);
   const [activeJobRef, setActiveJobRef] = useState(null); // null = Level 2 (Job Cards Grid), string = Level 3 (Job Details & Candidate Table)
   const [clientSearch, setClientSearch] = useState('');
@@ -19,6 +22,25 @@ export default function SmartScoringTab() {
   const [selectedCandidateModal, setSelectedCandidateModal] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
 
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    AnalyticsService.getScoringData()
+      .then((data) => {
+        if (active && data?.requisitions && data.requisitions.length > 0) {
+          setLiveRequisitions(data.requisitions);
+        }
+      })
+      .catch((err) => console.warn('Could not load live analytics scoring:', err))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3500);
@@ -27,9 +49,9 @@ export default function SmartScoringTab() {
   // Build unified 18 client directory with requisitions & scored candidates
   const clientDirectory = useMemo(() => {
     return CLIENTS.map((c) => {
-      const requisitions = CLIENT_REQUISITIONS.filter((r) => r.client === c.name);
-      const totalCandidates = requisitions.reduce((acc, r) => acc + r.candidates.length, 0);
-      const allMatches = requisitions.flatMap((r) => r.candidates.map((cand) => cand.matchScore));
+      const requisitions = liveRequisitions.filter((r) => r.client === c.name || (r.client && r.client.toLowerCase().includes(c.name.toLowerCase())));
+      const totalCandidates = requisitions.reduce((acc, r) => acc + (r.candidates?.length || 0), 0);
+      const allMatches = requisitions.flatMap((r) => (r.candidates || []).map((cand) => cand.matchScore));
       const topMatch = allMatches.length ? Math.max(...allMatches) : (c.name === 'Sunrise Hospitality Group' ? 96 : c.name === 'Northline BPO' ? 95 : c.name === 'Apex Construction Builders' ? 94 : c.name === 'ABC Logistics' ? 94 : c.name === 'Delta Manufacturing' ? 93 : c.name === 'Coastal Retail Group' ? 92 : 88);
       const primarySite = c.site || (c.jobs?.[0]?.location) || 'Metro Manila, NCR';
       const supervisor = c.am || 'Karla Reyes';
@@ -76,7 +98,7 @@ export default function SmartScoringTab() {
   // All Job requisitions under the selected client
   const clientJobs = useMemo(() => {
     if (!selectedClientName) return [];
-    const directReqs = CLIENT_REQUISITIONS.filter((r) => r.client === selectedClientName);
+    const directReqs = liveRequisitions.filter((r) => r.client === selectedClientName || (r.client && r.client.toLowerCase().includes(selectedClientName.toLowerCase())));
     if (directReqs.length) return directReqs;
 
     // Baseline from mock clients
