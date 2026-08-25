@@ -613,13 +613,9 @@ export default function ClientPortalPage() {
     });
 
     const lookupKey = targetCand?.name || targetCand?.regId || targetCand?.dbId || String(candId).replace(/^cand-/, '');
-    fetch(`http://localhost:8000/api/v1/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        client_endorsement_status: 'Accepted for Interview',
-        interview_schedule: scheduleData,
-      }),
+    api.patch(`/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
+      client_endorsement_status: 'Accepted for Interview',
+      interview_schedule: scheduleData,
     }).catch((err) => {
       console.warn('Could not sync endorsement status to backend:', err);
     });

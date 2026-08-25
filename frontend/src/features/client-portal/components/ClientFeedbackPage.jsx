@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 
 const CATEGORIES = [
   { value: 'service_quality', label: 'Service Quality' },
@@ -16,6 +16,8 @@ const RATING_LABELS = {
   4: 'Good',
   5: 'Excellent',
 };
+
+const FEEDBACK_STATUSES = ['All Status', 'Under Review', 'Acknowledged', 'Resolved'];
 
 function StarRating({ value, onChange, id }) {
   const [hovered, setHovered] = useState(0);
@@ -54,6 +56,8 @@ function StarRating({ value, onChange, id }) {
 function FeedbackCard({ fb }) {
   const categoryObj = CATEGORIES.find((c) => c.value === fb.category);
 
+  // Normalize to valid badge class — 'client-portal-badge--pending' does not exist in CSS.
+  // Unknown/pending statuses fall back to 'client-portal-badge--review' (amber/warning tone).
   const statusClass =
     fb.status === 'Acknowledged'
       ? 'client-portal-badge--active'
@@ -61,7 +65,7 @@ function FeedbackCard({ fb }) {
       ? 'client-portal-badge--review'
       : fb.status === 'Resolved'
       ? 'client-portal-badge--filled'
-      : 'client-portal-badge--pending';
+      : 'client-portal-badge--review'; // safe fallback for any unknown status
 
   return (
     <div className="cp-feedback-card">
@@ -116,7 +120,7 @@ function FeedbackCard({ fb }) {
   );
 }
 
-function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
+function FeedbackModal({ session, deployedRoster, onClose, onSubmit }) {
   const [form, setForm] = useState({
     category: '',
     employeeId: '',
@@ -127,22 +131,23 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  // Escape key closes modal
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
-  const handleFormChange = (field) => (e) => {
+  const handleFormChange = useCallback((field) => (e) => {
     const val = e.target.value;
     setForm((prev) => ({ ...prev, [field]: val }));
     if (formErrors[field]) setFormErrors((prev) => ({ ...prev, [field]: '' }));
-  };
+  }, [formErrors]);
 
-  const handleRatingChange = (val) => {
+  const handleRatingChange = useCallback((val) => {
     setForm((prev) => ({ ...prev, rating: val }));
     if (formErrors.rating) setFormErrors((prev) => ({ ...prev, rating: '' }));
-  };
+  }, [formErrors.rating]);
 
   const validateForm = () => {
     const errors = {};
@@ -171,6 +176,8 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
     }, 600);
   };
 
+  const companyLabel = session?.company ? ` — ${session.company}` : '';
+
   return (
     <>
       <div className="cp-modal-overlay" onClick={onClose} />
@@ -178,7 +185,7 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
         className="cp-modal-panel cp-feedback-modal-panel"
         role="dialog"
         aria-modal="true"
-        aria-label="Submit Feedback"
+        aria-labelledby="cp-feedback-modal-title"
       >
         <div className="cp-modal-head">
           <div className="cp-feedback-modal-head-inner">
@@ -188,13 +195,13 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
               </svg>
             </div>
             <div>
-              <div className="cp-modal-title">Submit Client Feedback</div>
+              <div id="cp-feedback-modal-title" className="cp-modal-title">Submit Client Feedback</div>
               <div className="cp-feedback-modal-subtitle">
-                Confidential — reviewed by our Senior Client Relations team
+                Confidential{companyLabel} — reviewed by our Senior Client Relations team
               </div>
             </div>
           </div>
-          <button type="button" className="cp-modal-close" onClick={onClose} aria-label="Close">
+          <button type="button" className="cp-modal-close" onClick={onClose} aria-label="Close dialog">
             <svg className="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
         </div>
@@ -245,7 +252,7 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
           </div>
 
           <div className="cp-modal-section">
-            <div className="cp-modal-section-title">Comments & Suggestions</div>
+            <div className="cp-modal-section-title">Comments &amp; Suggestions</div>
             <div className="cp-modal-field">
               <label htmlFor="fb-modal-comment">
                 Feedback Details <span className="cp-modal-req">*</span>
@@ -256,10 +263,11 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
                 placeholder="Describe your experience, specific observations, or concerns regarding the service or employee..."
                 value={form.comment}
                 onChange={handleFormChange('comment')}
+                maxLength={2000}
                 rows={4}
               />
               <div className="cp-feedback-char-count">
-                {form.comment.length} characters
+                {form.comment.length} / 2000 characters
                 {form.comment.length > 0 && form.comment.length < 20 && (
                   <span className="cp-feedback-char-warn"> (minimum 20 required)</span>
                 )}
@@ -274,8 +282,10 @@ function FeedbackModal({ deployedRoster, onClose, onSubmit }) {
                 placeholder="Any specific recommendations that would help us improve our service delivery..."
                 value={form.suggestions}
                 onChange={handleFormChange('suggestions')}
+                maxLength={1000}
                 rows={3}
               />
+              <div className="cp-feedback-char-count">{form.suggestions.length} / 1000</div>
             </div>
           </div>
 
@@ -347,6 +357,20 @@ const MOCK_PAST_FEEDBACK = [
   },
 ];
 
+/**
+ * Compute the next safe reference number from existing feedback records.
+ * Reads the trailing numeric portion from refs like 'FBK-2026-0003' → 3.
+ * Returns max + 1, safely padded to 4 digits. Avoids collisions on deletion/re-add.
+ */
+function getNextRefNumber(feedbackList) {
+  const max = feedbackList.reduce((acc, f) => {
+    const match = f.ref?.match(/FBK-\d{4}-(\d+)$/);
+    if (match) return Math.max(acc, parseInt(match[1], 10));
+    return acc;
+  }, 0);
+  return String(max + 1).padStart(4, '0');
+}
+
 export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
   const [feedbackList, setFeedbackList] = useState(() => {
     try {
@@ -359,10 +383,12 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
   const [showModal, setShowModal] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [ratingFilter, setRatingFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('All Status');
+  const [searchQuery, setSearchQuery] = useState('');
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleSubmit = (data) => {
-    const refNum = String(feedbackList.length + 1).padStart(4, '0');
+    const refNum = getNextRefNumber(feedbackList);
     const newFb = {
       id: `fb-${Date.now()}`,
       ref: `FBK-2026-${refNum}`,
@@ -380,12 +406,20 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
   };
 
   const filtered = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return feedbackList.filter((fb) => {
       const catMatch = categoryFilter === 'ALL' || fb.category === categoryFilter;
       const ratingMatch = ratingFilter === 'ALL' || String(fb.rating) === String(ratingFilter);
-      return catMatch && ratingMatch;
+      const statusMatch = statusFilter === 'All Status' || fb.status === statusFilter;
+      const searchMatch =
+        !q ||
+        (fb.ref && fb.ref.toLowerCase().includes(q)) ||
+        (fb.comment && fb.comment.toLowerCase().includes(q)) ||
+        (fb.employeeName && fb.employeeName.toLowerCase().includes(q)) ||
+        (fb.response && fb.response.toLowerCase().includes(q));
+      return catMatch && ratingMatch && statusMatch && searchMatch;
     });
-  }, [feedbackList, categoryFilter, ratingFilter]);
+  }, [feedbackList, categoryFilter, ratingFilter, statusFilter, searchQuery]);
 
   const avgRating =
     feedbackList.length > 0
@@ -400,11 +434,25 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
       : 0,
   }));
 
+  const hasActiveFilters =
+    categoryFilter !== 'ALL' ||
+    ratingFilter !== 'ALL' ||
+    statusFilter !== 'All Status' ||
+    searchQuery.trim().length > 0;
+
+  const clearFilters = () => {
+    setCategoryFilter('ALL');
+    setRatingFilter('ALL');
+    setStatusFilter('All Status');
+    setSearchQuery('');
+  };
+
   return (
     <div className="client-portal-view-container">
 
       {showModal && (
         <FeedbackModal
+          session={session}
           deployedRoster={deployedRoster}
           onClose={() => setShowModal(false)}
           onSubmit={handleSubmit}
@@ -413,7 +461,7 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
 
       <div className="client-portal-header">
         <div className="client-portal-header-left">
-          <div className="client-portal-eyebrow">Service Quality & Relations</div>
+          <div className="client-portal-eyebrow">Service Quality &amp; Relations</div>
           <h1 className="client-portal-title">Client Feedback</h1>
           <div className="client-portal-date">
             Share your experience with our services and deployed personnel
@@ -441,6 +489,7 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
         </div>
       )}
 
+      {/* METRICS ROW */}
       <div className="cp-feedback-metrics-row">
         <div className="client-portal-card cp-feedback-metric-card">
           <div className="cp-feedback-metric-label">Total Feedback Submitted</div>
@@ -485,7 +534,45 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
         </div>
       </div>
 
+      {/* FILTER & SEARCH CONTROLS */}
       <div className="client-portal-card client-portal-controls-card">
+        {/* SEARCH BAR */}
+        <div className="client-portal-search-wrap" style={{ marginBottom: 12 }}>
+          <svg className="icon" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            id="fb-search-input"
+            type="text"
+            className="client-portal-search-input"
+            placeholder="Search by reference number, employee name, or keyword..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                padding: '0 4px',
+                fontSize: 16,
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              title="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* FILTER ROW */}
         <div className="cp-feedback-filter-row">
           <div className="cp-feedback-filter-group">
             <label htmlFor="fb-cat-filter" className="client-portal-filter-label">Category:</label>
@@ -517,12 +604,35 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
               ))}
             </select>
           </div>
+          <div className="cp-feedback-filter-group">
+            <label htmlFor="fb-status-filter" className="client-portal-filter-label">Status:</label>
+            <select
+              id="fb-status-filter"
+              className="client-portal-filter-select"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              {FEEDBACK_STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
           <div className="cp-feedback-filter-total">
             Showing {filtered.length} of {feedbackList.length} records
           </div>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="cp-feedback-clear-filters-btn"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
       </div>
 
+      {/* FEEDBACK LIST */}
       <div className="cp-feedback-list">
         {filtered.length === 0 ? (
           <div className="client-portal-card cp-feedback-empty">
@@ -531,8 +641,20 @@ export default function ClientFeedbackPage({ session, deployedRoster = [] }) {
             </svg>
             <div className="cp-feedback-empty-title">No feedback records found</div>
             <div className="cp-feedback-empty-sub">
-              Adjust your filters or submit your first feedback using the button above.
+              {hasActiveFilters
+                ? 'No records match your current search or filter criteria. Try adjusting your filters or clearing the search.'
+                : 'Adjust your filters or submit your first feedback using the button above.'}
             </div>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className="cp-feedback-clear-filters-btn"
+                style={{ marginTop: 8 }}
+                onClick={clearFilters}
+              >
+                Clear All Filters
+              </button>
+            )}
           </div>
         ) : (
           filtered.map((fb) => <FeedbackCard key={fb.id} fb={fb} />)

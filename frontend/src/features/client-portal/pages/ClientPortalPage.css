@@ -3765,4 +3765,35 @@
   border-top: 1px solid var(--border);
 }
 
+/* ── MISSING BADGE CLASS ──
+   client-portal-badge--pending: used for feedback records with no
+   recognized status. Neutral grey to indicate awaiting action.    */
+.client-portal-badge--pending {
+  background: rgba(120, 120, 140, 0.12);
+  color: var(--text-muted, #888);
+  border: 1px solid rgba(120, 120, 140, 0.2);
+}
 
+/* CLEAR FILTERS BUTTON */
+.cp-feedback-clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cp-feedback-clear-filters-btn:hover {
+  background: var(--bg-alt, rgba(0, 0, 0, 0.04));
+  border-color: var(--border-active, rgba(0, 125, 204, 0.3));
+  color: var(--text);
+}
