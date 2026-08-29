@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { clientPortalService } from '../services/ClientPortalService';
 import '../../settings/pages/SettingsPage.css';
 
 const MOCK_CLIENT_AUDIT_LOGS = [
@@ -128,6 +129,81 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
   // Appearance Theme & Density State
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [density, setDensity] = useState(() => localStorage.getItem('density') || 'comfortable');
+
+  // Security & Password Change State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmNewPw, setShowConfirmNewPw] = useState(false);
+  const [pwSubmitting, setPwSubmitting] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPwError('');
+    setPwSuccess('');
+
+    if (!currentPassword) {
+      setPwError('Current password is required.');
+      return;
+    }
+    if (!newPassword) {
+      setPwError('New password is required.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPwError('New password must be at least 8 characters long.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPwError('New passwords do not match. Please verify.');
+      return;
+    }
+
+    setPwSubmitting(true);
+
+    try {
+      const res = await clientPortalService.changePassword({
+        email: session?.email || email,
+        currentPassword,
+        newPassword,
+      });
+
+      if (res?.data?.success) {
+        setPwSuccess('Your portal access password has been successfully updated.');
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+
+        const newLog = {
+          id: `LOG-${Math.floor(100 + Math.random() * 900)}`,
+          timestamp: new Date().toISOString(),
+          user: contactPerson || 'Client User',
+          email: email || session?.email || 'client@primepower.ph',
+          action: 'Updated Client Portal login access password',
+          module: 'Access',
+          ip: '203.0.113.18',
+          status: 'Success',
+        };
+        setAuditLogs((prev) => {
+          const next = [newLog, ...prev];
+          try {
+            localStorage.setItem('ismers.client_portal.audit_logs', JSON.stringify(next));
+          } catch { /* ignore */ }
+          return next;
+        });
+      } else {
+        setPwError(res?.data?.message || 'Password update failed.');
+      }
+    } catch (err) {
+      setPwError(err.response?.data?.message || 'Current password entered is incorrect.');
+    } finally {
+      setPwSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -260,6 +336,17 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                 <line x1="7" y1="12" x2="13" y2="12" />
               </svg>
               General Profile
+            </button>
+            <button
+              type="button"
+              className={`nav-item-btn ${activeTab === 'security' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('security'); setPwError(''); setPwSuccess(''); }}
+            >
+              <svg className="icon" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Security &amp; Password
             </button>
           </div>
 
@@ -458,6 +545,381 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                   <div style={{ fontSize: '11.5px', color: 'var(--muted)', marginTop: '2px' }}>Senior Account Manager &middot; Enterprise Recruitment</div>
                   <div style={{ fontSize: '11.5px', color: 'var(--primary)', marginTop: '4px' }}>m.delacruz@primepower.ph &middot; +63 917 554 1029</div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: SECURITY & PASSWORD */}
+          {activeTab === 'security' && (
+            <div className="section-block">
+
+              {/* ── Section Header ── */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '28px', paddingBottom: '20px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(0,125,204,0.12), rgba(0,125,204,0.06))',
+                  border: '1px solid rgba(0,125,204,0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="section-title" style={{ marginBottom: '4px' }}>Account Security &amp; Credentials</h2>
+                  <p className="section-desc" style={{ margin: 0 }}>
+                    Manage your Client Portal login credentials. All passwords are encrypted using bcrypt hashing in compliance with RA 10173 (Philippine Data Privacy Act).
+                  </p>
+                </div>
+              </div>
+
+              {/* ── Alerts ── */}
+              {pwSuccess && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '13px 16px',
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.22)',
+                  borderLeft: '3px solid #10b981',
+                  borderRadius: '10px',
+                  marginBottom: '24px',
+                  animation: 'fadeInDown 0.25s ease',
+                }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#059669', marginBottom: '1px' }}>Password Updated Successfully</div>
+                    <div style={{ fontSize: '12px', color: '#059669', opacity: 0.85 }}>{pwSuccess}</div>
+                  </div>
+                </div>
+              )}
+
+              {pwError && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '13px 16px',
+                  background: 'rgba(239, 68, 68, 0.07)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  borderLeft: '3px solid #ef4444',
+                  borderRadius: '10px',
+                  marginBottom: '24px',
+                }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ef4444" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#dc2626', marginBottom: '1px' }}>Update Failed</div>
+                    <div style={{ fontSize: '12px', color: '#dc2626', opacity: 0.85 }}>{pwError}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Password Form Card ── */}
+              <div style={{
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                borderRadius: '14px',
+                padding: '24px',
+                maxWidth: '540px',
+                marginBottom: '24px',
+              }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: '20px' }}>
+                  Change Access Password
+                </div>
+
+                <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+
+                  {/* Current Password */}
+                  <div>
+                    <label htmlFor="cp-curr-password" style={{
+                      display: 'block', fontSize: '12px', fontWeight: 700,
+                      color: 'var(--text)', marginBottom: '7px', letterSpacing: '0.1px',
+                    }}>
+                      Current Password <span style={{ color: 'var(--red)' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                        color: 'var(--muted)', pointerEvents: 'none', display: 'flex',
+                      }}>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
+                      </div>
+                      <input
+                        id="cp-curr-password"
+                        type={showCurrentPw ? 'text' : 'password'}
+                        placeholder="Enter your current access password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        required
+                        style={{
+                          width: '100%', height: '40px',
+                          padding: '0 40px 0 36px',
+                          background: 'var(--bg)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '9px',
+                          fontSize: '13px', fontWeight: 500,
+                          color: 'var(--text)',
+                          outline: 'none',
+                          transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                          fontFamily: 'var(--font-display)',
+                        }}
+                        onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(0,125,204,0.1)'; }}
+                        onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)}
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', padding: '4px' }}
+                        aria-label="Toggle password visibility">
+                        {showCurrentPw
+                          ? <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          : <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        }
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ height: '1px', background: 'var(--border)', margin: '2px 0' }} />
+
+                  {/* New Password */}
+                  <div>
+                    <label htmlFor="cp-new-password" style={{
+                      display: 'block', fontSize: '12px', fontWeight: 700,
+                      color: 'var(--text)', marginBottom: '7px',
+                    }}>
+                      New Password <span style={{ color: 'var(--red)' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                        color: 'var(--muted)', pointerEvents: 'none', display: 'flex',
+                      }}>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                      </div>
+                      <input
+                        id="cp-new-password"
+                        type={showNewPw ? 'text' : 'password'}
+                        placeholder="Minimum 8 characters"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        style={{
+                          width: '100%', height: '40px',
+                          padding: '0 40px 0 36px',
+                          background: 'var(--bg)',
+                          border: `1px solid ${newPassword.length > 0 && newPassword.length < 8 ? 'rgba(239,68,68,0.5)' : 'var(--border)'}`,
+                          borderRadius: '9px',
+                          fontSize: '13px', fontWeight: 500,
+                          color: 'var(--text)',
+                          outline: 'none',
+                          transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                          fontFamily: 'var(--font-display)',
+                        }}
+                        onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(0,125,204,0.1)'; }}
+                        onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <button type="button" onClick={() => setShowNewPw(!showNewPw)}
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', padding: '4px' }}
+                        aria-label="Toggle password visibility">
+                        {showNewPw
+                          ? <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          : <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        }
+                      </button>
+                    </div>
+                    {/* Password strength bar */}
+                    {newPassword.length > 0 && (
+                      <div style={{ marginTop: '8px' }}>
+                        <div style={{ display: 'flex', gap: '4px', marginBottom: '5px' }}>
+                          {[1, 2, 3, 4].map(i => {
+                            const strength = newPassword.length < 6 ? 1 : newPassword.length < 8 ? 2 : /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) ? 4 : 3;
+                            const colors = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#10b981' };
+                            return (
+                              <div key={i} style={{
+                                flex: 1, height: '3px', borderRadius: '2px',
+                                background: i <= strength ? colors[strength] : 'var(--border)',
+                                transition: 'background 0.2s ease',
+                              }} />
+                            );
+                          })}
+                        </div>
+                        <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>
+                          {newPassword.length < 6 ? 'Weak — too short'
+                            : newPassword.length < 8 ? 'Fair — must be at least 8 characters'
+                            : /[A-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[^A-Za-z0-9]/.test(newPassword) ? 'Strong — excellent password strength'
+                            : 'Good — add uppercase, numbers, or symbols for stronger security'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Confirm New Password */}
+                  <div>
+                    <label htmlFor="cp-confirm-new-password" style={{
+                      display: 'block', fontSize: '12px', fontWeight: 700,
+                      color: 'var(--text)', marginBottom: '7px',
+                    }}>
+                      Confirm New Password <span style={{ color: 'var(--red)' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)',
+                        color: 'var(--muted)', pointerEvents: 'none', display: 'flex',
+                      }}>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                      </div>
+                      <input
+                        id="cp-confirm-new-password"
+                        type={showConfirmNewPw ? 'text' : 'password'}
+                        placeholder="Re-enter new password"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        required
+                        style={{
+                          width: '100%', height: '40px',
+                          padding: '0 40px 0 36px',
+                          background: 'var(--bg)',
+                          border: `1px solid ${confirmNewPassword.length > 0 && confirmNewPassword !== newPassword ? 'rgba(239,68,68,0.5)' : 'var(--border)'}`,
+                          borderRadius: '9px',
+                          fontSize: '13px', fontWeight: 500,
+                          color: 'var(--text)',
+                          outline: 'none',
+                          transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+                          fontFamily: 'var(--font-display)',
+                        }}
+                        onFocus={e => { e.target.style.borderColor = 'var(--primary)'; e.target.style.boxShadow = '0 0 0 3px rgba(0,125,204,0.1)'; }}
+                        onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <button type="button" onClick={() => setShowConfirmNewPw(!showConfirmNewPw)}
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', padding: '4px' }}
+                        aria-label="Toggle password visibility">
+                        {showConfirmNewPw
+                          ? <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                          : <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        }
+                      </button>
+                    </div>
+                    {confirmNewPassword.length > 0 && confirmNewPassword !== newPassword && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '6px', fontSize: '11px', color: '#ef4444', fontWeight: 600 }}>
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        Passwords do not match
+                      </span>
+                    )}
+                    {confirmNewPassword.length > 0 && confirmNewPassword === newPassword && newPassword.length >= 8 && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '6px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        Passwords match
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Submit Button */}
+                  <div style={{ paddingTop: '4px' }}>
+                    <button
+                      type="submit"
+                      disabled={pwSubmitting}
+                      style={{
+                        height: '40px',
+                        padding: '0 24px',
+                        background: pwSubmitting ? 'var(--muted-bg)' : 'var(--primary)',
+                        color: pwSubmitting ? 'var(--muted)' : '#fff',
+                        border: 'none',
+                        borderRadius: '9px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        cursor: pwSubmitting ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'opacity 0.15s ease, transform 0.1s ease',
+                        fontFamily: 'var(--font-display)',
+                      }}
+                      onMouseEnter={e => { if (!pwSubmitting) e.currentTarget.style.opacity = '0.9'; }}
+                      onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
+                    >
+                      {pwSubmitting && (
+                        <span style={{
+                          width: 14, height: 14, borderRadius: '50%',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                          borderTopColor: '#fff',
+                          animation: 'spin 0.7s linear infinite',
+                          display: 'inline-block',
+                        }} />
+                      )}
+                      {pwSubmitting ? 'Updating Password...' : 'Update Password'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* ── Compliance Badges ── */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                {[
+                  {
+                    icon: <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+                    accent: 'rgba(0,125,204,0.18)',
+                    accentBorder: 'rgba(0,125,204,0.2)',
+                    label: 'RA 10173 Compliant',
+                    desc: 'Credentials stored with bcrypt encryption and strict role-based access isolation.',
+                  },
+                  {
+                    icon: <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 14"/></svg>,
+                    accent: 'rgba(16,185,129,0.08)',
+                    accentBorder: 'rgba(16,185,129,0.2)',
+                    label: '60-Minute Token Expiry',
+                    desc: 'Reset tokens are single-use and automatically invalidated after 60 minutes.',
+                  },
+                  {
+                    icon: <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#8b6fd1" strokeWidth="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
+                    accent: 'rgba(139,111,209,0.08)',
+                    accentBorder: 'rgba(139,111,209,0.2)',
+                    label: 'bcrypt Encrypted',
+                    desc: 'All passwords are one-way hashed. PRIMEPOWER staff cannot view or recover raw passwords.',
+                  },
+                ].map((badge) => (
+                  <div key={badge.label} style={{
+                    padding: '14px 16px',
+                    background: badge.accent,
+                    border: `1px solid ${badge.accentBorder}`,
+                    borderRadius: '11px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '7px' }}>
+                      {badge.icon}
+                      <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--text)', letterSpacing: '0.1px' }}>{badge.label}</span>
+                    </div>
+                    <p style={{ fontSize: '11.5px', color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
+                      {badge.desc}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           )}

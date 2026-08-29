@@ -7,9 +7,16 @@ import './ClientPortalLoginPage.css';
 export default function ClientPortalLoginPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Forgot Password Recovery State
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotResult, setForgotResult] = useState(null);
 
   // Sync design system tokens
   useEffect(() => {
@@ -35,6 +42,32 @@ export default function ClientPortalLoginPage() {
   const set = (field) => (e) => {
     setError('');
     setForm((f) => ({ ...f, [field]: e.target.value }));
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotResult(null);
+
+    if (!forgotEmail.trim()) {
+      setForgotError('Please enter your corporate email address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail.trim())) {
+      setForgotError('Please enter a valid corporate email address.');
+      return;
+    }
+
+    setForgotSubmitting(true);
+
+    try {
+      const res = await clientPortalService.forgotPassword(forgotEmail.trim());
+      setForgotResult(res.data);
+    } catch (err) {
+      setForgotError(err.response?.data?.message || 'Unable to process password reset request. Please try again.');
+    } finally {
+      setForgotSubmitting(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -135,10 +168,31 @@ export default function ClientPortalLoginPage() {
             </div>
 
             <div className="cp-login-field">
-              <div className="cp-login-label-row">
+              <div className="cp-login-label-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label className="cp-login-label" htmlFor="cp-login-password">
                   Password
                 </label>
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: 'var(--primary, #007dcc)',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                  }}
+                  onClick={() => {
+                    setShowForgotModal(true);
+                    setForgotEmail(form.email || '');
+                    setForgotError('');
+                    setForgotResult(null);
+                  }}
+                >
+                  Forgot Password?
+                </button>
               </div>
               <div className="cp-login-input-wrap">
                 <svg className="cp-login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -209,6 +263,192 @@ export default function ClientPortalLoginPage() {
           &copy; {new Date().getFullYear()} PRIMEPOWER MANPOWER SERVICES. All rights reserved. &nbsp;&middot;&nbsp; DOLE Accredited &nbsp;&middot;&nbsp; POEA Licensed &nbsp;&middot;&nbsp; ISO Compliant
         </footer>
       </main>
+
+      {/* ── FORGOT PASSWORD MODAL ── */}
+      {showForgotModal && (
+        <>
+          <div
+            className="cp-modal-overlay"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(10, 22, 40, 0.65)',
+              backdropFilter: 'blur(6px)',
+              zIndex: 1000,
+            }}
+            onClick={() => setShowForgotModal(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Forgot Password Recovery"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '92%',
+              maxWidth: '440px',
+              background: 'var(--panel, #ffffff)',
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              padding: '32px 28px',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.22)',
+              zIndex: 1001,
+              color: 'var(--text)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '10px',
+                  background: 'rgba(0, 125, 204, 0.1)',
+                  color: 'var(--primary, #007dcc)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>Account Recovery</h3>
+                  <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600 }}>Reset Client Credentials</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '20px', lineHeight: 1 }}
+                onClick={() => setShowForgotModal(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            {forgotResult ? (
+              <div>
+                <div style={{
+                  padding: '14px 16px',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  borderRadius: '10px',
+                  color: '#059669',
+                  fontSize: '12.5px',
+                  lineHeight: 1.5,
+                  marginBottom: '20px',
+                }}>
+                  <div style={{ fontWeight: 700, marginBottom: '4px' }}>Reset Link Dispatched</div>
+                  {forgotResult.message}
+                </div>
+
+                {forgotResult.reset_token && (
+                  <div style={{ marginBottom: '20px', padding: '12px 14px', background: 'var(--bg, #f8fafc)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>
+                      Automated Recovery Link (Expires in 60m)
+                    </div>
+                    <button
+                      type="button"
+                      className="cp-login-submit"
+                      style={{ height: '40px', fontSize: '12.5px' }}
+                      onClick={() => {
+                        setShowForgotModal(false);
+                        navigate(`/client-portal/reset-password?token=${forgotResult.reset_token}&email=${encodeURIComponent(forgotEmail)}`);
+                      }}
+                    >
+                      Proceed to Reset Password Now
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'transparent',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    fontSize: '12.5px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    color: 'var(--text)',
+                  }}
+                  onClick={() => setShowForgotModal(false)}
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotSubmit}>
+                <p style={{ fontSize: '12.5px', color: 'var(--muted)', lineHeight: 1.5, marginBottom: '18px' }}>
+                  Enter the registered corporate email address associated with your client account. We will generate a secure reset link valid for <strong>60 minutes</strong>.
+                </p>
+
+                {forgotError && (
+                  <div className="cp-login-error-banner" style={{ marginBottom: '16px' }} role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                    {forgotError}
+                  </div>
+                )}
+
+                <div className="cp-login-field" style={{ marginBottom: '20px' }}>
+                  <label className="cp-login-label" htmlFor="cp-forgot-email">
+                    Corporate Email Address
+                  </label>
+                  <div className="cp-login-input-wrap">
+                    <svg className="cp-login-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    <input
+                      id="cp-forgot-email"
+                      type="email"
+                      className="cp-login-input"
+                      placeholder="e.g. hr@abclogistics.com.ph"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    style={{
+                      flex: 1,
+                      height: '42px',
+                      background: 'transparent',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      color: 'var(--text)',
+                    }}
+                    onClick={() => setShowForgotModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="cp-login-submit"
+                    style={{ flex: 1.5, margin: 0 }}
+                    disabled={forgotSubmitting}
+                  >
+                    {forgotSubmitting ? 'Sending Request...' : 'Send Reset Link'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
