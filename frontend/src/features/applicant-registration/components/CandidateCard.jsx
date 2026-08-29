@@ -1,4 +1,5 @@
-import { initials, targetById, STATUS_META, computeMatchScore } from '../services/ApplicantRegistrationService';
+import { targetById, STATUS_META, computeMatchScore } from '../services/ApplicantRegistrationService';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 
 export default function CandidateCard({ candidate, onOpen }) {
   const job = targetById(candidate.targetJobId);
@@ -10,7 +11,13 @@ export default function CandidateCard({ candidate, onOpen }) {
   return (
     <div className="cand-card" onClick={() => onOpen(candidate.regId)}>
       <div className="cand-top">
-        <div className="cand-avatar">{initials(candidate.name)}</div>
+        <PersonAvatar
+          name={candidate.name}
+          gender={candidate.gender}
+          photo={candidate.photo || candidate.avatar}
+          size="sm"
+          variant="blue"
+        />
         <div className="cand-name">{candidate.name}</div>
         {aiScore != null ? (
           <div className={`score-badge ${scoreClass}`}>{aiScore}%</div>

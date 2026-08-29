@@ -362,18 +362,22 @@ select.chip:hover {
 .drawer.open {
   right: 0;
 }
+/* ====================================================
+   PREMIUM DRAWER HEADER — hero layout
+   ==================================================== */
 .sheet-head {
-  padding: 22px 24px 16px 24px;
+  padding: 0;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   position: relative;
+  background: linear-gradient(135deg, var(--panel) 0%, color-mix(in srgb, var(--primary) 6%, var(--panel)) 100%);
 }
 .sheet-close {
   position: absolute;
-  top: 18px;
-  right: 20px;
-  width: 28px;
-  height: 28px;
+  top: 14px;
+  right: 16px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -381,14 +385,125 @@ select.chip:hover {
   align-items: center;
   justify-content: center;
   color: var(--muted-fg);
+  z-index: 2;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 .sheet-close:hover {
   color: var(--red);
+  background: color-mix(in srgb, var(--red) 8%, var(--bg));
 }
 .sheet-close svg {
   width: 14px;
   height: 14px;
 }
+
+/* HERO IDENTITY ROW */
+.drawer-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 24px 14px 24px;
+}
+.drawer-hero-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+.drawer-hero-stage-dot {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2.5px solid var(--panel);
+  display: block;
+}
+.drawer-hero-info {
+  flex: 1;
+  min-width: 0;
+  padding-right: 36px;
+  padding-top: 2px;
+}
+.drawer-hero-regid {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+  margin-bottom: 3px;
+}
+.drawer-hero-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  line-height: 1.15;
+  margin-bottom: 3px;
+}
+.drawer-hero-sub {
+  font-size: 11.5px;
+  color: var(--muted-fg);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.drawer-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.drawer-hero-stage-pill {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1.5px solid currentColor;
+  background: transparent;
+  white-space: nowrap;
+}
+
+/* QUICK STATS STRIP */
+.drawer-hero-stats {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--primary) 4%, var(--bg));
+}
+.drawer-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 6px;
+  gap: 2px;
+}
+.drawer-stat-val {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+.drawer-stat-lbl {
+  font-size: 9px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+  font-weight: 600;
+}
+.drawer-stat-divider {
+  width: 1px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 8px 0;
+}
+
+/* Legacy — keep for other references */
 .sheet-eyebrow {
   font-family: var(--font-display);
   font-size: 9.5px;
@@ -410,9 +525,6 @@ select.chip:hover {
   margin-top: 4px;
 }
 .stamp {
-  position: absolute;
-  top: 20px;
-  right: 56px;
   border: 2px solid currentColor;
   border-radius: 6px;
   padding: 4px 10px;
@@ -421,7 +533,6 @@ select.chip:hover {
   font-size: 10px;
   letter-spacing: 1.6px;
   text-transform: uppercase;
-  transform: rotate(-6deg);
 }
 
 .sheet-scroll {

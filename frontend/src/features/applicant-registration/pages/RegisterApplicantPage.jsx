@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../../../components/layout/Sidebar';
 import { EDUCATION_LEVELS } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
+import { useUIFeedback } from '../../../components/common/UIFeedback';
 import './ApplicantRegistrationBoard.css';
 
 // Staff-assisted intake form. Mirrors the company's paper "Application
@@ -21,6 +22,7 @@ const emptyEducationRows = () =>
 
 export default function RegisterApplicantPage({ embedded = false, onDone }) {
   const { addApplicant } = useApplicantRegistration();
+  const { showToast, confirmAction, executeWithFeedback } = useUIFeedback();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [error, setError] = useState('');
@@ -66,60 +68,74 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
       return;
     }
 
-    setSubmitting(true);
-    setError('');
+    const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
 
-    try {
-      const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Applicant Registration',
+        message: `Register new applicant ${fullName} into the Intake Profiling database?`,
+        confirmLabel: 'Register & Save Applicant',
+        details: [
+          { label: 'Candidate Name', value: fullName },
+          { label: 'Mobile Number', value: form.phone.trim() },
+          { label: 'Email', value: form.email.trim() || 'N/A' },
+          { label: 'Location', value: form.location.trim() || 'Metro Manila' },
+        ],
+      },
+      busyMessage: `Registering candidate file for ${fullName}...`,
+      actionFn: async () => {
+        setSubmitting(true);
+        setError('');
 
-      const education = EDUCATION_LEVELS
-        .filter((level) => educationRows[level].school.trim() || educationRows[level].yearGraduated.trim())
-        .map((level) => ({
-          school: educationRows[level].school.trim(),
-          degree: level,
-          level,
-          startYear: '',
-          endYear: educationRows[level].yearGraduated.trim() || '—',
-        }));
+        const education = EDUCATION_LEVELS
+          .filter((level) => educationRows[level].school.trim() || educationRows[level].yearGraduated.trim())
+          .map((level) => ({
+            school: educationRows[level].school.trim(),
+            degree: level,
+            level,
+            startYear: '',
+            endYear: educationRows[level].yearGraduated.trim() || '—',
+          }));
 
-      const workHistory = noWorkExperience
-        ? [{ role: 'First-time Job Seeker / Fresh Graduate', company: 'N/A', duration: 'N/A' }]
-        : employmentRows
-            .filter((r) => r.position.trim() || r.company.trim())
-            .map((r) => ({
-              role: r.position.trim(),
-              company: r.company.trim(),
-              duration: [r.from.trim(), r.to.trim()].filter(Boolean).join(' – ') || '—',
-            }));
+        const workHistory = noWorkExperience
+          ? [{ role: 'First-time Job Seeker / Fresh Graduate', company: 'N/A', duration: 'N/A' }]
+          : employmentRows
+              .filter((r) => r.position.trim() || r.company.trim())
+              .map((r) => ({
+                role: r.position.trim(),
+                company: r.company.trim(),
+                duration: [r.from.trim(), r.to.trim()].filter(Boolean).join(' – ') || '—',
+              }));
 
-      const experienceSummary = noWorkExperience
-        ? 'No formal work experience yet (Fresh Graduate / First-time Job Seeker)'
-        : (form.experienceSummary || (workHistory.length > 0 ? `${workHistory.length} previous position(s)` : 'No formal work experience listed'));
+        const experienceSummary = noWorkExperience
+          ? 'No formal work experience yet (Fresh Graduate / First-time Job Seeker)'
+          : (form.experienceSummary || (workHistory.length > 0 ? `${workHistory.length} previous position(s)` : 'No formal work experience listed'));
 
-      const references = noReferences
-        ? [{ name: 'N/A', occupation: 'Not Applicable', contact: 'N/A' }]
-        : referenceRows
-            .filter((r) => r.name.trim())
-            .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
+        const references = noReferences
+          ? [{ name: 'N/A', occupation: 'Not Applicable', contact: 'N/A' }]
+          : referenceRows
+              .filter((r) => r.name.trim())
+              .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
 
-      const result = await addApplicant({ ...form, name: fullName, experienceSummary, education, workHistory, references });
+        const result = await addApplicant({ ...form, name: fullName, experienceSummary, education, workHistory, references });
 
-      if (!result || !result.ok) {
-        setError(result?.message || 'Error registering applicant.');
-        return;
-      }
+        if (!result || !result.ok) {
+          setError(result?.message || 'Error registering applicant.');
+          throw new Error(result?.message || 'Error registering applicant.');
+        }
 
-      if (onDone) {
-        onDone();
-      } else {
-        navigate('/applicant-registration');
-      }
-    } catch (err) {
-      console.error('Error registering applicant:', err);
-      setError('Failed to register applicant. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+        if (onDone) {
+          onDone();
+        } else {
+          navigate('/applicant-registration');
+        }
+        return result;
+      },
+      successTitle: 'Applicant Registered',
+      successMessage: `${fullName} has been registered and added to the profiling board.`,
+      delayMs: 450,
+    });
+    setSubmitting(false);
   };
 
   const formContent = (

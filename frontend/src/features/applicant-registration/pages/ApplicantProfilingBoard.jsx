@@ -8,9 +8,11 @@ import RoleSwitcher from '../components/RoleSwitcher';
 import RegisterApplicantPage from './RegisterApplicantPage';
 import {
   COLUMN_ORDER, STAGE_META, STATUS_META, JOB_TARGETS, CATEGORIES, boardColumn,
-  hasPermission, targetById, initials, computeMatchScore,
+  hasPermission, targetById, computeMatchScore,
 } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
+import { useUIFeedback } from '../../../components/common/UIFeedback';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 import './ApplicantRegistrationBoard.css';
 
 const STAGE_PAGE_META = {
@@ -92,27 +94,69 @@ export default function ApplicantProfilingBoard() {
     return base;
   }, [candidates]);
 
-  const flashBoardWarning = (msg) => {
-    setBoardWarning(msg);
-    setTimeout(() => setBoardWarning(''), 5000);
-  };
+  const { showToast, confirmAction, executeWithFeedback } = useUIFeedback();
 
   const handleAdvanceStage = async (regId, currentStage) => {
-    let result;
-    if (currentStage === 'registered') {
-      result = await startProfiling(regId);
-    } else if (currentStage === 'profiling') {
-      result = await completeProfile(regId);
-    } else if (currentStage === 'profiled') {
-      result = await sendToRecruitment(regId);
-    } else {
-      result = await updateStage(regId, currentStage);
-    }
+    const candidate = candidates.find((c) => c.regId === regId);
+    const candidateName = candidate?.name || regId;
+    const stageInfo = STAGE_PAGE_META[currentStage];
+    const nextStageName = stageInfo?.btnLabel || 'Next Stage';
 
-    if (result && result.ok === false) {
-      flashBoardWarning(result.message);
-      setOpenRegId(regId);
-    }
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Candidate Stage Transition',
+        message: `Are you sure you want to execute "${nextStageName}" for applicant ${candidateName}?`,
+        description: `This action will advance ${candidateName} from ${STAGE_META[currentStage]?.label || currentStage} to the next stage.`,
+        confirmLabel: 'Confirm & Advance Stage',
+        details: [
+          { label: 'Applicant ID', value: regId },
+          { label: 'Full Name', value: candidateName },
+          { label: 'Current Stage', value: STAGE_META[currentStage]?.label || currentStage },
+        ],
+      },
+      busyMessage: `Advancing ${candidateName} to next profiling stage...`,
+      actionFn: async () => {
+        let result;
+        if (currentStage === 'registered') {
+          result = await startProfiling(regId);
+        } else if (currentStage === 'profiling') {
+          result = await completeProfile(regId);
+        } else if (currentStage === 'profiled') {
+          result = await sendToRecruitment(regId);
+        } else {
+          result = await updateStage(regId, currentStage);
+        }
+
+        if (result && result.ok === false) {
+          flashBoardWarning(result.message);
+          setOpenRegId(regId);
+          throw new Error(result.message);
+        }
+        return result;
+      },
+      successTitle: 'Candidate Stage Updated',
+      successMessage: `${candidateName} has been successfully advanced to the next stage.`,
+      delayMs: 420,
+    });
+  };
+
+  const handleBulkReturn = async () => {
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Bulk Return to Profiling',
+        message: `Pull all ${counts.sent} candidate(s) currently in Recruitment & Selection back into Profiling?`,
+        description: 'This will reset candidate stage indicators and return their records to the internal profiling board.',
+        confirmLabel: 'Pull All to Profiling',
+        variant: 'warning',
+      },
+      busyMessage: 'Returning candidates to profiling pipeline...',
+      actionFn: async () => {
+        await bulkReturnToProfiling();
+      },
+      successTitle: 'Candidates Returned',
+      successMessage: 'All candidates have been returned to the Profiling stage.',
+      delayMs: 500,
+    });
   };
 
   return (
@@ -136,7 +180,7 @@ export default function ApplicantProfilingBoard() {
           {counts.sent > 0 && (
             <button
               className="stage-btn cancel"
-              onClick={() => bulkReturnToProfiling()}
+              onClick={handleBulkReturn}
               style={{ whiteSpace: 'nowrap', border: '1px solid var(--border)' }}
               title="Pull all applicants back into Profiling"
             >
@@ -274,7 +318,13 @@ export default function ApplicantProfilingBoard() {
                         <td className="cell-regid">{cand.regId}</td>
                         <td className="cell-name">
                           <div className="table-user-wrap">
-                            <div className="table-user-avatar">{initials(cand.name)}</div>
+                            <PersonAvatar
+                              name={cand.name}
+                              gender={cand.gender}
+                              photo={cand.photo || cand.avatar}
+                              size="sm"
+                              variant="blue"
+                            />
                             <div>
                               <div className="table-user-name">{cand.name}</div>
                               <div className="table-user-sub">{cand.email || cand.phone}</div>

@@ -1,4 +1,5 @@
-import { attendanceRate, countdownLabel, initials, STATUS_META, stageToStatus } from '../services/DeploymentAssignmentService';
+import { attendanceRate, countdownLabel, STATUS_META, stageToStatus } from '../services/DeploymentAssignmentService';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 
 export default function Ticket({ deployment, onOpen }) {
   const status = stageToStatus(deployment.stage);
@@ -35,9 +36,11 @@ export default function Ticket({ deployment, onOpen }) {
       {/* CARD HEADER */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>
-            {initials(deployment.employee)}
-          </div>
+          <PersonAvatar
+            name={deployment.employee}
+            size="sm"
+            variant="blue"
+          />
           <div>
             <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>{deployment.employee}</div>
             <div style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{deployment.position}</div>

@@ -3,10 +3,11 @@ import {
   STAGES, PIPELINE_ORDER, CHECKLIST_ITEMS, INTERVIEW_STAGES, DOC_DEFS,
   CURRENT_ADMIN, TODAY,
 } from '../data/mockApplications';
-import { initials, scoreColor, formatDate, addDays, assignedRecruiter, findNextAvailableSlot } from '../utils/recruitmentUtils';
+import { scoreColor, formatDate, addDays, assignedRecruiter, findNextAvailableSlot } from '../utils/recruitmentUtils';
 import { upsertHire, keyFor, updateRecruitmentStage, updateRecruitmentScreening } from '../services/RecruitmentSelectionService';
 import DocViewerModal, { DOC_ICONS } from './DocViewerModal';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 import MedicalReferralModal from './MedicalReferralModal';
 import ContractSigningModal from './ContractSigningModal';
 import OrientationModal from './OrientationModal';
@@ -625,7 +626,13 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
 
         {/* MODAL HEADER */}
         <div className="modal-head">
-          <div className="modal-avatar">{initials(app.name)}</div>
+          <PersonAvatar
+            name={app.name}
+            gender={app.gender}
+            photo={app.photo || app.avatar}
+            size="lg"
+            variant="blue"
+          />
           <div className="modal-title-wrap">
             <div className="modal-jo-title">{app.name}</div>
             <div className="modal-jo-sub">{job?.title || app.jobTitle || app.jobId || 'Unassigned'} &middot; {job?.client || app.client || '\u2014'}</div>
@@ -1099,28 +1106,6 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
             </div>
           )}
 
-          {/* PIPELINE TRACKER */}
-          <div className="modal-section">
-            <div className="modal-section-label">Pipeline Stage</div>
-            <div className="stage-track">
-              {stageKeys.map((key, idx) => {
-                const label = STAGES.find((s) => s.key === key).label;
-                let cls = '';
-                if (isRejected) {
-                  cls = key === 'rejected' ? 'current' : 'done';
-                } else {
-                  cls = idx < currentIdx ? 'done' : idx === currentIdx ? 'current' : '';
-                }
-                return (
-                  <div key={key} className={`stage-step ${cls}`}>
-                    <div className="stage-line" />
-                    <div className="stage-dot">{idx + 1}</div>
-                    <div className="stage-label">{label}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
           {/* AI CANDIDATE SCORE */}
           <div className="modal-section">

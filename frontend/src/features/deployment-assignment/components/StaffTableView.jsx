@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { attendanceRate, countdownLabel, initials, STATUS_META, STATUS_ORDER, stageToStatus } from '../services/DeploymentAssignmentService';
+import { attendanceRate, countdownLabel, STATUS_META, STATUS_ORDER, stageToStatus } from '../services/DeploymentAssignmentService';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 
 export default function StaffTableView({ deployments, onOpen }) {
   const [selectedClient, setSelectedClient] = useState('all');
@@ -163,9 +164,11 @@ export default function StaffTableView({ deployments, onOpen }) {
                       {/* EMPLOYEE */}
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--primary)', color: 'var(--primary-fg)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>
-                            {initials(d.employee)}
-                          </div>
+                          <PersonAvatar
+                            name={d.employee}
+                            size="sm"
+                            variant="blue"
+                          />
                           <div>
                             <div style={{ fontWeight: 800, color: 'var(--text)' }}>{d.employee}</div>
                             <div style={{ fontSize: 10.5, color: 'var(--muted-fg)', fontFamily: 'monospace' }}>{d.id}</div>

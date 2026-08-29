@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
-import { initials } from '../utils/recruitmentUtils';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 
 export default function EmployeeIdModal({ candidate, job, onClose }) {
   const [activeTab, setActiveTab] = useState('both'); // 'both' | 'front' | 'back'
@@ -282,21 +282,13 @@ export default function EmployeeIdModal({ candidate, job, onClose }) {
                   boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
                   marginBottom: '14px',
                 }}>
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '50%',
-                    background: '#ffffff',
-                    color: '#006eb4',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '34px',
-                    fontWeight: 900,
-                    letterSpacing: '1px',
-                  }}>
-                    {initials(candidate.name)}
-                  </div>
+                  <PersonAvatar
+                    name={candidate.name}
+                    gender={candidate.gender}
+                    photo={candidate.photo || candidate.avatar}
+                    size="xl"
+                    variant="blue"
+                  />
                   {/* ACTIVE STATUS DOT */}
                   <div style={{
                     position: 'absolute',

@@ -1,9 +1,37 @@
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useUIFeedback } from '../common/UIFeedback';
 import './Header.css';
 
 export default function Header({ onToggleMobileMenu }) {
   const location = useLocation();
   const path = location.pathname;
+  const [openNotifs, setOpenNotifs] = useState(false);
+  const [notifFilter, setNotifFilter] = useState('all'); // 'all' | 'unread'
+  const notifRef = useRef(null);
+
+  const { notifications, unreadCount, markAllAsRead, markAsRead, clearNotifications } = useUIFeedback();
+
+  // Close dropdown on click outside or escape
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setOpenNotifs(false);
+      }
+    };
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setOpenNotifs(false);
+    };
+
+    if (openNotifs) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openNotifs]);
 
   // Dynamic system breadcrumbs based on route and query parameters
   const getBreadcrumb = () => {
@@ -78,12 +106,16 @@ export default function Header({ onToggleMobileMenu }) {
     );
   };
 
-  // Formatted date string aligned with system settings
   const formattedToday = `Today, ${new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: '2-digit',
     year: 'numeric',
   }).toUpperCase()}`;
+
+  const filteredNotifs = (notifications || []).filter((n) => {
+    if (notifFilter === 'unread') return !n.read;
+    return true;
+  });
 
   return (
     <header className="global-topbar">
@@ -116,12 +148,113 @@ export default function Header({ onToggleMobileMenu }) {
           />
         </div>
 
-        <div className="global-icon-btn" title="System Notifications">
-          <svg className="icon" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
-            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-          </svg>
-          <span className="global-bell-dot" />
+        {/* NOTIFICATION BELL CONTAINER */}
+        <div className="global-bell-wrap" ref={notifRef}>
+          <button
+            type="button"
+            className={`global-icon-btn ${openNotifs ? 'active' : ''}`}
+            title="System Notification Center"
+            onClick={() => setOpenNotifs((v) => !v)}
+            aria-label="Toggle notifications"
+          >
+            <svg className="icon" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+              <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="global-bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+            )}
+          </button>
+
+          {/* NOTIFICATION DROPDOWN POPUP */}
+          {openNotifs && (
+            <div className="notif-dropdown-card" role="dialog" aria-label="System Notifications">
+              <div className="notif-head">
+                <div className="notif-head-title-wrap">
+                  <span className="notif-eyebrow">Audit &amp; Activity Log</span>
+                  <div className="notif-head-title">
+                    System Notifications
+                    {unreadCount > 0 && <span className="notif-count-pill">{unreadCount} New</span>}
+                  </div>
+                </div>
+                <div className="notif-head-actions">
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      className="notif-action-text-btn"
+                      onClick={markAllAsRead}
+                    >
+                      Mark All Read
+                    </button>
+                  )}
+                  {notifications.length > 0 && (
+                    <button
+                      type="button"
+                      className="notif-action-text-btn danger"
+                      onClick={clearNotifications}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* FILTER TABS */}
+              <div className="notif-tabs-bar">
+                <button
+                  type="button"
+                  className={`notif-tab-item ${notifFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setNotifFilter('all')}
+                >
+                  All ({notifications.length})
+                </button>
+                <button
+                  type="button"
+                  className={`notif-tab-item ${notifFilter === 'unread' ? 'active' : ''}`}
+                  onClick={() => setNotifFilter('unread')}
+                >
+                  Unread ({unreadCount})
+                </button>
+              </div>
+
+              {/* NOTIFICATION LIST */}
+              <div className="notif-scroll-list">
+                {filteredNotifs.length === 0 ? (
+                  <div className="notif-empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 28, height: 28, color: 'var(--muted-fg)' }}>
+                      <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                    </svg>
+                    <div className="notif-empty-title">All Caught Up</div>
+                    <div className="notif-empty-sub">No recent transaction notifications at this time.</div>
+                  </div>
+                ) : (
+                  filteredNotifs.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`notif-item-row ${item.read ? 'read' : 'unread'} type-${item.type || 'info'}`}
+                      onClick={() => markAsRead(item.id)}
+                    >
+                      <div className="notif-strip" />
+                      <div className="notif-item-content">
+                        <div className="notif-meta-row">
+                          <span className="notif-module-tag">{item.module || 'Workflow'}</span>
+                          <span className="notif-time-ago">{item.time || 'Recent'}</span>
+                        </div>
+                        <div className="notif-item-title">{item.title}</div>
+                        <div className="notif-item-desc">{item.message}</div>
+                      </div>
+                      {!item.read && <span className="notif-unread-dot" title="Unread" />}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="notif-foot">
+                <span className="notif-foot-note">DOLE D.O. 174 &middot; Real-time Workflow Synchronization</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="global-who">

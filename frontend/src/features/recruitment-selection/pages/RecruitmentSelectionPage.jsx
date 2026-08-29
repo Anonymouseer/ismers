@@ -5,8 +5,10 @@ import CandidateModal from '../components/CandidateModal';
 import { APPLICATIONS, JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
 import { fetchRecruitmentApplications, updateRecruitmentStage, updateRecruitmentScreening, getStoredStages, saveStoredStage, saveCachedApplications } from '../services/RecruitmentSelectionService';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
-import { initials, scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDate } from '../utils/recruitmentUtils';
+import { scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDate } from '../utils/recruitmentUtils';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
+import { useUIFeedback } from '../../../components/common/UIFeedback';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 import './RecruitmentSelectionPage.css';
 
 /** Stage-specific metadata for the single-stage table view banners. */
@@ -239,100 +241,125 @@ export default function RecruitmentSelectionPage() {
     });
   }
 
-  function handleAdvance(appId) {
+  const { showToast, confirmAction, executeWithFeedback } = useUIFeedback();
+
+  async function handleAdvance(appId) {
     const targetApp = applications.find((a) => a.id === appId);
     if (!targetApp) return;
     const currentIdx = PIPELINE_ORDER.indexOf(targetApp.status);
     const nextKey = currentIdx !== -1 ? PIPELINE_ORDER[currentIdx + 1] : (targetApp.status === 're_pooling' ? 'pooling' : null);
     if (!nextKey) return;
 
-    const isResettingToReview = targetApp.status === 're_pooling' || nextKey === 'pooling' || nextKey === 'client_interview';
-    const nextCpStatus = isResettingToReview ? 'Pending Review' : (targetApp.clientEndorsementStatus || 'Pending Review');
+    const currentStageObj = STAGES.find((s) => s.key === targetApp.status);
+    const nextStageObj = STAGES.find((s) => s.key === nextKey);
+    const currentStageLabel = currentStageObj?.label || targetApp.status;
+    const nextStageLabel = nextStageObj?.label || nextKey;
 
-    if (isResettingToReview) {
-      try {
-        localStorage.setItem(`cp_endorsement_${targetApp.name}`, 'Pending Review');
-        localStorage.setItem(`cp_endorsement_${targetApp.id}`, 'Pending Review');
-        localStorage.setItem(`cp_endorsement_cand-${targetApp.id}`, 'Pending Review');
-        if (targetApp.regId) {
-          localStorage.setItem(`cp_endorsement_cand-${targetApp.regId}`, 'Pending Review');
-          localStorage.setItem(`cp_endorsement_${targetApp.regId}`, 'Pending Review');
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Pipeline Stage Advancement',
+        message: `Advance candidate ${targetApp.name} to "${nextStageLabel}"?`,
+        description: `This transaction moves ${targetApp.name} along the official hiring pipeline and updates all real-time client records.`,
+        confirmLabel: `Advance to ${nextStageLabel}`,
+        details: [
+          { label: 'Candidate', value: targetApp.name },
+          { label: 'Current Stage', value: currentStageLabel },
+          { label: 'Target Stage', value: nextStageLabel },
+          { label: 'Requisition', value: targetApp.jobId || 'Open Placement' },
+        ],
+      },
+      busyMessage: `Advancing ${targetApp.name} to ${nextStageLabel}...`,
+      actionFn: async () => {
+        const isResettingToReview = targetApp.status === 're_pooling' || nextKey === 'pooling' || nextKey === 'client_interview';
+        const nextCpStatus = isResettingToReview ? 'Pending Review' : (targetApp.clientEndorsementStatus || 'Pending Review');
+
+        if (isResettingToReview) {
+          try {
+            localStorage.setItem(`cp_endorsement_${targetApp.name}`, 'Pending Review');
+            localStorage.setItem(`cp_endorsement_${targetApp.id}`, 'Pending Review');
+            localStorage.setItem(`cp_endorsement_cand-${targetApp.id}`, 'Pending Review');
+            if (targetApp.regId) {
+              localStorage.setItem(`cp_endorsement_cand-${targetApp.regId}`, 'Pending Review');
+              localStorage.setItem(`cp_endorsement_${targetApp.regId}`, 'Pending Review');
+            }
+          } catch (e) {}
         }
-      } catch (e) {}
-    }
 
-    let autoScheduledInterview = targetApp.interview;
-    if (nextKey === 'area_manager' && !targetApp.interview) {
-      const job = targetById(targetApp.jobId) || targetById(targetApp.targetJobId) || jobById(targetApp.jobId);
-      const recruiter = assignedRecruiter(job) || 'Area Supervisor';
-      const searchFrom = addDays(new Date(), 1);
-      const slot = findNextAvailableSlot(applications, recruiter, searchFrom);
-      if (slot) {
-        autoScheduledInterview = {
-          title: 'Area Manager 2nd Interview',
-          date: slot.date,
-          time: slot.time,
-          recruiter,
-        };
-      }
-    }
+        let autoScheduledInterview = targetApp.interview;
+        if (nextKey === 'area_manager' && !targetApp.interview) {
+          const job = targetById(targetApp.jobId) || targetById(targetApp.targetJobId) || jobById(targetApp.jobId);
+          const recruiter = assignedRecruiter(job) || 'Area Supervisor';
+          const searchFrom = addDays(new Date(), 1);
+          const slot = findNextAvailableSlot(applications, recruiter, searchFrom);
+          if (slot) {
+            autoScheduledInterview = {
+              title: 'Area Manager 2nd Interview',
+              date: slot.date,
+              time: slot.time,
+              recruiter,
+            };
+          }
+        }
 
-    updateApplication(appId, (a) => {
-      let notes = a.notes || [];
-      const nextStageObj = STAGES.find((s) => s.key === nextKey);
-      const nextStageLabel = nextStageObj?.label || nextKey;
-      const extraNote = autoScheduledInterview
-        ? ` · Interview auto-scheduled: ${autoScheduledInterview.date} at ${autoScheduledInterview.time}`
-        : '';
-      notes = [
-        {
-          text: `Advanced to ${nextStageLabel}${isResettingToReview ? ' (Endorsement status reset to Pending Review)' : ''}${extraNote}`,
-          meta: `System · ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`,
-        },
-        ...notes,
-      ];
-      return {
-        ...a,
-        status: nextKey,
-        clientEndorsementStatus: nextCpStatus,
-        interview: autoScheduledInterview || a.interview,
-        notes,
-      };
-    });
+        updateApplication(appId, (a) => {
+          let notes = a.notes || [];
+          const extraNote = autoScheduledInterview
+            ? ` · Interview auto-scheduled: ${autoScheduledInterview.date} at ${autoScheduledInterview.time}`
+            : '';
+          notes = [
+            {
+              text: `Advanced to ${nextStageLabel}${isResettingToReview ? ' (Endorsement status reset to Pending Review)' : ''}${extraNote}`,
+              meta: `System · ${new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}`,
+            },
+            ...notes,
+          ];
+          return {
+            ...a,
+            status: nextKey,
+            clientEndorsementStatus: nextCpStatus,
+            interview: autoScheduledInterview || a.interview,
+            notes,
+          };
+        });
 
-    saveStoredStage(appId, nextKey);
-    if (targetApp.regId) saveStoredStage(targetApp.regId, nextKey);
-    if (targetApp.name) saveStoredStage(targetApp.name, nextKey);
+        saveStoredStage(appId, nextKey);
+        if (targetApp.regId) saveStoredStage(targetApp.regId, nextKey);
+        if (targetApp.name) saveStoredStage(targetApp.name, nextKey);
 
-    const persistId = targetApp.regId || targetApp.id || appId;
-    updateRecruitmentStage(persistId, nextKey, null, targetApp.name).catch((err) => {
-      console.warn('Could not persist recruitment stage to backend:', err);
-    });
+        const persistId = targetApp.regId || targetApp.id || appId;
+        updateRecruitmentStage(persistId, nextKey, null, targetApp.name).catch((err) => {
+          console.warn('Could not persist recruitment stage to backend:', err);
+        });
 
-    if (autoScheduledInterview) {
-      updateRecruitmentScreening(persistId, { interview_schedule: autoScheduledInterview }, targetApp.name).catch(() => {});
-    }
+        if (autoScheduledInterview) {
+          updateRecruitmentScreening(persistId, { interview_schedule: autoScheduledInterview }, targetApp.name).catch(() => {});
+        }
 
-    if (isResettingToReview) {
-      updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, targetApp.name).catch(() => {});
-      broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
-        candidateId: appId,
-        dbId: targetApp.id,
-        regId: targetApp.regId,
-        name: targetApp.name,
-        status: 'Pending Review',
-        stage: nextKey,
-      });
-    }
+        if (isResettingToReview) {
+          updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, targetApp.name).catch(() => {});
+          broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
+            candidateId: appId,
+            dbId: targetApp.id,
+            regId: targetApp.regId,
+            name: targetApp.name,
+            status: 'Pending Review',
+            stage: nextKey,
+          });
+        }
 
-    // 0ms instant broadcast to Client Portal and other tabs
-    broadcastRealtimeEvent('STAGE_CHANGED', {
-      candidateId: appId,
-      dbId: targetApp.id,
-      regId: targetApp.regId,
-      name: targetApp.name,
-      stage: nextKey,
-      applicant: { ...targetApp, status: nextKey, clientEndorsementStatus: nextCpStatus },
+        // 0ms instant broadcast to Client Portal and other tabs
+        broadcastRealtimeEvent('STAGE_CHANGED', {
+          candidateId: appId,
+          dbId: targetApp.id,
+          regId: targetApp.regId,
+          name: targetApp.name,
+          stage: nextKey,
+          applicant: { ...targetApp, status: nextKey, clientEndorsementStatus: nextCpStatus },
+        });
+      },
+      successTitle: 'Pipeline Stage Updated',
+      successMessage: `${targetApp.name} successfully advanced to ${nextStageLabel}.`,
+      delayMs: 420,
     });
   }
 
@@ -526,7 +553,13 @@ export default function RecruitmentSelectionPage() {
                           <tr key={app.id} onClick={() => setSelectedId(app.id)} className="rs-stage-table-row">
                             <td className="cell-name">
                               <div className="rs-table-user-wrap">
-                                <div className="rs-table-user-avatar">{initials(app.name)}</div>
+                                <PersonAvatar
+                                  name={app.name}
+                                  gender={app.gender}
+                                  photo={app.photo || app.avatar}
+                                  size="sm"
+                                  variant="blue"
+                                />
                                 <div>
                                   <div className="rs-table-user-name">{app.name}</div>
                                   <div className="rs-table-user-sub">{app.location}</div>

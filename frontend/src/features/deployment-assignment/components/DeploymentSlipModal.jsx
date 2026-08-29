@@ -1,11 +1,34 @@
 import { TODAY } from '../services/DeploymentAssignmentService';
+import { useUIFeedback } from '../../../components/common/UIFeedback';
 
 export default function DeploymentSlipModal({ deployment, open, onClose, onAdvanceStage }) {
+  const { showToast, confirmAction, executeWithFeedback } = useUIFeedback();
+
   if (!open || !deployment) return null;
 
-  function handleConfirmDispatch() {
-    onAdvanceStage(deployment.id, 'dispatched');
-    onClose();
+  async function handleConfirmDispatch() {
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Employee Dispatch & Authorization',
+        message: `Authorize and dispatch ${deployment.employee} to ${deployment.client}?`,
+        description: 'This validates that all 6/6 pre-employment statutory compliance requirements and safety orientations have been completed per DOLE D.O. 174-17.',
+        confirmLabel: 'Authorize & Dispatch Candidate',
+        details: [
+          { label: 'Employee', value: deployment.employee },
+          { label: 'Client Partner', value: deployment.client },
+          { label: 'Assigned Position', value: deployment.position },
+          { label: 'Deployment Facility', value: deployment.site || 'Designated Client Facility' },
+        ],
+      },
+      busyMessage: `Authorizing dispatch slip for ${deployment.employee}...`,
+      actionFn: async () => {
+        onAdvanceStage(deployment.id, 'dispatched');
+        onClose();
+      },
+      successTitle: 'Deployment Dispatched',
+      successMessage: `${deployment.employee} has been authorized and dispatched to ${deployment.client}.`,
+      delayMs: 450,
+    });
   }
 
   function handlePrint() {

@@ -1,4 +1,5 @@
-import { daysLeft, countdownLabel, initials } from '../services/DeploymentAssignmentService';
+import { daysLeft, countdownLabel } from '../services/DeploymentAssignmentService';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 
 export default function RenewalsAlertView({ deployments, onOpen }) {
   // Filter staff whose contracts end within 90 days or are completed
@@ -52,9 +53,11 @@ export default function RenewalsAlertView({ deployments, onOpen }) {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--primary)', color: 'var(--primary-fg)', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
-                      {initials(d.employee)}
-                    </div>
+                    <PersonAvatar
+                      name={d.employee}
+                      size="sm"
+                      variant="blue"
+                    />
                     <div>
                       <div style={{ fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>{d.employee}</div>
                       <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{d.position}</div>

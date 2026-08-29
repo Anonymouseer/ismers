@@ -1,6 +1,7 @@
-import { initials, scoreClass } from '../utils/recruitmentUtils';
+import { scoreClass } from '../utils/recruitmentUtils';
 import { getHire, keyFor } from '../services/RecruitmentSelectionService';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
+import PersonAvatar from '../../../components/common/PersonAvatar';
 
 const STAGE_LABELS = {
   assigned: 'Assigned', scheduled: 'Scheduled', reporting: 'Reporting',
@@ -34,7 +35,13 @@ export default function CandidateCard({ app, job, onSelect }) {
   return (
     <div className="cand-card" onClick={() => onSelect(app)}>
       <div className="cand-top">
-        <div className="cand-avatar">{initials(app.name)}</div>
+        <PersonAvatar
+          name={app.name}
+          gender={app.gender}
+          photo={app.photo || app.avatar}
+          size="sm"
+          variant="blue"
+        />
         <div className="cand-name">{app.name}</div>
         <div className={`score-badge ${scoreClass(currentScore)}`}>{currentScore}%</div>
       </div>
