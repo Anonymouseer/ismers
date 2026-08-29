@@ -15,17 +15,17 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('primepower_admin_user');
-      return saved ? JSON.parse(saved) : DEFAULT_ADMIN;
+      return saved ? JSON.parse(saved) : null;
     } catch {
-      return DEFAULT_ADMIN;
+      return null;
     }
   });
 
   const [token, setToken] = useState(() => {
     try {
-      return localStorage.getItem('primepower_admin_token') || 'local-demo-token';
+      return localStorage.getItem('primepower_admin_token') || null;
     } catch {
-      return 'local-demo-token';
+      return null;
     }
   });
 
@@ -68,9 +68,9 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider
       value={{
-        user: user || DEFAULT_ADMIN,
+        user,
         token,
-        isAuthenticated: Boolean(user || token),
+        isAuthenticated: Boolean(token),
         loading,
         login,
         logout,

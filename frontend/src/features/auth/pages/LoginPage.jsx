@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthStore';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 import './LoginPage.css';
@@ -7,10 +7,10 @@ import './LoginPage.css';
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loading } = useAuth();
+  const { login, loading, isAuthenticated } = useAuth();
 
-  const [email, setEmail] = useState('admin@primepower.ph');
-  const [password, setPassword] = useState('PrimePower@2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,6 +25,12 @@ export default function LoginPage() {
       // ignore
     }
   }, []);
+
+  // If user is already authenticated, redirect away from login
+  if (isAuthenticated) {
+    const destination = location.state?.from?.pathname || '/client-management';
+    return <Navigate to={destination} replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,5 +1,6 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RootLayout from '../components/layout/RootLayout';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 import ClientManagementPage from '../features/client-management/pages/ClientManagementPage';
 import ApplicantProfilingBoard from '../features/applicant-registration/pages/ApplicantProfilingBoard';
 import RegisterApplicantPage from '../features/applicant-registration/pages/RegisterApplicantPage';
@@ -22,9 +23,13 @@ const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: <RootLayout />,
+    element: (
+      <ProtectedRoute>
+        <RootLayout />
+      </ProtectedRoute>
+    ),
     children: [
-      { index: true, element: <ClientManagementPage /> },
+      { index: true, element: <Navigate to="/client-management" replace /> },
       { path: 'client-management', element: <ClientManagementPage /> },
       {
         path: 'applicant-registration',
