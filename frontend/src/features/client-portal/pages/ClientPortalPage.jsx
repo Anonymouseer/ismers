@@ -286,6 +286,29 @@ export default function ClientPortalPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [successBanner, setSuccessBanner] = useState('');
 
+  // ── NOTIFICATION STATE ──────────────────────────────────────────────────────
+  const [notifications, setNotifications] = useState(() => {
+    // Seed with system announcements
+    return ANNOUNCEMENTS.map((ann) => ({
+      id: ann.id,
+      type: 'announcement',
+      title: ann.title,
+      body: ann.body,
+      time: ann.date,
+      read: false,
+    }));
+  });
+
+  const handleMarkNotifRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const handleMarkAllNotifsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
   // New Job Order Form State
   const [jobForm, setJobForm] = useState({
     title: '',
@@ -534,6 +557,16 @@ export default function ClientPortalPage() {
     } else {
       setSuccessBanner(`Candidate endorsement status updated to ${newStatus}.`);
     }
+
+    // Push a live notification for endorsement status changes
+    setNotifications((prev) => [{
+      id: `endorse-${candId}-${Date.now()}`,
+      type: 'endorsement',
+      title: `Endorsement Updated: ${newStatus}`,
+      body: `Status for ${targetCand?.name || 'candidate'} has been updated to "${newStatus}".`,
+      time: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+      read: false,
+    }, ...prev]);
   };
 
   const handlePassCandidate = (candId) => {
@@ -1311,7 +1344,11 @@ export default function ClientPortalPage() {
 
   return (
     <div className="client-portal-shell">
-      <ClientPortalTopbar />
+      <ClientPortalTopbar
+        notifications={notifications}
+        onMarkRead={handleMarkNotifRead}
+        onMarkAllRead={handleMarkAllNotifsRead}
+      />
 
       <div className="client-portal-main-container">
         <ClientPortalSidebar
