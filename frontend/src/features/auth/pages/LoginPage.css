@@ -272,15 +272,30 @@
 .login-error-banner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 10px 14px;
   background: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 10px;
   font-size: 12px;
   font-weight: 600;
   color: #fca5a5;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+}
+
+/* Session-expired advisory — amber, distinct from error */
+.login-session-expired-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+  margin-bottom: 18px;
   animation: shake 0.35s ease;
 }
 

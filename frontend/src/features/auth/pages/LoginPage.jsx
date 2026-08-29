@@ -14,6 +14,9 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
+  // Detect redirect from session expiry or idle timeout
+  const sessionExpired = new URLSearchParams(window.location.search).get('reason') === 'session_expired';
+
   // Sync theme
   useEffect(() => {
     try {
@@ -83,6 +86,16 @@ export default function LoginPage() {
               Enter your authorized enterprise credentials to access the recruitment, selection, and deployment platform.
             </p>
           </div>
+
+          {sessionExpired && (
+            <div className="login-session-expired-banner" role="status">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>Your session has expired. Please sign in again to continue.</span>
+            </div>
+          )}
 
           {error && (
             <div className="login-error-banner" role="alert">
