@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RootLayout from '../components/layout/RootLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
+import ModuleRoute from '../components/auth/ModuleRoute';
 import ClientManagementPage from '../features/client-management/pages/ClientManagementPage';
 import ApplicantProfilingBoard from '../features/applicant-registration/pages/ApplicantProfilingBoard';
 import RegisterApplicantPage from '../features/applicant-registration/pages/RegisterApplicantPage';
@@ -16,12 +17,13 @@ import ClientPortalRegisterPage from '../features/client-portal/pages/ClientPort
 import ClientPortalResetPasswordPage from '../features/client-portal/pages/ClientPortalResetPasswordPage';
 import PublicApplyPage from '../features/applicant-registration/pages/PublicApplyPage';
 import LoginPage from '../features/auth/pages/LoginPage';
+import RoleDefaultRedirect from '../components/auth/RoleDefaultRedirect';
 
 const router = createBrowserRouter([
-  {
-    path: '/login',
-    element: <LoginPage />,
-  },
+  // PUBLIC: Login
+  { path: '/login', element: <LoginPage /> },
+
+  // PROTECTED: Internal HR System
   {
     path: '/',
     element: (
@@ -30,47 +32,100 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/client-management" replace /> },
-      { path: 'client-management', element: <ClientManagementPage /> },
+      // Root → redirect to role's own default module
+      { index: true, element: <RoleDefaultRedirect /> },
+
+      // Client Management — hr_administrator, job_order_coordinator
+      {
+        path: 'client-management',
+        element: (
+          <ModuleRoute moduleKey="client-management">
+            <ClientManagementPage />
+          </ModuleRoute>
+        ),
+      },
+
+      // Applicant Registration — hr_administrator, registration_officer
       {
         path: 'applicant-registration',
         element: (
-          <ApplicantRegistrationProvider>
-            <ApplicantProfilingBoard />
-          </ApplicantRegistrationProvider>
+          <ModuleRoute moduleKey="applicant-registration">
+            <ApplicantRegistrationProvider>
+              <ApplicantProfilingBoard />
+            </ApplicantRegistrationProvider>
+          </ModuleRoute>
         ),
       },
       {
         path: 'applicant-registration/register',
         element: (
-          <ApplicantRegistrationProvider>
-            <RegisterApplicantPage />
-          </ApplicantRegistrationProvider>
+          <ModuleRoute moduleKey="applicant-registration">
+            <ApplicantRegistrationProvider>
+              <RegisterApplicantPage />
+            </ApplicantRegistrationProvider>
+          </ModuleRoute>
         ),
       },
-      { path: 'recruitment-selection', element: <RecruitmentSelectionPage /> },
-      { path: 'job-order-management', element: <JobOrderManagementPage /> },
-      { path: 'deployment-assignment', element: <DeploymentAssignmentPage /> },
-      { path: 'ai-analytics', element: <AiAnalyticsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
+
+      // Recruitment & Selection — hr_administrator, recruitment_officer
+      {
+        path: 'recruitment-selection',
+        element: (
+          <ModuleRoute moduleKey="recruitment-selection">
+            <RecruitmentSelectionPage />
+          </ModuleRoute>
+        ),
+      },
+
+      // Job Order Management — hr_administrator, job_order_coordinator
+      {
+        path: 'job-order-management',
+        element: (
+          <ModuleRoute moduleKey="job-order-management">
+            <JobOrderManagementPage />
+          </ModuleRoute>
+        ),
+      },
+
+      // Deployment & Assignment — hr_administrator, deployment_officer
+      {
+        path: 'deployment-assignment',
+        element: (
+          <ModuleRoute moduleKey="deployment-assignment">
+            <DeploymentAssignmentPage />
+          </ModuleRoute>
+        ),
+      },
+
+      // AI Analytics — hr_administrator only
+      {
+        path: 'ai-analytics',
+        element: (
+          <ModuleRoute moduleKey="ai-analytics">
+            <AiAnalyticsPage />
+          </ModuleRoute>
+        ),
+      },
+
+      // Settings — hr_administrator only
+      {
+        path: 'settings',
+        element: (
+          <ModuleRoute moduleKey="settings">
+            <SettingsPage />
+          </ModuleRoute>
+        ),
+      },
     ],
   },
-  {
-    path: '/client-portal',
-    element: <ClientPortalPage />,
-  },
-  {
-    path: '/client-portal/login',
-    element: <ClientPortalLoginPage />,
-  },
-  {
-    path: '/client-portal/register',
-    element: <ClientPortalRegisterPage />,
-  },
-  {
-    path: '/client-portal/reset-password',
-    element: <ClientPortalResetPasswordPage />,
-  },
+
+  // PUBLIC: Client Portal (separate auth)
+  { path: '/client-portal', element: <ClientPortalPage /> },
+  { path: '/client-portal/login', element: <ClientPortalLoginPage /> },
+  { path: '/client-portal/register', element: <ClientPortalRegisterPage /> },
+  { path: '/client-portal/reset-password', element: <ClientPortalResetPasswordPage /> },
+
+  // PUBLIC: Applicant self-registration
   {
     path: '/apply',
     element: (

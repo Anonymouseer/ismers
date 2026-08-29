@@ -41,7 +41,7 @@ function getStoredDeployments() {
           }
         }
       }
-    } catch {}
+    } catch { }
   }
   if (!list.length) list = getDeployments();
   return list;
@@ -104,7 +104,7 @@ export function getInitialClientData(currentSession) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) cpJobOrders = parsed;
     }
-  } catch {}
+  } catch { }
 
   const normalizedClientName = (matchedCm.name || clientCompName || '').trim().toLowerCase();
 
@@ -531,14 +531,49 @@ export default function ClientPortalPage() {
     );
 
     // 0ms instant broadcast across all tabs and windows
+    const clientName = session?.company || company?.name || 'Client Partner';
     broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
       candidateId: candId,
       dbId: targetCand?.dbId,
       regId: targetCand?.regId,
       name: targetCand?.name,
+      client: clientName,
       status: newStatus,
       stage: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : undefined,
     });
+
+    try {
+      const feedKey = 'ismers_notifications_feed_v1';
+      const rawFeed = localStorage.getItem(feedKey);
+      const feed = rawFeed ? JSON.parse(rawFeed) : [];
+      let notifTitle = `Client Endorsement: ${newStatus}`;
+      let notifMsg = `${clientName} updated ${targetCand?.name || 'candidate'} endorsement to "${newStatus}".`;
+      let notifType = 'info';
+
+      if (newStatus === 'Passed Interview') {
+        notifTitle = 'Client Interview Passed';
+        notifMsg = `${clientName} passed ${targetCand?.name || 'candidate'} for pre-employment requirements clearance.`;
+        notifType = 'success';
+      } else if (newStatus === 'Declined') {
+        notifTitle = 'Client Candidate Declined';
+        notifMsg = `${clientName} declined ${targetCand?.name || 'candidate'} for reassignment to pooling.`;
+        notifType = 'warning';
+      }
+
+      const notifItem = {
+        id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title: notifTitle,
+        message: notifMsg,
+        type: notifType,
+        module: 'Client Portal',
+        time: 'Just now',
+        timestamp: Date.now(),
+        read: false,
+      };
+      localStorage.setItem(feedKey, JSON.stringify([notifItem, ...(Array.isArray(feed) ? feed : []).slice(0, 49)]));
+    } catch {
+      // ignore
+    }
 
     const lookupKey = targetCand?.name || targetCand?.regId || targetCand?.dbId || String(candId).replace(/^cand-/, '');
     api.patch(`/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
@@ -636,14 +671,36 @@ export default function ClientPortalPage() {
     );
 
     // 0ms instant broadcast across all tabs and windows
+    const clientName = session?.company || company?.name || 'Client Partner';
     broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
       candidateId: candId,
       dbId: targetCand?.dbId,
       regId: targetCand?.regId,
       name: targetCand?.name,
+      client: clientName,
       status: 'Accepted for Interview',
       interview: scheduleData,
     });
+
+    // Also persist into notification feed in localStorage for immediate reflection in the bell
+    try {
+      const feedKey = 'ismers_notifications_feed_v1';
+      const rawFeed = localStorage.getItem(feedKey);
+      const feed = rawFeed ? JSON.parse(rawFeed) : [];
+      const notifItem = {
+        id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        title: 'Client Interview Scheduled',
+        message: `${clientName} accepted endorsement & scheduled interview for ${targetCand?.name || 'Candidate'} on ${scheduleData.date} at ${scheduleData.time} (${scheduleData.mode || 'Virtual'}).`,
+        type: 'success',
+        module: 'Client Portal',
+        time: 'Just now',
+        timestamp: Date.now(),
+        read: false,
+      };
+      localStorage.setItem(feedKey, JSON.stringify([notifItem, ...(Array.isArray(feed) ? feed : []).slice(0, 49)]));
+    } catch {
+      // ignore
+    }
 
     const lookupKey = targetCand?.name || targetCand?.regId || targetCand?.dbId || String(candId).replace(/^cand-/, '');
     api.patch(`/applicants/${encodeURIComponent(lookupKey)}/client-endorsement-status`, {
@@ -749,7 +806,7 @@ export default function ClientPortalPage() {
               }
             }
           }
-        } catch {}
+        } catch { }
 
         // Look up corresponding live Client Management profile
         const { jobs: liveJobs, roster: liveRoster, client: matchedCm } = getInitialClientData(parsed);
@@ -841,7 +898,7 @@ export default function ClientPortalPage() {
           try {
             const rawStages = localStorage.getItem('ismers_recruitment_stages');
             if (rawStages) storedStages = JSON.parse(rawStages);
-          } catch {}
+          } catch { }
 
           const endorsedStages = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired', 're_pooling'];
 
@@ -868,7 +925,7 @@ export default function ClientPortalPage() {
 
           matchedApps.forEach((a) => {
             const effectiveStage = storedStages[a.id] || (a.regId && storedStages[a.regId]) || storedStages[a.name] || a.status;
-            
+
             // Resolve Endorsement Status:
             // When candidate is in 'client_interview', they are actively awaiting client review.
             // If they were previously declined and re-endorsed, status resets to 'Pending Review'.
@@ -1620,175 +1677,174 @@ export default function ClientPortalPage() {
                       (c.skills && c.skills.some((sk) => sk.toLowerCase().includes(q)));
                     return matchesStatus && matchesSearch;
                   }).length === 0 ? (
-                    <div style={{
-                      gridColumn: '1 / -1',
-                      padding: '48px 24px',
-                      background: 'var(--panel, #0f172a)',
-                      border: '1px dashed var(--border, #1e293b)',
-                      borderRadius: 12,
-                      textAlign: 'center',
-                      color: 'var(--muted, #888)',
-                    }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 44, height: 44, margin: '0 auto 12px', opacity: 0.45 }}>
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="8.5" cy="7" r="4" />
-                        <line x1="20" y1="8" x2="20" y2="14" />
-                        <line x1="23" y1="11" x2="17" y2="11" />
-                      </svg>
-                      <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #fff)', marginBottom: 6 }}>
-                        No Endorsed Candidates
-                      </div>
-                      <div style={{ fontSize: 12, maxWidth: 440, margin: '0 auto', lineHeight: 1.6 }}>
-                        {endorsementFilter === 'ALL'
-                          ? 'There are currently no candidates in the endorsement pipeline for your organization. When PRIMEPOWER recruiters endorse qualified applicants for your job orders, they will appear here.'
-                          : `No candidate records currently found under '${endorsementFilter}'.`}
-                      </div>
+                  <div style={{
+                    gridColumn: '1 / -1',
+                    padding: '48px 24px',
+                    background: 'var(--panel, #0f172a)',
+                    border: '1px dashed var(--border, #1e293b)',
+                    borderRadius: 12,
+                    textAlign: 'center',
+                    color: 'var(--muted, #888)',
+                  }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ width: 44, height: 44, margin: '0 auto 12px', opacity: 0.45 }}>
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="8.5" cy="7" r="4" />
+                      <line x1="20" y1="8" x2="20" y2="14" />
+                      <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text, #fff)', marginBottom: 6 }}>
+                      No Endorsed Candidates
                     </div>
-                  ) : (
-                    endorsedCandidates
-                      .filter((c) => {
-                        const matchesStatus = endorsementFilter === 'ALL' || c.status === endorsementFilter;
-                        const q = endorsementSearch.trim().toLowerCase();
-                        if (!q) return matchesStatus;
-                        const matchesSearch =
-                          (c.name && c.name.toLowerCase().includes(q)) ||
-                          (c.position && c.position.toLowerCase().includes(q)) ||
-                          (c.jobRef && c.jobRef.toLowerCase().includes(q)) ||
-                          (c.skills && c.skills.some((sk) => sk.toLowerCase().includes(q)));
-                        return matchesStatus && matchesSearch;
-                      })
-                      .map((cand) => (
-                        <div
-                          key={cand.id}
-                          className="client-portal-card cp-endorsement-card"
-                          onClick={() => setSelectedCandidate(cand)}
-                          title="Click to view full AI Profile & validated credentials"
-                        >
-                          <div className="cp-endorsement-card-header">
-                            <div className="cp-endorsement-avatar">{cand.name[0]}</div>
-                            <div className="cp-endorsement-title-block">
-                              <div className="cp-endorsement-name">{cand.name}</div>
-                              <div className="cp-endorsement-role">{cand.position} &middot; <span className="client-portal-ref-id">{cand.jobRef}</span></div>
-                            </div>
-                            <div className="cp-endorsement-score">
-                              <span className="cp-score-badge">{cand.matchScore}% Match Score</span>
+                    <div style={{ fontSize: 12, maxWidth: 440, margin: '0 auto', lineHeight: 1.6 }}>
+                      {endorsementFilter === 'ALL'
+                        ? 'There are currently no candidates in the endorsement pipeline for your organization. When PRIMEPOWER recruiters endorse qualified applicants for your job orders, they will appear here.'
+                        : `No candidate records currently found under '${endorsementFilter}'.`}
+                    </div>
+                  </div>
+                ) : (
+                  endorsedCandidates
+                    .filter((c) => {
+                      const matchesStatus = endorsementFilter === 'ALL' || c.status === endorsementFilter;
+                      const q = endorsementSearch.trim().toLowerCase();
+                      if (!q) return matchesStatus;
+                      const matchesSearch =
+                        (c.name && c.name.toLowerCase().includes(q)) ||
+                        (c.position && c.position.toLowerCase().includes(q)) ||
+                        (c.jobRef && c.jobRef.toLowerCase().includes(q)) ||
+                        (c.skills && c.skills.some((sk) => sk.toLowerCase().includes(q)));
+                      return matchesStatus && matchesSearch;
+                    })
+                    .map((cand) => (
+                      <div
+                        key={cand.id}
+                        className="client-portal-card cp-endorsement-card"
+                        onClick={() => setSelectedCandidate(cand)}
+                        title="Click to view full AI Profile & validated credentials"
+                      >
+                        <div className="cp-endorsement-card-header">
+                          <div className="cp-endorsement-avatar">{cand.name[0]}</div>
+                          <div className="cp-endorsement-title-block">
+                            <div className="cp-endorsement-name">{cand.name}</div>
+                            <div className="cp-endorsement-role">{cand.position} &middot; <span className="client-portal-ref-id">{cand.jobRef}</span></div>
+                          </div>
+                          <div className="cp-endorsement-score">
+                            <span className="cp-score-badge">{cand.matchScore}% Match Score</span>
+                          </div>
+                        </div>
+
+                        <div className="cp-endorsement-card-body">
+                          <div className="cp-endorsement-section">
+                            <label>Work Experience Summary</label>
+                            <p>{cand.experience}</p>
+                          </div>
+                          <div className="cp-endorsement-section">
+                            <label>Validated Competencies</label>
+                            <div className="cp-skill-tags">
+                              {cand.skills.map((sk) => (
+                                <span key={sk} className="cp-skill-tag">{sk}</span>
+                              ))}
                             </div>
                           </div>
-
-                          <div className="cp-endorsement-card-body">
-                            <div className="cp-endorsement-section">
-                              <label>Work Experience Summary</label>
-                              <p>{cand.experience}</p>
-                            </div>
-                            <div className="cp-endorsement-section">
-                              <label>Validated Competencies</label>
-                              <div className="cp-skill-tags">
-                                {cand.skills.map((sk) => (
-                                  <span key={sk} className="cp-skill-tag">{sk}</span>
-                                ))}
-                              </div>
-                            </div>
-                            <div className="cp-endorsement-meta-row">
-                              <span>Endorsed on {cand.endorsedDate} by {cand.recruiter}</span>
-                              <span className={`client-portal-badge ${
-                                cand.status === 'Accepted for Interview'
-                                  ? 'client-portal-badge--filled'
-                                  : cand.status === 'Declined'
+                          <div className="cp-endorsement-meta-row">
+                            <span>Endorsed on {cand.endorsedDate} by {cand.recruiter}</span>
+                            <span className={`client-portal-badge ${cand.status === 'Accepted for Interview'
+                                ? 'client-portal-badge--filled'
+                                : cand.status === 'Declined'
                                   ? 'cp-badge--declined'
                                   : 'client-portal-badge--review'
                               }`}>
-                                {cand.status}
-                              </span>
-                            </div>
+                              {cand.status}
+                            </span>
                           </div>
+                        </div>
 
-                          <div className="cp-endorsement-card-footer" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              className="cp-card-review-btn"
-                              onClick={() => setSelectedCandidate(cand)}
-                            >
-                              <span>Review Full AI Profile &amp; Credentials</span>
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M5 12h14M12 5l7 7-7 7" />
-                              </svg>
-                            </button>
+                        <div className="cp-endorsement-card-footer" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="cp-card-review-btn"
+                            onClick={() => setSelectedCandidate(cand)}
+                          >
+                            <span>Review Full AI Profile &amp; Credentials</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
+                          </button>
 
-                            <div className="cp-card-actions">
-                              {cand.status === 'Pending Review' && (
-                                <>
-                                  <button
-                                    type="button"
-                                    className="cp-btn-decline"
-                                    onClick={() => handleDeclineCandidate(cand.id)}
-                                  >
-                                    Decline
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="client-portal-btn-primary cp-btn-accept"
-                                    onClick={() => handleAcceptCandidate(cand.id)}
-                                  >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
-                                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                      <line x1="16" y1="2" x2="16" y2="6" />
-                                      <line x1="8" y1="2" x2="8" y2="6" />
-                                    </svg>
-                                    Accept &amp; Schedule
-                                  </button>
-                                </>
-                              )}
-                              {cand.status === 'Accepted for Interview' && (
-                                <>
-                                  <button
-                                    type="button"
-                                    className="cp-btn-decline"
-                                    onClick={() => handleDeclineCandidate(cand.id)}
-                                  >
-                                    Decline
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="cp-btn-reschedule"
-                                    onClick={() => handleAcceptCandidate(cand.id)}
-                                  >
-                                    Reschedule
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="client-portal-btn-primary cp-btn-pass"
-                                    onClick={() => handlePassCandidate(cand.id)}
-                                  >
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    Pass Candidate
-                                  </button>
-                                </>
-                              )}
-                              {(cand.status === 'Passed Interview' || cand.status === 'Passed Client Interview' || cand.status === 'Hired') && (
-                                <div className="cp-passed-pill" style={{ width: '100%', justifyContent: 'center' }}>
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--green, #149e6e)' }}>
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                  <span>Passed Client Final Interview &middot; Approved</span>
-                                </div>
-                              )}
-                              {cand.status === 'Declined' && (
+                          <div className="cp-card-actions">
+                            {cand.status === 'Pending Review' && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="cp-btn-decline"
+                                  onClick={() => handleDeclineCandidate(cand.id)}
+                                >
+                                  Decline
+                                </button>
                                 <button
                                   type="button"
                                   className="client-portal-btn-primary cp-btn-accept"
-                                  style={{ width: '100%', justifyContent: 'center' }}
                                   onClick={() => handleAcceptCandidate(cand.id)}
                                 >
-                                  Reopen &amp; Schedule Interview
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                  </svg>
+                                  Accept &amp; Schedule
                                 </button>
-                              )}
-                            </div>
+                              </>
+                            )}
+                            {cand.status === 'Accepted for Interview' && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="cp-btn-decline"
+                                  onClick={() => handleDeclineCandidate(cand.id)}
+                                >
+                                  Decline
+                                </button>
+                                <button
+                                  type="button"
+                                  className="cp-btn-reschedule"
+                                  onClick={() => handleAcceptCandidate(cand.id)}
+                                >
+                                  Reschedule
+                                </button>
+                                <button
+                                  type="button"
+                                  className="client-portal-btn-primary cp-btn-pass"
+                                  onClick={() => handlePassCandidate(cand.id)}
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '13px', height: '13px' }}>
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  Pass Candidate
+                                </button>
+                              </>
+                            )}
+                            {(cand.status === 'Passed Interview' || cand.status === 'Passed Client Interview' || cand.status === 'Hired') && (
+                              <div className="cp-passed-pill" style={{ width: '100%', justifyContent: 'center' }}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--green, #149e6e)' }}>
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                <span>Passed Client Final Interview &middot; Approved</span>
+                              </div>
+                            )}
+                            {cand.status === 'Declined' && (
+                              <button
+                                type="button"
+                                className="client-portal-btn-primary cp-btn-accept"
+                                style={{ width: '100%', justifyContent: 'center' }}
+                                onClick={() => handleAcceptCandidate(cand.id)}
+                              >
+                                Reopen &amp; Schedule Interview
+                              </button>
+                            )}
                           </div>
                         </div>
-                      ))
-                  )}
+                      </div>
+                    ))
+                )}
               </div>
             </div>
           )}
@@ -1866,10 +1922,10 @@ export default function ClientPortalPage() {
                             <td>
                               <span
                                 className={`client-portal-badge ${emp.status === 'Active'
-                                    ? 'client-portal-badge--active'
-                                    : emp.status === 'Renewal Requested'
-                                      ? 'client-portal-badge--filled'
-                                      : 'client-portal-badge--pending'
+                                  ? 'client-portal-badge--active'
+                                  : emp.status === 'Renewal Requested'
+                                    ? 'client-portal-badge--filled'
+                                    : 'client-portal-badge--pending'
                                   }`}
                               >
                                 {emp.status}

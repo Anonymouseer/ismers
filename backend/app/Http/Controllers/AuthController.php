@@ -6,13 +6,12 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
      * POST /api/v1/auth/login
-     * Authenticate HR Administrator or Recruiter.
+     * Authenticate any of the 5 internal team roles against the PostgreSQL database.
      */
     public function login(Request $request): JsonResponse
     {
@@ -21,26 +20,13 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', strtolower(trim($request->email)))->first();
+        $email = strtolower(trim($request->email));
+        $user = User::where('email', $email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
-            // Fallback for default demo credential if database was freshly reset
-            if (
-                strtolower(trim($request->email)) === 'admin@primepower.ph' &&
-                $request->password === 'PrimePower@2026'
-            ) {
-                $user = User::firstOrCreate(
-                    ['email' => 'admin@primepower.ph'],
-                    [
-                        'name' => 'HR Administrator',
-                        'password' => Hash::make('PrimePower@2026'),
-                    ]
-                );
-            } else {
-                return response()->json([
-                    'message' => 'Invalid email address or password. Please verify your credentials.',
-                ], 401);
-            }
+            return response()->json([
+                'message' => 'Invalid email address or password. Please verify your credentials.',
+            ], 401);
         }
 
         // Generate Sanctum plain text token
@@ -52,8 +38,19 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => 'admin',
-                'department' => 'HR Smart Recruitment',
+                'role' => $user->role ?? 'hr_administrator',
+                'roleLabel' => $user->role_label ?? 'HR Administrator',
+                'department' => $user->department ?? 'HR Management',
+                'allowedModules' => $user->allowed_modules ?? [
+                    'client-management',
+                    'job-order-management',
+                    'applicant-registration',
+                    'recruitment-selection',
+                    'deployment-assignment',
+                    'ai-analytics',
+                    'settings',
+                ],
+                'defaultRoute' => $user->default_route ?? '/client-management',
             ],
             'message' => 'Authentication successful.',
         ]);
@@ -89,7 +86,11 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => 'admin',
+            'role' => $user->role ?? 'hr_administrator',
+            'roleLabel' => $user->role_label ?? 'HR Administrator',
+            'department' => $user->department ?? 'HR Management',
+            'allowedModules' => $user->allowed_modules ?? [],
+            'defaultRoute' => $user->default_route ?? '/client-management',
         ]);
     }
 }

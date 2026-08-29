@@ -152,6 +152,44 @@ export function UIFeedbackProvider({ children }) {
           type: 'info',
           module: 'Recruitment',
         });
+      } else if (event.type === 'ENDORSEMENT_STATUS_CHANGED' || event.type === 'CLIENT_INTERVIEW_SCHEDULED') {
+        const payload = event.payload || {};
+        const candidateName = payload.name || payload.candidateName || 'Candidate';
+        const clientName = payload.client || payload.clientName || payload.company || 'Client Partner';
+        const status = payload.status;
+        const interview = payload.interview;
+
+        if (status === 'Accepted for Interview' || interview) {
+          const scheduleStr = interview?.date && interview?.time
+            ? ` on ${interview.date} at ${interview.time} (${interview.mode || 'Virtual / Online'})`
+            : '';
+          addNotification({
+            title: 'Client Interview Scheduled',
+            message: `${clientName} accepted endorsement & scheduled interview for ${candidateName}${scheduleStr}.`,
+            type: 'success',
+            module: 'Client Portal',
+          });
+          showToast({
+            title: 'Client Interview Confirmed',
+            message: `${clientName} confirmed interview for ${candidateName}${scheduleStr}.`,
+            type: 'success',
+            module: 'Client Portal',
+          });
+        } else if (status === 'Passed Interview') {
+          addNotification({
+            title: 'Client Interview Passed',
+            message: `${clientName} marked ${candidateName} as PASSED interview. Ready for pre-employment requirements.`,
+            type: 'success',
+            module: 'Client Portal',
+          });
+        } else if (status === 'Declined') {
+          addNotification({
+            title: 'Client Candidate Declined',
+            message: `${clientName} declined candidate ${candidateName} for reassignment to pooling.`,
+            type: 'warning',
+            module: 'Client Portal',
+          });
+        }
       }
     });
 

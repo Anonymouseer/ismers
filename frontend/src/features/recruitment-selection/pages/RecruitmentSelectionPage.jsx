@@ -132,7 +132,7 @@ export default function RecruitmentSelectionPage() {
               const newStatus = stage || ((status === 'Passed Interview' || status === 'Passed Client Interview')
                 ? 'hr_requirements'
                 : (status === 'Declined' ? 're_pooling' : app.status));
-              
+
               saveStoredStage(app.id, newStatus);
               if (app.regId) saveStoredStage(app.regId, newStatus);
               if (app.name) saveStoredStage(app.name, newStatus);
@@ -200,7 +200,7 @@ export default function RecruitmentSelectionPage() {
             });
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     };
 
     window.addEventListener('focus', handleFocusRevalidate);
@@ -282,7 +282,7 @@ export default function RecruitmentSelectionPage() {
               localStorage.setItem(`cp_endorsement_cand-${targetApp.regId}`, 'Pending Review');
               localStorage.setItem(`cp_endorsement_${targetApp.regId}`, 'Pending Review');
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         let autoScheduledInterview = targetApp.interview;
@@ -332,11 +332,11 @@ export default function RecruitmentSelectionPage() {
         });
 
         if (autoScheduledInterview) {
-          updateRecruitmentScreening(persistId, { interview_schedule: autoScheduledInterview }, targetApp.name).catch(() => {});
+          updateRecruitmentScreening(persistId, { interview_schedule: autoScheduledInterview }, targetApp.name).catch(() => { });
         }
 
         if (isResettingToReview) {
-          updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, targetApp.name).catch(() => {});
+          updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, targetApp.name).catch(() => { });
           broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
             candidateId: appId,
             dbId: targetApp.id,
@@ -486,12 +486,12 @@ export default function RecruitmentSelectionPage() {
                         {stageFilter === 'hr_requirements'
                           ? 'Pre-Employment Clearances'
                           : stageFilter === 'contract_signing'
-                          ? 'Onboarding & Contract Status'
-                          : stageFilter === 'for_deployment'
-                          ? 'Deployment Readiness'
-                          : stageFilter === 're_pooling'
-                          ? 'Pooling & Line-Up Status'
-                          : 'Interview & Endorsement Status'}
+                            ? 'Onboarding & Contract Status'
+                            : stageFilter === 'for_deployment'
+                              ? 'Deployment Readiness'
+                              : stageFilter === 're_pooling'
+                                ? 'Pooling & Line-Up Status'
+                                : 'Interview & Endorsement Status'}
                       </th>
                       <th>Applied Date</th>
                       <th style={{ textAlign: 'right' }}>Actions</th>
@@ -517,12 +517,12 @@ export default function RecruitmentSelectionPage() {
                           (app.clientEndorsementStatus && app.clientEndorsementStatus !== 'Pending Review')
                             ? app.clientEndorsementStatus
                             : (localStorage.getItem(`cp_endorsement_${app.name}`) ||
-                               localStorage.getItem(`cp_endorsement_cand-${app.id}`) ||
-                               (app.regId && localStorage.getItem(`cp_endorsement_cand-${app.regId}`)) ||
-                               localStorage.getItem(`cp_endorsement_${app.id}`) ||
-                               (app.regId && localStorage.getItem(`cp_endorsement_${app.regId}`)) ||
-                               app.clientEndorsementStatus ||
-                               'Pending Review');
+                              localStorage.getItem(`cp_endorsement_cand-${app.id}`) ||
+                              (app.regId && localStorage.getItem(`cp_endorsement_cand-${app.regId}`)) ||
+                              localStorage.getItem(`cp_endorsement_${app.id}`) ||
+                              (app.regId && localStorage.getItem(`cp_endorsement_${app.regId}`)) ||
+                              app.clientEndorsementStatus ||
+                              'Pending Review');
 
                         let interviewLabel = 'Not scheduled';
                         let statusClass = 'none';
@@ -773,4 +773,4 @@ export default function RecruitmentSelectionPage() {
     </div>
   );
 }
-
+

@@ -180,19 +180,32 @@ export function AuthProvider({ children }) {
         setUser(res.user);
         writeStorage(TOKEN_KEY, res.token);
         writeStorage(USER_KEY, JSON.stringify(res.user));
-        // Persist the absolute expiry provided by the server
+        // Reset sidebar submenu state so menus start collapsed on fresh login
+        try { localStorage.removeItem('primepower_open_menus'); } catch { /* ignore */ }
         if (res.expires_at) {
           writeStorage(EXPIRY_KEY, res.expires_at);
         }
-        return { success: true };
+        return { success: true, user: res.user };
       }
       return { success: false, message: 'Invalid response from server.' };
     } catch (err) {
-      const message = err.response?.data?.message || 'Invalid email or password.';
+      // Support both Axios error format and plain Error (mock service)
+      const message =
+        err.response?.data?.message || err.message || 'Invalid email or password.';
       return { success: false, message };
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Check if the logged-in user has access to a given module key.
+   */
+  const canAccess = (moduleKey) => {
+    if (!user) return false;
+    return Array.isArray(user.allowedModules)
+      ? user.allowedModules.includes(moduleKey)
+      : false;
   };
 
   return (
@@ -204,6 +217,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        canAccess,
       }}
     >
       {children}

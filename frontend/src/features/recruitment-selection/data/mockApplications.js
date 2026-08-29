@@ -83,33 +83,47 @@ export const DOC_DEFS = [
 export const SLOT_TIMES = ['9:00 AM', '10:00 AM', '11:00 AM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
 
 export const APPLICATIONS = [
-  { name: 'Andrea Molina', jobId: 'jo-seda-1', status: 'for_deployment', score: 94, applied: 'Jul 01, 2026', experience: '3 yrs Housekeeping', location: 'Quezon City',
+  {
+    name: 'Andrea Molina', jobId: 'jo-seda-1', status: 'for_deployment', score: 94, applied: 'Jul 01, 2026', experience: '3 yrs Housekeeping', location: 'Quezon City',
     breakdown: { skills: 95, experience: 92, screening: 94, availability: 98 }, interview: null,
-    notes: [{ text: 'Passed Client Final Interview at Seda Vertis. Pre-employment requirements and contract signing completed.', meta: 'Area Manager · Jul 20, 2026' }] },
-  
-  { name: 'Jomar Villagracia', jobId: 'jo-vikings-1', status: 'contract_signing', score: 89, applied: 'Jul 05, 2026', experience: '2 yrs F&B', location: 'Pasig City',
-    breakdown: { skills: 88, experience: 85, screening: 90, availability: 95 }, interview: null,
-    notes: [{ text: 'Endorsed by Area Manager to HR. Scheduled for Client Orientation and Contract & ID signing.', meta: 'HR Dept · Jul 22, 2026' }] },
-  
-  { name: 'Michael Tan', jobId: 'jo-vikings-1', status: 'hr_requirements', score: 85, applied: 'Jul 10, 2026', experience: '1.5 yrs F&B', location: 'Mandaluyong',
-    breakdown: { skills: 82, experience: 80, screening: 88, availability: 90 }, interview: null,
-    notes: [{ text: 'Client confirmed PASSED interview result. Currently completing NBI clearance & Medical Fit-to-work.', meta: 'Area Supervisor · Jul 23, 2026' }] },
+    notes: [{ text: 'Passed Client Final Interview at Seda Vertis. Pre-employment requirements and contract signing completed.', meta: 'Area Manager · Jul 20, 2026' }]
+  },
 
-  { name: 'Carlo Dizon', jobId: 'jo-y2-1', status: 'client_interview', score: 88, applied: 'Jul 12, 2026', experience: '2 yrs Line Cook', location: 'Makati City',
+  {
+    name: 'Jomar Villagracia', jobId: 'jo-vikings-1', status: 'contract_signing', score: 89, applied: 'Jul 05, 2026', experience: '2 yrs F&B', location: 'Pasig City',
+    breakdown: { skills: 88, experience: 85, screening: 90, availability: 95 }, interview: null,
+    notes: [{ text: 'Endorsed by Area Manager to HR. Scheduled for Client Orientation and Contract & ID signing.', meta: 'HR Dept · Jul 22, 2026' }]
+  },
+
+  {
+    name: 'Michael Tan', jobId: 'jo-vikings-1', status: 'hr_requirements', score: 85, applied: 'Jul 10, 2026', experience: '1.5 yrs F&B', location: 'Mandaluyong',
+    breakdown: { skills: 82, experience: 80, screening: 88, availability: 90 }, interview: null,
+    notes: [{ text: 'Client confirmed PASSED interview result. Currently completing NBI clearance & Medical Fit-to-work.', meta: 'Area Supervisor · Jul 23, 2026' }]
+  },
+
+  {
+    name: 'Carlo Dizon', jobId: 'jo-y2-1', status: 'client_interview', score: 88, applied: 'Jul 12, 2026', experience: '2 yrs Line Cook', location: 'Makati City',
     breakdown: { skills: 90, experience: 85, screening: 86, availability: 92 },
     interview: { title: 'Client Final Interview', date: 'Jul 26, 2026', time: '2:00 PM', recruiter: 'Y2 Hotel HR Manager' },
-    notes: [{ text: 'Endorsed by Area Manager for Final Interview with Client Y2 Hotel.', meta: 'Area Manager · Jul 18, 2026' }] },
+    notes: [{ text: 'Endorsed by Area Manager for Final Interview with Client Y2 Hotel.', meta: 'Area Manager · Jul 18, 2026' }]
+  },
 
-  { name: 'Bea Fernandez', jobId: 'jo-citygarden-1', status: 'area_manager', score: 79, applied: 'Jul 15, 2026', experience: '1 yr Front Desk', location: 'Manila',
+  {
+    name: 'Bea Fernandez', jobId: 'jo-citygarden-1', status: 'area_manager', score: 79, applied: 'Jul 15, 2026', experience: '1 yr Front Desk', location: 'Manila',
     breakdown: { skills: 78, experience: 75, screening: 82, availability: 85 },
     interview: { title: 'Area Manager 2nd Interview', date: 'Jul 25, 2026', time: '10:00 AM', recruiter: 'Area Supervisor' },
-    notes: [{ text: 'Initial screening passed. Endorsed to Area Manager for 2nd interview evaluation.', meta: 'Recruiter · Jul 16, 2026' }] },
+    notes: [{ text: 'Initial screening passed. Endorsed to Area Manager for 2nd interview evaluation.', meta: 'Recruiter · Jul 16, 2026' }]
+  },
 
-  { name: 'Rico Manalo', jobId: 'jo1', status: 'pooling', score: 75, applied: 'Jul 20, 2026', experience: '1 yr Warehouse', location: 'Valenzuela',
+  {
+    name: 'Rico Manalo', jobId: 'jo1', status: 'pooling', score: 75, applied: 'Jul 20, 2026', experience: '1 yr Warehouse', location: 'Valenzuela',
     breakdown: { skills: 72, experience: 70, screening: 78, availability: 88 }, interview: null,
-    notes: [{ text: 'Logged by Guard & front desk. Resumed screened and categorized for Warehouse pooling.', meta: 'Front Desk · Jul 20, 2026' }] },
+    notes: [{ text: 'Logged by Guard & front desk. Resumed screened and categorized for Warehouse pooling.', meta: 'Front Desk · Jul 20, 2026' }]
+  },
 
-  { name: 'Vince Ocampo', jobId: 'jo-seda-1', status: 're_pooling', score: 62, applied: 'Jul 08, 2026', experience: '0.5 yr', location: 'Caloocan',
+  {
+    name: 'Vince Ocampo', jobId: 'jo-seda-1', status: 're_pooling', score: 62, applied: 'Jul 08, 2026', experience: '0.5 yr', location: 'Caloocan',
     breakdown: { skills: 60, experience: 50, screening: 68, availability: 75 }, interview: null,
-    notes: [{ text: 'Client interview result: Failed. Returned to Main Office Pooling for line-up to other clients within 3 days.', meta: 'Area Manager · Jul 19, 2026' }] }
+    notes: [{ text: 'Client interview result: Failed. Returned to Main Office Pooling for line-up to other clients within 3 days.', meta: 'Area Manager · Jul 19, 2026' }]
+  }
 ];

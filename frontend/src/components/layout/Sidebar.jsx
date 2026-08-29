@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../features/auth/store/AuthStore';
 import './Sidebar.css';
@@ -16,41 +16,27 @@ export default function Sidebar({
   onCloseMobile = () => { },
 }) {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, canAccess } = useAuth();
   const adminName = user?.name || 'HR Administrator';
-  const adminEmail = user?.email || 'admin@primepower.ph';
+  const adminRole = user?.roleLabel || 'HR Administrator';
 
-  // Persistent Collapsible Sub-menu States in localStorage
+  // Menu state is NOT persisted across sessions.
+  // Submenus are closed by default; only the active route's menu is open.
   const [openMenus, setOpenMenus] = useState(() => {
-    let initial = {
-      'client-management': true,
-      'job-order-management': true,
-      'applicant-registration': true,
-      'recruitment-selection': true,
-      'deployment-assignment': true,
-      'ai-analytics': true,
+    const initial = {
+      'client-management': false,
+      'job-order-management': false,
+      'applicant-registration': false,
+      'recruitment-selection': false,
+      'deployment-assignment': false,
+      'ai-analytics': false,
     };
-    try {
-      const saved = localStorage.getItem('primepower_open_menus');
-      if (saved) {
-        initial = { ...initial, ...JSON.parse(saved) };
-      }
-    } catch {
-      // ignore
-    }
     if (activeItem) {
       initial[activeItem] = true;
     }
     return initial;
   });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('primepower_open_menus', JSON.stringify(openMenus));
-    } catch {
-      // ignore
-    }
-  }, [openMenus]);
 
   const toggleSubmenu = (menuKey, e) => {
     e.preventDefault();
@@ -107,10 +93,12 @@ export default function Sidebar({
           </div>
 
           {/* RECRUITMENT OPERATIONS */}
+          {(canAccess('client-management') || canAccess('job-order-management')) && (
           <div className="nav-group">
             <div className="nav-label">Recruitment Operations</div>
 
             {/* Client Management */}
+            {canAccess('client-management') && (
             <Link
               to="/client-management"
               className={`nav-item${activeItem === 'client-management' ? ' active' : ''}`}
@@ -123,8 +111,10 @@ export default function Sidebar({
               </span>
               <span className="label">Client Management</span>
             </Link>
+            )}
 
             {/* Job Order Management */}
+            {canAccess('job-order-management') && (
             <div className="nav-menu-wrapper">
               <Link
                 to="/job-order-management"
@@ -195,13 +185,17 @@ export default function Sidebar({
                 </div>
               </div>
             </div>
+            )}
           </div>
+          )}
 
           {/* TALENT & DEPLOYMENT */}
+          {(canAccess('applicant-registration') || canAccess('recruitment-selection') || canAccess('deployment-assignment')) && (
           <div className="nav-group">
             <div className="nav-label">Talent &amp; Deployment</div>
 
             {/* Applicant Registration */}
+            {canAccess('applicant-registration') && (
             <div className="nav-menu-wrapper">
               <Link
                 to="/applicant-registration"
@@ -270,8 +264,10 @@ export default function Sidebar({
                 </div>
               </div>
             </div>
+            )}
 
             {/* Recruitment & Selection */}
+            {canAccess('recruitment-selection') && (
             <div className="nav-menu-wrapper">
               <Link
                 to="/recruitment-selection"
@@ -351,8 +347,10 @@ export default function Sidebar({
                 </div>
               </div>
             </div>
+            )}
 
             {/* Deployment & Assignment */}
+            {canAccess('deployment-assignment') && (
             <Link
               to="/deployment-assignment"
               className={`nav-item${activeItem === 'deployment-assignment' ? ' active' : ''}`}
@@ -366,9 +364,12 @@ export default function Sidebar({
               </span>
               <span className="label">Deployment &amp; Assignment</span>
             </Link>
+            )}
           </div>
+          )}
 
           {/* AI & ANALYTICS */}
+          {canAccess('ai-analytics') && (
           <div className="nav-group">
             <div className="nav-label">AI &amp; Analytics</div>
 
@@ -415,8 +416,10 @@ export default function Sidebar({
               <span className="label">Workforce Retention Analysis</span>
             </Link>
           </div>
+          )}
 
           {/* SYSTEM */}
+          {canAccess('settings') && (
           <div className="nav-group">
             <div className="nav-label">System</div>
             <Link
@@ -432,6 +435,7 @@ export default function Sidebar({
               <span className="label">Settings</span>
             </Link>
           </div>
+          )}
         </div>
 
         {/* FOOTER USER SUMMARY */}
@@ -439,7 +443,7 @@ export default function Sidebar({
           <div className="avatar">{adminName.charAt(0)}</div>
           <div className="foot-text">
             <div className="foot-name">{adminName}</div>
-            <div className="foot-role">{adminEmail}</div>
+            <div className="foot-role">{adminRole}</div>
           </div>
         </div>
 

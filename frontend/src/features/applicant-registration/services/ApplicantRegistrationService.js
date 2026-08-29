@@ -265,24 +265,102 @@ export function getAllJobTargets() {
 export const JOB_TARGETS = getAllJobTargets();
 
 export function computeMatchScore(candidate, job) {
-  if (!job) return 0;
+  if (!job || !candidate) return 0;
 
-  const keywords = (job.keywords && job.keywords.length > 0)
-    ? job.keywords
-    : (job.title || '').toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2);
+  const candidateSkills = (candidate.skills || []).map((s) => s.toLowerCase().trim()).filter(Boolean);
+  const workHistory = candidate.workHistory || [];
+  const workHistoryText = workHistory.map((w) => `${w.role || ''} ${w.company || ''}`).join(' ').toLowerCase().trim();
+  const summaryText = (candidate.summary || candidate.headline || '').toLowerCase().trim();
 
-  if (!keywords || !keywords.length) return 0;
+  // 1. Strict zero start: if candidate has no skills, work history, or summary text -> 0%
+  if (candidateSkills.length === 0 && !workHistoryText && !summaryText) {
+    return 0;
+  }
 
-  const searchable = [
-    ...(candidate?.skills || []),
-    ...(candidate?.workHistory || []).map((w) => `${w.role} ${w.company}`),
-  ].join(' ').toLowerCase();
+  const candCat = (candidate.category || '').toLowerCase().trim();
+  const jobCat = (job.category || '').toLowerCase().trim();
+  const jobTitle = (job.title || '').toLowerCase().trim();
 
-  if (!searchable.trim()) return 0;
+  // Extract core keywords from job title & tags
+  const rawKeywords = [
+    ...jobTitle.split(/[\s·,-/()]+/).filter((w) => w.length > 2 && !['and', 'for', 'the', 'with', 'associate', 'officer', 'staff', 'operator', 'attendant', 'crew'].includes(w)),
+    ...(job.tags || []).map((t) => t.toLowerCase()),
+  ];
 
-  const matched = keywords.filter((kw) => searchable.includes(kw.toLowerCase())).length;
-  if (matched === 0) return 0;
-  return Math.round((matched / keywords.length) * 100);
+  const filler = new Set(['high', 'school', 'graduate', 'least', 'year', 'years', 'month', 'months', 'willing', 'work', 'able', 'plus', 'preferred', 'good', 'with', 'must', 'have', 'experience', 'relocate', 'provided', 'housing']);
+  const coreKeywords = Array.from(new Set(
+    rawKeywords
+      .map((k) => k.toLowerCase().trim())
+      .filter((k) => k.length > 2 && !filler.has(k))
+  ));
+
+  const allCandidateText = [...candidateSkills, workHistoryText, summaryText].join(' ');
+
+  // 2. Count matching skills against job title, tags, and category keywords
+  let matchingSkillCount = 0;
+  candidateSkills.forEach((skill) => {
+    const directHit = coreKeywords.some((kw) => skill.includes(kw) || kw.includes(skill));
+    const catHit = jobCat && jobCat.split(/[\s&/()]+/).some((cw) => cw.length > 2 && (skill.includes(cw) || cw.includes(skill)));
+    const titleHit = jobTitle && jobTitle.split(/[\s&/()]+/).some((tw) => tw.length > 2 && (skill.includes(tw) || tw.includes(skill)));
+
+    if (directHit || titleHit || catHit) {
+      matchingSkillCount += 1;
+    }
+  });
+
+  // 3. Keyword hit count from all text
+  let keywordHits = 0;
+  coreKeywords.forEach((kw) => {
+    if (allCandidateText.includes(kw)) {
+      keywordHits += 1;
+    }
+  });
+
+  // If candidate has ZERO matching skills and ZERO keyword hits for this job -> strictly 0%
+  if (matchingSkillCount === 0 && keywordHits === 0) {
+    return 0;
+  }
+
+  // 4. Progressive scoring starting from 0%
+  // Each matching skill adds ~18% points
+  const skillsScore = Math.min(matchingSkillCount * 18, 70);
+
+  // Keyword coverage (up to 15 pts)
+  const keywordScore = coreKeywords.length > 0
+    ? (keywordHits / coreKeywords.length) * 15
+    : 0;
+
+  // Category alignment bonus (only earned if candidate has active matching skills)
+  let categoryBonus = 0;
+  if (candCat && jobCat && matchingSkillCount > 0) {
+    if (candCat === jobCat) {
+      categoryBonus = 10;
+    } else if (
+      (candCat.includes('hospitality') || candCat.includes('food') || candCat.includes('f&b')) &&
+      (jobCat.includes('hospitality') || jobCat.includes('food') || jobCat.includes('f&b'))
+    ) {
+      categoryBonus = 8;
+    } else if (
+      (candCat.includes('bpo') || candCat.includes('customer')) &&
+      (jobCat.includes('bpo') || jobCat.includes('customer'))
+    ) {
+      categoryBonus = 8;
+    } else if (
+      (candCat.includes('logistics') || candCat.includes('warehousing')) &&
+      (jobCat.includes('logistics') || jobCat.includes('warehousing'))
+    ) {
+      categoryBonus = 8;
+    }
+  }
+
+  // Work history bonus
+  let historyBonus = 0;
+  if (workHistoryText && coreKeywords.some((kw) => workHistoryText.includes(kw))) {
+    historyBonus = 8;
+  }
+
+  const total = Math.round(skillsScore + keywordScore + categoryBonus + historyBonus);
+  return Math.min(Math.max(total, 0), 98);
 }
 
 export function jobMatchesForCandidate(candidate) {
