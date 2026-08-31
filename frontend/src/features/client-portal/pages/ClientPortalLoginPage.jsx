@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { clientPortalService } from '../services/ClientPortalService';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 import './ClientPortalLoginPage.css';
 
 export default function ClientPortalLoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/client-portal';
   const [form, setForm] = useState({ email: '', password: '' });
-    const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,10 +36,10 @@ export default function ClientPortalLoginPage() {
   useEffect(() => {
     try {
       if (localStorage.getItem('cp_session')) {
-        navigate('/client-portal', { replace: true });
+        navigate(from, { replace: true });
       }
     } catch { /* ignore */ }
-  }, [navigate]);
+  }, [navigate, from]);
 
   const set = (field) => (e) => {
     setError('');
@@ -88,7 +90,7 @@ export default function ClientPortalLoginPage() {
       .then((response) => {
         const sessionUser = response.data;
         localStorage.setItem('cp_session', JSON.stringify({ ...sessionUser, loggedIn: true }));
-        navigate('/client-portal', { replace: true });
+        navigate(from, { replace: true });
       })
       .catch((err) => {
         const message = err.response?.data?.message ||

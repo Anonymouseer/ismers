@@ -1131,7 +1131,12 @@ export default function ClientPortalPage() {
         e.key === 'cp_session'
       ) {
         const rawCurrent = localStorage.getItem('cp_session');
-        const currentSession = rawCurrent ? JSON.parse(rawCurrent) : null;
+        // Session cleared in another tab — force redirect to login
+        if (!rawCurrent) {
+          if (!cancelled) navigate('/client-portal/login', { replace: true });
+          return;
+        }
+        const currentSession = JSON.parse(rawCurrent);
         const { jobs: updatedJobs, roster: updatedRoster } = getInitialClientData(currentSession);
         if (!cancelled && updatedJobs.length > 0) setJobRequests(updatedJobs);
         if (!cancelled && updatedRoster.length > 0) setDeployedRoster(updatedRoster);

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import RootLayout from '../components/layout/RootLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import ModuleRoute from '../components/auth/ModuleRoute';
+import ClientPortalProtectedRoute from '../components/auth/ClientPortalProtectedRoute';
 import ClientManagementPage from '../features/client-management/pages/ClientManagementPage';
 import ApplicantProfilingBoard from '../features/applicant-registration/pages/ApplicantProfilingBoard';
 import RegisterApplicantPage from '../features/applicant-registration/pages/RegisterApplicantPage';
@@ -119,8 +120,16 @@ const router = createBrowserRouter([
     ],
   },
 
-  // PUBLIC: Client Portal (separate auth)
-  { path: '/client-portal', element: <ClientPortalPage /> },
+  // PROTECTED: Client Portal (separate auth scope)
+  {
+    path: '/client-portal',
+    element: (
+      <ClientPortalProtectedRoute>
+        <ClientPortalPage />
+      </ClientPortalProtectedRoute>
+    ),
+  },
+  // PUBLIC: Client Portal authentication pages
   { path: '/client-portal/login', element: <ClientPortalLoginPage /> },
   { path: '/client-portal/register', element: <ClientPortalRegisterPage /> },
   { path: '/client-portal/reset-password', element: <ClientPortalResetPasswordPage /> },
