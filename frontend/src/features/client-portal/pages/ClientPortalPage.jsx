@@ -885,12 +885,9 @@ export default function ClientPortalPage() {
         try {
           let apps = [];
           try {
-            const recRes = await fetch('http://localhost:8000/api/v1/recruitment/applications');
-            if (recRes.ok) {
-              const resJson = await recRes.json();
-              if (Array.isArray(resJson) && resJson.length > 0) {
-                apps = resJson;
-              }
+            const recRes = await api.get('/recruitment/applications');
+            if (recRes.data && Array.isArray(recRes.data) && recRes.data.length > 0) {
+              apps = recRes.data;
             }
           } catch {
             // Non-fatal, fallback to cached / mock
