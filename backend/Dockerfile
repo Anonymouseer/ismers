@@ -3,6 +3,7 @@ FROM php:8.3-cli-alpine
 # Install system dependencies & PHP extensions
 RUN apk add --no-cache \
     sqlite-dev \
+    postgresql-dev \
     libzip-dev \
     zip \
     unzip \
@@ -10,7 +11,7 @@ RUN apk add --no-cache \
     curl \
     libpng-dev \
     oniguruma-dev \
-    && docker-php-ext-install pdo pdo_sqlite pdo_mysql bcmath mbstring zip pcntl
+    && docker-php-ext-install pdo pdo_sqlite pdo_pgsql pdo_mysql bcmath mbstring zip pcntl
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
