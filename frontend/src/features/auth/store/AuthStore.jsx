@@ -7,9 +7,26 @@ const AuthContext = createContext(null);
 const TOKEN_KEY    = 'primepower_admin_token';
 const USER_KEY     = 'primepower_admin_user';
 const EXPIRY_KEY   = 'primepower_admin_token_expiry';
+const SETTINGS_KEY = 'ismers.settings';
 
-// Idle timeout: 30 minutes of no user activity forces logout
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+/**
+ * Reads the configured Session Idle Timeout from the Settings page.
+ * Falls back to 30 minutes if not configured.
+ * The Settings UI stores the value as a string (minutes).
+ */
+function getIdleTimeoutMs() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const minutes = parseInt(parsed.sessionTimeout, 10);
+      if (!isNaN(minutes) && minutes > 0) {
+        return minutes * 60 * 1000;
+      }
+    }
+  } catch { /* ignore */ }
+  return 30 * 60 * 1000; // Default: 30 minutes
+}
 
 // Warn the user 2 minutes before expiry
 const EXPIRY_WARN_BEFORE_MS = 2 * 60 * 1000;
@@ -28,11 +45,13 @@ function removeStorage(key) {
 }
 
 /**
- * Returns true if the stored expiry timestamp is in the past.
+ * Returns true if the stored expiry timestamp is missing or in the past.
+ * A missing expiry is treated as expired to enforce re-authentication
+ * for any session persisted before token expiry was introduced.
  */
 function isTokenExpired() {
   const expiry = readStorage(EXPIRY_KEY);
-  if (!expiry) return false; // No expiry stored — treat as valid
+  if (!expiry) return true; // No expiry recorded — treat as expired, force re-login
   return Date.now() > new Date(expiry).getTime();
 }
 
@@ -93,7 +112,9 @@ export function AuthProvider({ children }) {
   const resetIdleTimer = useCallback(() => {
     if (!token) return;
     clearTimeout(idleTimerRef.current);
-    idleTimerRef.current = setTimeout(() => logout('idle'), IDLE_TIMEOUT_MS);
+    // Read current configured timeout dynamically so Settings changes take
+    // effect immediately on the next user activity event.
+    idleTimerRef.current = setTimeout(() => logout('idle'), getIdleTimeoutMs());
   }, [token, logout]);
 
   useEffect(() => {
