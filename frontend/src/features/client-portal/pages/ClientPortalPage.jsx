@@ -58,6 +58,12 @@ export function getInitialClientData(currentSession) {
     }
   }
 
+  // No authenticated client session — return empty data to prevent
+  // unauthenticated data exposure via mock fallback.
+  if (!sess || (!sess.company && !sess.email && !sess.id)) {
+    return { jobs: [], roster: [], client: null, allClients: [] };
+  }
+
   const clientCompName = sess?.company?.trim() || '';
   const clientEmail = sess?.email?.trim() || '';
 
@@ -766,6 +772,7 @@ export default function ClientPortalPage() {
     }
   }, []);
 
+
   // Auth guard — redirect to login if no active session & load company-specific data
   useEffect(() => {
     let cancelled = false;
@@ -1403,6 +1410,11 @@ export default function ClientPortalPage() {
         type: c.interview?.mode || c.interview?.title || 'Video Call',
       }));
   }, [endorsedCandidates]);
+
+  // Null-session render gate — placed after all hooks to comply with React Rules of Hooks.
+  // Prevents any client data from rendering for unauthenticated visitors while
+  // the useEffect auth guard fires its redirect to /client-portal/login.
+  if (!session) return null;
 
   return (
     <div className="client-portal-shell">
