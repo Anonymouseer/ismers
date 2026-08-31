@@ -950,7 +950,7 @@ export default function ClientPortalPage() {
               (a.regId && localStorage.getItem(`cp_endorsement_${a.regId}`));
 
             if (effectiveStage === 'client_interview') {
-              if (localStatus === 'Accepted for Interview' || a.clientEndorsementStatus === 'Accepted for Interview' || a.interview) {
+              if (localStatus === 'Accepted for Interview' || a.clientEndorsementStatus === 'Accepted for Interview') {
                 cpStatus = 'Accepted for Interview';
               } else {
                 cpStatus = 'Pending Review';
@@ -1455,7 +1455,7 @@ export default function ClientPortalPage() {
 
   const upcomingInterviews = useMemo(() => {
     return endorsedCandidates
-      .filter((c) => c.status === 'Accepted for Interview' || c.interview)
+      .filter((c) => c.status === 'Accepted for Interview')
       .map((c, idx) => ({
         id: `iv-${c.id || idx}`,
         candidate: c.name,

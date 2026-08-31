@@ -157,9 +157,7 @@ export function UIFeedbackProvider({ children }) {
         const candidateName = payload.name || payload.candidateName || 'Candidate';
         const clientName = payload.client || payload.clientName || payload.company || 'Client Partner';
         const status = payload.status;
-        const interview = payload.interview;
-
-        if (status === 'Accepted for Interview' || interview) {
+        if (status === 'Accepted for Interview' || event.type === 'CLIENT_INTERVIEW_SCHEDULED') {
           const scheduleStr = interview?.date && interview?.time
             ? ` on ${interview.date} at ${interview.time} (${interview.mode || 'Virtual / Online'})`
             : '';
