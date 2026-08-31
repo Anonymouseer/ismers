@@ -7,7 +7,7 @@ function getApiBaseUrl() {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
-      return 'https://primepowersystem.com/api/v1';
+      return 'https://api.primepowersystem.com/api/v1';
     }
   }
   return 'http://localhost:8000/api/v1';
