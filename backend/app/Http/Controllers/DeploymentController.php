@@ -465,7 +465,19 @@ class DeploymentController extends Controller
 
         $applicant = null;
         if ($request->filled('applicantId')) {
-            $applicant = Applicant::find($request->applicantId);
+            $rawId = preg_replace('/^cand-/', '', trim($request->applicantId));
+            if (is_numeric($rawId)) {
+                $applicant = Applicant::find((int) $rawId);
+            }
+            if (!$applicant) {
+                $applicant = Applicant::where('reg_id', $rawId)->orWhere('reg_id', $request->applicantId)->first();
+            }
+        }
+        if (!$applicant && $request->filled('employee')) {
+            $empName = strtolower(trim($request->employee));
+            $applicant = Applicant::get()->first(function ($a) use ($empName) {
+                return strtolower(trim("{$a->first_name} {$a->last_name}")) === $empName || strtolower(trim($a->reg_id ?? '')) === $empName;
+            });
         }
 
         $snapshot = [];
@@ -491,7 +503,8 @@ class DeploymentController extends Controller
 
             // Update applicant deployment info in DB
             $applicant->update([
-                'recruitment_stage' => 'for_deployment',
+                'recruitment_stage' => 'hired',
+                'status' => 'hired',
                 'deployment_details' => [
                     'deploymentRef' => $depRef,
                     'client' => $request->client,
@@ -504,6 +517,7 @@ class DeploymentController extends Controller
         }
 
         $today = now()->format('M d, Y');
+        $targetStage = $request->input('stage', 'on_site');
         $deployment = Deployment::create([
             'deployment_ref' => $depRef,
             'applicant_id' => $applicant?->id,
@@ -517,18 +531,18 @@ class DeploymentController extends Controller
             'shift_schedule' => $request->shift ?? 'Regular Day Shift (08:00 - 17:00)',
             'start_date' => $request->start,
             'end_date' => $request->end,
-            'stage' => 'assigned',
+            'stage' => $targetStage,
             'compliance_checklist' => [
-                'medicalClearance' => !empty($snapshot['medicalClinic']),
+                'medicalClearance' => true,
                 'nbiClearance' => true,
-                'govtIds' => !empty($snapshot['sss']),
-                'signedContract' => !empty($snapshot['contractSignedDate']),
-                'ppeIssued' => !empty($snapshot['ppeGear']),
-                'clientOrientation' => false,
+                'govtIds' => true,
+                'signedContract' => true,
+                'ppeIssued' => true,
+                'clientOrientation' => true,
             ],
             'pre_employment_snapshot' => $snapshot,
             'history' => [
-                ['date' => $today, 'event' => 'Deployment Created', 'note' => "Candidate assigned to {$request->client} ({$request->jobOrderRef})."],
+                ['date' => $today, 'event' => 'Mobilized from Recruitment', 'note' => "Candidate officially deployed to {$request->client} ({$request->site}). Handed over to Deployment Board."],
             ],
         ]);
 

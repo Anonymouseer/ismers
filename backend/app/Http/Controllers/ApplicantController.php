@@ -1121,8 +1121,8 @@ class ApplicantController extends Controller
     public function updateRecruitmentStage(string $id, Request $request): JsonResponse
     {
         $request->validate([
-            'recruitment_stage' => 'nullable|string|in:pooling,area_manager,client_interview,hr_requirements,contract_signing,for_deployment,re_pooling',
-            'status' => 'nullable|string|in:active,inactive,on_hold,hired,rejected,withdrawn,blacklisted',
+            'recruitment_stage' => 'nullable|string|in:pooling,area_manager,client_interview,hr_requirements,contract_signing,for_deployment,re_pooling,hired,deployed',
+            'status' => 'nullable|string|in:active,inactive,on_hold,hired,deployed,rejected,withdrawn,blacklisted',
             'screening_checklist' => 'nullable|array',
             'document_status' => 'nullable|array',
             'recruiter_rating' => 'nullable|integer|min:0|max:5',

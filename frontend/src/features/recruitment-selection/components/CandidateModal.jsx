@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   STAGES, PIPELINE_ORDER, CHECKLIST_ITEMS, INTERVIEW_STAGES, DOC_DEFS,
   CURRENT_ADMIN, TODAY,
 } from '../data/mockApplications';
 import { scoreColor, formatDate, addDays, assignedRecruiter, findNextAvailableSlot } from '../utils/recruitmentUtils';
-import { upsertHire, keyFor, updateRecruitmentStage, updateRecruitmentScreening } from '../services/RecruitmentSelectionService';
+import { upsertHire, keyFor, updateRecruitmentStage, updateRecruitmentScreening, saveStoredStage } from '../services/RecruitmentSelectionService';
+import { createDeploymentApi } from '../../deployment-assignment/services/DeploymentAssignmentService';
 import DocViewerModal, { DOC_ICONS } from './DocViewerModal';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import PersonAvatar from '../../../components/common/PersonAvatar';
@@ -64,6 +66,7 @@ export const PRE_EMPLOYMENT_ITEMS = [
 ];
 
 export default function CandidateModal({ app, job, applications, onClose, onUpdate }) {
+  const navigate = useNavigate();
   const targetJob = job || targetById(app?.jobId) || targetById(app?.targetJobId);
   const currentScore = targetJob ? computeMatchScore(app, targetJob) : (app?.score ?? 0);
 
@@ -394,7 +397,32 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       ],
     }));
 
+    // 1. Post to Backend REST API for persistent database storage on deployed server
+    const deployApiPayload = {
+      applicantId: app.dbId || app.id || persistId,
+      employee: app.name,
+      client: clientName,
+      jobOrderRef: jobOrderRef,
+      position: positionTitle,
+      site: siteLocation,
+      supervisor: 'Operations Supervisor',
+      supervisorContact: '+63 917 555 0000',
+      shift: app.shift || 'Regular Day Shift (08:00 - 17:00)',
+      start: todayFormatted,
+      end: 'Jan 2027',
+      stage: 'on_site',
+    };
+    createDeploymentApi(deployApiPayload).catch((err) => {
+      console.warn('Could not post to /deployments API:', err);
+    });
+
+    // 2. Persist stage updates in local and cached pipeline stores
+    saveStoredStage(app.id, 'hired');
+    if (app.regId) saveStoredStage(app.regId, 'hired');
+    if (app.name) saveStoredStage(app.name, 'hired');
     updateRecruitmentStage(persistId, 'hired', 'hired', app.name).catch(() => {});
+
+    // 3. Broadcast real-time 0ms events
     broadcastRealtimeEvent('candidate_deployed', {
       applicantId: persistId,
       name: app.name,
@@ -403,8 +431,21 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       site: siteLocation,
       position: positionTitle,
     });
+    broadcastRealtimeEvent('STAGE_CHANGED', {
+      candidateId: app.id,
+      dbId: app.id,
+      regId: app.regId,
+      name: app.name,
+      stage: 'hired',
+      applicant: { ...app, status: 'hired' },
+    });
+
     onClose();
-    window.location.href = '/deployment-assignment';
+    if (typeof navigate === 'function') {
+      navigate('/deployment-assignment');
+    } else {
+      window.location.href = '/deployment-assignment';
+    }
   }
 
 
@@ -1204,7 +1245,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
               style={{ width: '100%', background: 'var(--green, #149e6e)', borderColor: 'var(--green, #149e6e)', padding: '12px', fontSize: '13px', fontWeight: 800 }}
               onClick={handleDeployHandover}
             >
-              ✓ Execute Deployment &amp; Hand Over to Deployment Board &rarr;
+              Execute Deployment and Hand Over to Deployment Board
             </button>
           ) : app.status === 're_pooling' ? (
             <button
