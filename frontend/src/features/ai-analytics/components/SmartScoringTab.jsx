@@ -5,7 +5,8 @@ import { logoUrl } from '../../client-management/utils/clientDisplay';
 import ClientsAiScoringTable from './ClientsAiScoringTable';
 import Pagination from '../../../components/common/Pagination';
 import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
-import { saveStoredStage, getCachedApplications, saveCachedApplications } from '../../recruitment-selection/services/RecruitmentSelectionService';
+import { saveStoredStage, getCachedApplications, saveCachedApplications, updateRecruitmentStage, updateRecruitmentScreening } from '../../recruitment-selection/services/RecruitmentSelectionService';
+import { targetById } from '../../applicant-registration/services/ApplicantRegistrationService';
 import AnalyticsService from '../services/AnalyticsService';
 
 export default function SmartScoringTab() {
@@ -233,14 +234,20 @@ export default function SmartScoringTab() {
 
   const handleShortlist = (candidateName, jobTitle, clientName) => {
     // 1. Advance candidate into client_interview stage in recruitment pipeline cache
+    let foundApp = null;
     try {
       const existingApps = getCachedApplications() || [];
       const targetApp = existingApps.find((a) => a.name === candidateName);
       if (targetApp) {
         targetApp.status = 'client_interview';
-        targetApp.clientEndorsementStatus = 'Endorsed for Client Review';
+        targetApp.clientEndorsementStatus = 'Pending Review';
+        targetApp.client = clientName;
+        targetApp.jobTitle = jobTitle;
         saveStoredStage(targetApp.id, 'client_interview');
+        if (targetApp.regId) saveStoredStage(targetApp.regId, 'client_interview');
+        saveStoredStage(candidateName, 'client_interview');
         saveCachedApplications(existingApps);
+        foundApp = targetApp;
       } else {
         saveStoredStage(candidateName, 'client_interview');
       }
@@ -248,15 +255,81 @@ export default function SmartScoringTab() {
       console.warn('Could not sync shortlist to recruitment cache:', e);
     }
 
-    // 2. Broadcast real-time event across Recruitment Board and Client Portal
     try {
-      broadcastRealtimeEvent('RECRUITMENT_APPLICATION_UPDATED', {
-        candidateName,
-        jobTitle,
-        clientName,
-        status: 'client_interview',
-        clientEndorsementStatus: 'Endorsed for Client Review',
-        timestamp: Date.now(),
+      localStorage.setItem(`cp_endorsement_${candidateName}`, 'Pending Review');
+      if (foundApp?.id) localStorage.setItem(`cp_endorsement_${foundApp.id}`, 'Pending Review');
+    } catch (e) { }
+
+    const persistId = foundApp?.regId || foundApp?.id || candidateName;
+    updateRecruitmentStage(persistId, 'client_interview', null, candidateName).catch(() => { });
+    updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, candidateName).catch(() => { });
+
+    const targetJob = targetById(foundApp?.jobId) || targetById(jobTitle);
+    const jobRefCode = targetJob?.ref || targetJob?.id || 'PRF-2026-0001';
+    const formattedJobRef = String(jobRefCode).startsWith('PRF-')
+      ? jobRefCode
+      : `PRF-2026-${String(jobRefCode).replace(/\D/g, '').padStart(4, '0')}`;
+
+    // 2. Broadcast real-time events across Recruitment Board and Client Portal
+    try {
+      broadcastRealtimeEvent('CANDIDATE_ENDORSED', {
+        candidateId: foundApp?.id || candidateName,
+        dbId: foundApp?.id,
+        regId: foundApp?.regId,
+        name: candidateName,
+        client: clientName,
+        status: 'Pending Review',
+        stage: 'client_interview',
+        applicant: {
+          ...(foundApp || {}),
+          name: candidateName,
+          status: 'client_interview',
+          clientEndorsementStatus: 'Pending Review',
+          client: clientName,
+          jobTitle: jobTitle,
+          jobId: jobRefCode,
+        },
+        candidate: {
+          id: `cand-${foundApp?.id || Date.now()}`,
+          dbId: foundApp?.id,
+          regId: foundApp?.regId,
+          name: candidateName,
+          client: clientName,
+          position: jobTitle,
+          jobRef: formattedJobRef,
+          matchScore: foundApp?.score || 88,
+          experience: foundApp?.experience || '3 years relevant industry experience',
+          skills: Array.isArray(foundApp?.skills) && foundApp.skills.length > 0 ? foundApp.skills : ['Technical Proficiency', 'Communications', 'Operations Protocol'],
+          endorsedDate: 'Aug 14, 2026',
+          status: 'Pending Review',
+          recruiter: foundApp?.assignedManager || 'M. Dela Cruz (Lead Recruiter)',
+        },
+      });
+
+      broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
+        candidateId: foundApp?.id || candidateName,
+        dbId: foundApp?.id,
+        regId: foundApp?.regId,
+        name: candidateName,
+        client: clientName,
+        status: 'Pending Review',
+        stage: 'client_interview',
+      });
+
+      broadcastRealtimeEvent('STAGE_CHANGED', {
+        candidateId: foundApp?.id || candidateName,
+        dbId: foundApp?.id,
+        regId: foundApp?.regId,
+        name: candidateName,
+        stage: 'client_interview',
+        applicant: {
+          ...(foundApp || {}),
+          name: candidateName,
+          status: 'client_interview',
+          clientEndorsementStatus: 'Pending Review',
+          client: clientName,
+          jobTitle: jobTitle,
+        },
       });
     } catch (e) {
       console.warn('Could not broadcast shortlist event:', e);

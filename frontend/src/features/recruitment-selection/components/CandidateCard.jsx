@@ -75,7 +75,7 @@ export default function CandidateCard({ app, job, onSelect }) {
           return (
             <div className="cand-dep-row">
               <span className="dep-sync-badge active" style={{ background: 'var(--green, #149e6e)', color: '#fff', fontWeight: 800 }}>
-                ✓ Passed Client Final Interview
+                Passed Client Final Interview
               </span>
             </div>
           );
@@ -120,7 +120,7 @@ export default function CandidateCard({ app, job, onSelect }) {
             }
           >
             {isPreCleared
-              ? '✓ 7/7 Clearances Verified'
+              ? '7/7 Clearances Verified'
               : app.medicalReferral
                 ? `${preCount}/7 · Med Referral Issued`
                 : `${preCount}/7 Clearances Pending`}
@@ -141,11 +141,11 @@ export default function CandidateCard({ app, job, onSelect }) {
             }
           >
             {isContractSigned && isOrientationDone
-              ? '✓ E-Signed & PDOS Certified'
+              ? 'E-Signed and PDOS Certified'
               : isContractSigned
-                ? '✓ E-Signed · Awaiting PDOS'
+                ? 'E-Signed · Awaiting PDOS'
                 : isOrientationDone
-                  ? '✓ PDOS Certified · Awaiting Sign'
+                  ? 'PDOS Certified · Awaiting Sign'
                   : 'Pending Contract E-Signature'}
           </span>
         </div>
@@ -154,7 +154,7 @@ export default function CandidateCard({ app, job, onSelect }) {
       {app.status === 'for_deployment' && (
         <div className="cand-dep-row">
           <span className="dep-sync-badge active" style={{ background: 'var(--green, #149e6e)', color: '#fff', fontWeight: 800 }}>
-            ✓ Ready for Deployment Handover
+            Ready for Deployment Handover
           </span>
         </div>
       )}

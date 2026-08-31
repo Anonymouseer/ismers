@@ -432,7 +432,41 @@ export const CATEGORIES = [
 export function targetById(id) {
   if (!id) return null;
   const targets = getAllJobTargets();
-  return targets.find((j) => j.id === id || j.ref === id || String(j.id).toLowerCase() === String(id).toLowerCase());
+  const idStr = String(id).trim().toLowerCase();
+
+  // 1. Direct match on id, ref, depRef
+  let found = targets.find(
+    (j) =>
+      (j.id && j.id.toLowerCase() === idStr) ||
+      (j.ref && j.ref.toLowerCase() === idStr) ||
+      (j.depRef && j.depRef.toLowerCase() === idStr)
+  );
+  if (found) return found;
+
+  // 2. Direct match on job title
+  found = targets.find((j) => j.title && j.title.toLowerCase() === idStr);
+  if (found) return found;
+
+  // 3. Numeric extraction: e.g. 'jo22' -> 22, 'JO-022' -> 22, 'PRF-2026-0022' -> 22
+  const numMatch = idStr.match(/(?:jo|prf|dep|prf-2026-)?-?0*(\d+)/i);
+  if (numMatch && numMatch[1]) {
+    const num = parseInt(numMatch[1], 10);
+    found = targets.find((j) => {
+      const jNumMatch = (j.ref || j.id || j.depRef || '').toLowerCase().match(/(?:jo|prf|dep|prf-2026-)?-?0*(\d+)/i);
+      return jNumMatch && parseInt(jNumMatch[1], 10) === num;
+    });
+    if (found) return found;
+  }
+
+  // 4. Substring title match
+  found = targets.find(
+    (j) =>
+      j.title &&
+      (j.title.toLowerCase().includes(idStr) || idStr.includes(j.title.toLowerCase()))
+  );
+  if (found) return found;
+
+  return null;
 }
 
 export const STAGE_META = {

@@ -1094,6 +1094,30 @@ class ApplicantController extends Controller
         return response()->json($applicants);
     }
 
+    private function findRecruitmentApplicant(string $id): ?Applicant
+    {
+        $cleanId = preg_replace('/^cand-/', '', trim($id));
+        $decoded = urldecode($cleanId);
+
+        if (is_numeric($cleanId)) {
+            $app = Applicant::find((int) $cleanId);
+            if ($app) {
+                return $app;
+            }
+        }
+
+        $app = Applicant::where('reg_id', $cleanId)->orWhere('reg_id', $decoded)->orWhere('reg_id', $id)->first();
+        if ($app) {
+            return $app;
+        }
+
+        $target = strtolower(trim($decoded));
+        return Applicant::get()->first(function ($a) use ($target) {
+            $name = strtolower(trim("{$a->first_name} {$a->last_name}"));
+            return $name === $target || strtolower(trim($a->reg_id ?? '')) === $target;
+        });
+    }
+
     public function updateRecruitmentStage(string $id, Request $request): JsonResponse
     {
         $request->validate([
@@ -1115,14 +1139,7 @@ class ApplicantController extends Controller
             'ppe_issuance' => 'nullable|array',
         ]);
 
-        $cleanId = preg_replace('/^cand-/', '', $id);
-        $applicant = Applicant::where('id', is_numeric($cleanId) ? (int)$cleanId : 0)
-            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
-            ->orWhere('reg_id', $cleanId)
-            ->orWhere('reg_id', $id)
-            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$cleanId])
-            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$id])
-            ->first();
+        $applicant = $this->findRecruitmentApplicant($id);
         if (!$applicant) {
             return response()->json(['ok' => false, 'message' => 'Applicant not found.'], 404);
         }
@@ -1193,14 +1210,7 @@ class ApplicantController extends Controller
 
     public function updateRecruitmentScreening(string $id, Request $request): JsonResponse
     {
-        $cleanId = preg_replace('/^cand-/', '', $id);
-        $applicant = Applicant::where('id', is_numeric($cleanId) ? (int)$cleanId : 0)
-            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
-            ->orWhere('reg_id', $cleanId)
-            ->orWhere('reg_id', $id)
-            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$cleanId])
-            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$id])
-            ->first();
+        $applicant = $this->findRecruitmentApplicant($id);
         if (!$applicant) {
             return response()->json(['ok' => false, 'message' => 'Applicant not found.'], 404);
         }
@@ -1273,6 +1283,13 @@ class ApplicantController extends Controller
         }
         if ($request->has('client_endorsement_status')) {
             $updates['client_endorsement_status'] = $request->client_endorsement_status;
+        } elseif ($request->has('clientEndorsementStatus')) {
+            $updates['client_endorsement_status'] = $request->clientEndorsementStatus;
+        }
+        if ($request->has('interview_schedule')) {
+            $updates['interview_schedule'] = $request->interview_schedule;
+        } elseif ($request->has('interviewSchedule')) {
+            $updates['interview_schedule'] = $request->interviewSchedule;
         }
 
         if (!empty($updates)) {
@@ -1289,14 +1306,7 @@ class ApplicantController extends Controller
             'interview_schedule' => 'nullable|array',
         ]);
 
-        $cleanId = preg_replace('/^cand-/', '', $id);
-        $applicant = Applicant::where('id', is_numeric($cleanId) ? (int)$cleanId : 0)
-            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
-            ->orWhere('reg_id', $cleanId)
-            ->orWhere('reg_id', $id)
-            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$cleanId])
-            ->orWhereRaw("CONCAT(first_name, ' ', last_name) ILIKE ?", [$id])
-            ->first();
+        $applicant = $this->findRecruitmentApplicant($id);
         if (!$applicant) {
             return response()->json(['ok' => false, 'message' => 'Applicant not found.'], 404);
         }

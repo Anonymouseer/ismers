@@ -15,7 +15,7 @@ import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/
 import { CLIENTS } from '../../client-management/data/mockClients';
 import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
 import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService';
-import { getCachedApplications } from '../../recruitment-selection/services/RecruitmentSelectionService';
+import { getCachedApplications, saveCachedApplications, getStoredStages, saveStoredStage } from '../../recruitment-selection/services/RecruitmentSelectionService';
 import { APPLICATIONS } from '../../recruitment-selection/data/mockApplications';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import './ClientPortalPage.css';
@@ -292,6 +292,13 @@ export default function ClientPortalPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [successBanner, setSuccessBanner] = useState('');
 
+  // Auto-dismiss notification banner
+  useEffect(() => {
+    if (!successBanner) return;
+    const timer = setTimeout(() => setSuccessBanner(''), 6000);
+    return () => clearTimeout(timer);
+  }, [successBanner]);
+
   // ── NOTIFICATION STATE ──────────────────────────────────────────────────────
   const [notifications, setNotifications] = useState(() => {
     // Seed with system announcements
@@ -475,48 +482,42 @@ export default function ClientPortalPage() {
         localStorage.setItem(`cp_endorsement_${targetCand.name}`, newStatus);
       }
 
+      let nextStage = null;
       if (newStatus === 'Passed Interview') {
-        const nextStage = 'hr_requirements';
-        localStorage.setItem(`recruitment_stage_${candId}`, nextStage);
-        if (targetCand?.id) localStorage.setItem(`recruitment_stage_${targetCand.id}`, nextStage);
-        if (targetCand?.dbId) localStorage.setItem(`recruitment_stage_${targetCand.dbId}`, nextStage);
-        if (targetCand?.regId) localStorage.setItem(`recruitment_stage_${targetCand.regId}`, nextStage);
-        if (targetCand?.name) localStorage.setItem(`recruitment_stage_${targetCand.name}`, nextStage);
+        nextStage = 'hr_requirements';
       } else if (newStatus === 'Declined') {
-        const nextStage = 're_pooling';
-        localStorage.setItem(`recruitment_stage_${candId}`, nextStage);
-        if (targetCand?.id) localStorage.setItem(`recruitment_stage_${targetCand.id}`, nextStage);
-        if (targetCand?.dbId) localStorage.setItem(`recruitment_stage_${targetCand.dbId}`, nextStage);
-        if (targetCand?.regId) localStorage.setItem(`recruitment_stage_${targetCand.regId}`, nextStage);
-        if (targetCand?.name) localStorage.setItem(`recruitment_stage_${targetCand.name}`, nextStage);
+        nextStage = 're_pooling';
+      }
+
+      if (nextStage) {
+        saveStoredStage(candId, nextStage);
+        if (targetCand?.id) saveStoredStage(targetCand.id, nextStage);
+        if (targetCand?.dbId) saveStoredStage(targetCand.dbId, nextStage);
+        if (targetCand?.regId) saveStoredStage(targetCand.regId, nextStage);
+        if (targetCand?.name) saveStoredStage(targetCand.name, nextStage);
       }
 
       // Also update recruitment cached applications in localStorage
-      const cachedRec = localStorage.getItem('ismers_recruitment_applications');
-      if (cachedRec) {
-        try {
-          const parsed = JSON.parse(cachedRec);
-          const updated = parsed.map((a) => {
-            const isMatch =
-              a.id === candId ||
-              a.regId === candId ||
-              a.name === candId ||
-              (targetCand?.dbId && a.id === `cand-${targetCand.dbId}`) ||
-              (targetCand?.regId && a.regId === targetCand.regId) ||
-              (targetCand?.name && a.name === targetCand.name);
-            if (isMatch) {
-              return {
-                ...a,
-                clientEndorsementStatus: newStatus,
-                status: newStatus === 'Passed Interview' ? 'hr_requirements' : newStatus === 'Declined' ? 're_pooling' : a.status,
-              };
-            }
-            return a;
-          });
-          localStorage.setItem('ismers_recruitment_applications', JSON.stringify(updated));
-        } catch (e) {
-          console.warn('Could not update cached recruitment applications:', e);
-        }
+      const cached = getCachedApplications();
+      if (cached && Array.isArray(cached)) {
+        const updated = cached.map((a) => {
+          const isMatch =
+            String(a.id) === String(candId) ||
+            a.regId === candId ||
+            a.name === candId ||
+            (targetCand?.dbId && (String(a.id) === String(targetCand.dbId) || a.id === `cand-${targetCand.dbId}`)) ||
+            (targetCand?.regId && a.regId === targetCand.regId) ||
+            (targetCand?.name && a.name === targetCand.name);
+          if (isMatch) {
+            return {
+              ...a,
+              clientEndorsementStatus: newStatus,
+              status: nextStage || a.status,
+            };
+          }
+          return a;
+        });
+        saveCachedApplications(updated);
       }
     } catch (err) {
       console.warn('Could not save endorsement status locally:', err);
@@ -645,12 +646,11 @@ export default function ClientPortalPage() {
       }
 
       // Also update recruitment cached applications in localStorage
-      const cachedRec = localStorage.getItem('ismers_recruitment_apps');
-      if (cachedRec) {
-        const parsed = JSON.parse(cachedRec);
-        const updated = parsed.map((a) => {
+      const cachedRec = getCachedApplications();
+      if (cachedRec && Array.isArray(cachedRec)) {
+        const updated = cachedRec.map((a) => {
           if (
-            (targetCand?.dbId && String(a.id) === String(targetCand.dbId)) ||
+            (targetCand?.dbId && (String(a.id) === String(targetCand.dbId) || a.id === `cand-${targetCand.dbId}`)) ||
             (targetCand?.regId && a.regId === targetCand.regId) ||
             (targetCand?.name && a.name === targetCand.name) ||
             String(a.id) === String(candId) ||
@@ -660,7 +660,7 @@ export default function ClientPortalPage() {
           }
           return a;
         });
-        localStorage.setItem('ismers_recruitment_apps', JSON.stringify(updated));
+        saveCachedApplications(updated);
       }
     } catch {
       // ignore
@@ -893,15 +893,24 @@ export default function ClientPortalPage() {
             // Non-fatal, fallback to cached / mock
           }
 
-          if (!apps.length) {
-            apps = getCachedApplications() || APPLICATIONS || [];
+          const cachedApps = getCachedApplications();
+          if (cachedApps && Array.isArray(cachedApps) && cachedApps.length > 0) {
+            const appMap = new Map();
+            apps.forEach((a) => appMap.set(String(a.id || a.name), a));
+            cachedApps.forEach((ca) => {
+              const key = String(ca.id || ca.name);
+              appMap.set(key, { ...(appMap.get(key) || {}), ...ca });
+            });
+            apps = Array.from(appMap.values());
+          } else if (!apps.length) {
+            apps = APPLICATIONS || [];
           }
 
           // Read stored stages from localStorage to ensure immediate reflection
-          let storedStages = {};
+          let storedStages = getStoredStages() || {};
           try {
             const rawStages = localStorage.getItem('ismers_recruitment_stages');
-            if (rawStages) storedStages = JSON.parse(rawStages);
+            if (rawStages) storedStages = { ...storedStages, ...JSON.parse(rawStages) };
           } catch { }
 
           const endorsedStages = ['client_interview', 'hr_requirements', 'contract_signing', 'for_deployment', 'hired', 're_pooling'];
@@ -915,14 +924,13 @@ export default function ClientPortalPage() {
             const candJob = (a.jobTitle || a.position || '').toLowerCase().trim();
             const compLower = companyKey.toLowerCase();
 
-            // Match if no client constraint, client name matches, or job title matches client roster
+            // Match if:
+            // 1. Candidate is explicitly assigned to this client
+            // 2. Or candidate has no client specified but matches one of this client's active job requisitions
             const matchesClient =
               !companyKey ||
-              !candClient ||
-              candClient === compLower ||
-              candClient.includes(compLower) ||
-              compLower.includes(candClient) ||
-              clientJobTitles.includes(candJob);
+              (candClient && (candClient === compLower || candClient.includes(compLower) || compLower.includes(candClient))) ||
+              (!candClient && clientJobTitles.includes(candJob));
 
             return matchesClient;
           });
@@ -1066,48 +1074,98 @@ export default function ClientPortalPage() {
 
           if (index !== -1) {
             const copy = [...prev];
+            const oldStatus = copy[index].status;
             copy[index] = {
               ...copy[index],
               status: resolvedStatus,
               ...(interview !== undefined ? { interview } : {}),
             };
+
+            if (resolvedStatus && resolvedStatus !== oldStatus) {
+              const targetName = copy[index].name || 'Candidate';
+              setSuccessBanner(`Endorsement Status: ${targetName} is now "${resolvedStatus}".`);
+              setNotifications((prevNotifs) => [
+                {
+                  id: `notif-status-${Date.now()}`,
+                  type: 'status',
+                  title: 'Endorsement Status Updated',
+                  body: `${targetName} status updated to "${resolvedStatus}".`,
+                  time: 'Just now',
+                  read: false,
+                },
+                ...prevNotifs,
+              ]);
+            }
+
             return copy;
           }
 
           if (!isEndorsedStage) return prev;
 
+          // Scope real-time candidate additions to this client
+          const candClient = (payload.client || applicant?.client || candidate?.client || '').toLowerCase().trim();
+          const candJob = (applicant?.jobTitle || applicant?.position || candidate?.position || '').toLowerCase().trim();
+          const currentCompName = (session?.company || matchedCm?.name || clientCompName || '').toLowerCase().trim();
+          const matchesCurrentClient =
+            !currentCompName ||
+            (candClient && (candClient === currentCompName || candClient.includes(currentCompName) || currentCompName.includes(candClient))) ||
+            (!candClient && clientJobTitles.includes(candJob));
+
+          if (!matchesCurrentClient) return prev;
+
           // If new candidate endorsed to Client Portal (0ms instant addition)
-          const skillsArr = Array.isArray(applicant?.skills) && applicant.skills.length > 0
-            ? applicant.skills.map((s) => (typeof s === 'string' ? s : s.name))
+          const skillsArr = Array.isArray(applicant?.skills || candidate?.skills) && (applicant?.skills || candidate?.skills).length > 0
+            ? (applicant?.skills || candidate?.skills).map((s) => (typeof s === 'string' ? s : s.name))
             : ['Technical Proficiency', 'Communications', 'Operations Protocol'];
 
-          const targetJob = targetById(applicant?.jobId) || targetById(applicant?.targetJobId);
-          const computedScore = targetJob ? computeMatchScore(applicant, targetJob) : (typeof applicant?.score === 'number' ? applicant.score : 0);
+          const targetJob = targetById(applicant?.jobId || candidate?.jobId) || targetById(applicant?.targetJobId);
+          const computedScore = (typeof candidate?.matchScore === 'number' && candidate.matchScore > 0)
+            ? candidate.matchScore
+            : (typeof applicant?.score === 'number' && applicant.score > 0
+              ? applicant.score
+              : (targetJob ? computeMatchScore(applicant || candidate, targetJob) : 88));
 
-          const newCand = candidate || {
+          const rawJobId = applicant?.jobId || candidate?.jobId;
+          const formattedJobRef = candidate?.jobRef || (rawJobId ? `PRF-2026-${String(rawJobId).replace(/\D/g, '').padStart(4, '0')}` : 'PRF-2026-0081');
+
+          const newCand = {
             id: candidateId ? (String(candidateId).startsWith('cand-') ? candidateId : `cand-${candidateId}`) : `cand-${dbId || regId || Date.now()}`,
-            dbId: dbId || candidateId,
-            regId: regId || applicant?.regId,
+            dbId: dbId || candidateId || candidate?.dbId,
+            regId: regId || applicant?.regId || candidate?.regId,
             name: candName || 'Candidate',
-            position: applicant?.jobTitle || applicant?.position || 'Operations Candidate',
-            jobRef: applicant?.jobId ? `PRF-2026-${String(applicant.jobId).replace(/\D/g, '').padStart(4, '0')}` : 'PRF-2026-0081',
-            jobId: applicant?.jobId,
-            targetJobId: applicant?.targetJobId,
+            position: candidate?.position || applicant?.jobTitle || applicant?.position || 'Operations Candidate',
+            jobRef: formattedJobRef,
+            jobId: rawJobId,
+            targetJobId: applicant?.targetJobId || candidate?.targetJobId,
             matchScore: computedScore,
-            experience: applicant?.experience || '3 years relevant industry experience',
+            experience: candidate?.experience || applicant?.experience || '3 years relevant industry experience',
             skills: skillsArr,
-            workHistory: applicant?.workHistory || [],
-            education: applicant?.education || [],
-            documents: applicant?.documents || [],
-            breakdown: applicant?.breakdown || null,
-            phone: applicant?.phone || null,
-            email: applicant?.email || null,
-            endorsedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+            workHistory: candidate?.workHistory || applicant?.workHistory || [],
+            education: candidate?.education || applicant?.education || [],
+            documents: candidate?.documents || applicant?.documents || [],
+            breakdown: candidate?.breakdown || applicant?.breakdown || null,
+            phone: candidate?.phone || applicant?.phone || null,
+            email: candidate?.email || applicant?.email || null,
+            endorsedDate: candidate?.endorsedDate || new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
             status: resolvedStatus,
-            recruiter: applicant?.assignedManager || 'M. Dela Cruz (Lead Recruiter)',
-            client: applicant?.client || session?.company || 'Client Organization',
-            interview: interview || applicant?.interview || null,
+            recruiter: candidate?.recruiter || applicant?.assignedManager || 'M. Dela Cruz (Lead Recruiter)',
+            client: candClient || currentCompName || 'Client Organization',
+            interview: interview || applicant?.interview || candidate?.interview || null,
           };
+
+          // 0ms instant visual notification in Client Portal
+          setSuccessBanner(`New Candidate Endorsed: ${newCand.name} for ${newCand.position} (${newCand.matchScore}% Match).`);
+          setNotifications((prevNotifs) => [
+            {
+              id: `notif-endorsed-${Date.now()}`,
+              type: 'endorsement',
+              title: 'New Candidate Endorsed',
+              body: `${newCand.name} has been endorsed by recruitment for ${newCand.position} (${newCand.matchScore}% Match).`,
+              time: 'Just now',
+              read: false,
+            },
+            ...prevNotifs,
+          ]);
 
           return [newCand, ...prev];
         });

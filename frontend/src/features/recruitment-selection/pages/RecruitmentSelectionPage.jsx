@@ -336,12 +336,55 @@ export default function RecruitmentSelectionPage() {
         }
 
         if (isResettingToReview) {
+          const targetJob = targetById(targetApp.jobId) || targetById(targetApp.targetJobId) || jobById(targetApp.jobId);
+          const resolvedClient = targetApp.client || targetJob?.client || 'Prime Realty Corp';
+          const resolvedPosition = targetApp.jobTitle || targetJob?.title || 'Operations Associate';
+          const resolvedJobRef = targetJob?.ref || targetJob?.id || targetApp.jobId || 'PRF-2026-0001';
+          const formattedJobRef = String(resolvedJobRef).startsWith('PRF-')
+            ? resolvedJobRef
+            : `PRF-2026-${String(resolvedJobRef).replace(/\D/g, '').padStart(4, '0')}`;
+
           updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, targetApp.name).catch(() => { });
+
+          broadcastRealtimeEvent('CANDIDATE_ENDORSED', {
+            candidateId: appId,
+            dbId: targetApp.id,
+            regId: targetApp.regId,
+            name: targetApp.name,
+            client: resolvedClient,
+            status: 'Pending Review',
+            stage: nextKey,
+            applicant: {
+              ...targetApp,
+              status: nextKey,
+              clientEndorsementStatus: 'Pending Review',
+              client: resolvedClient,
+              jobTitle: resolvedPosition,
+              jobId: resolvedJobRef,
+            },
+            candidate: {
+              id: `cand-${targetApp.id}`,
+              dbId: targetApp.id,
+              regId: targetApp.regId,
+              name: targetApp.name,
+              client: resolvedClient,
+              position: resolvedPosition,
+              jobRef: formattedJobRef,
+              matchScore: targetApp.score || 88,
+              experience: targetApp.experience || '3 years relevant industry experience',
+              skills: Array.isArray(targetApp.skills) && targetApp.skills.length > 0 ? targetApp.skills : ['Technical Proficiency', 'Communications', 'Operations Protocol'],
+              endorsedDate: targetApp.applied || 'Aug 14, 2026',
+              status: 'Pending Review',
+              recruiter: targetApp.assignedManager || 'M. Dela Cruz (Lead Recruiter)',
+            },
+          });
+
           broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
             candidateId: appId,
             dbId: targetApp.id,
             regId: targetApp.regId,
             name: targetApp.name,
+            client: resolvedClient,
             status: 'Pending Review',
             stage: nextKey,
           });

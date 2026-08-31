@@ -541,28 +541,57 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
     });
 
     if (nextKey === 'client_interview') {
+      const targetJob = targetById(app.jobId) || targetById(app.targetJobId) || jobById(app.jobId) || job;
+      const clientName = app.client || targetJob?.client || job?.client || 'Prime Realty Corp';
+      const positionName = app.jobTitle || targetJob?.title || job?.title || 'Operations Associate';
+      const jobRefCode = targetJob?.ref || targetJob?.id || job?.id || app.jobId || 'PRF-2026-0001';
+      const formattedJobRef = String(jobRefCode).startsWith('PRF-')
+        ? jobRefCode
+        : `PRF-2026-${String(jobRefCode).replace(/\D/g, '').padStart(4, '0')}`;
+
       updateRecruitmentScreening(persistId, { client_endorsement_status: 'Pending Review' }, app.name).catch(() => { });
-      broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
+
+      broadcastRealtimeEvent('CANDIDATE_ENDORSED', {
         candidateId: app.id,
         dbId: app.id,
         regId: app.regId,
         name: app.name,
+        client: clientName,
         status: 'Pending Review',
         stage: nextKey,
+        applicant: {
+          ...app,
+          status: nextKey,
+          clientEndorsementStatus: 'Pending Review',
+          client: clientName,
+          jobTitle: positionName,
+          jobId: jobRefCode,
+        },
         candidate: {
           id: `cand-${app.id}`,
           dbId: app.id,
           regId: app.regId,
           name: app.name,
-          position: app.jobTitle || job?.title || 'Operations Associate',
-          jobRef: job?.id ? `PRF-2026-${String(job.id).padStart(4, '0')}` : 'PRF-2026-0081',
+          client: clientName,
+          position: positionName,
+          jobRef: formattedJobRef,
           matchScore: app.score || 88,
           experience: app.experience || '3 years relevant industry experience',
-          skills: ['Technical Proficiency', 'Communications', 'Operations Protocol'],
+          skills: Array.isArray(app.skills) && app.skills.length > 0 ? app.skills : ['Technical Proficiency', 'Communications', 'Operations Protocol'],
           endorsedDate: app.applied || 'Aug 14, 2026',
           status: 'Pending Review',
-          recruiter: 'M. Dela Cruz (Lead Recruiter)',
+          recruiter: app.assignedManager || 'M. Dela Cruz (Lead Recruiter)',
         },
+      });
+
+      broadcastRealtimeEvent('ENDORSEMENT_STATUS_CHANGED', {
+        candidateId: app.id,
+        dbId: app.id,
+        regId: app.regId,
+        name: app.name,
+        client: clientName,
+        status: 'Pending Review',
+        stage: nextKey,
       });
     }
 
