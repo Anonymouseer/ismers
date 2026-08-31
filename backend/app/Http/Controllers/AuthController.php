@@ -16,12 +16,12 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
         $email = strtolower(trim($request->email));
-        $user = User::where('email', $email)->first();
+        $user  = User::where('email', $email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -29,18 +29,26 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Generate Sanctum plain text token
-        $token = $user->createToken('primepower-session')->plainTextToken;
+        // Session window: 8 hours from login
+        $expiresAt = now()->addHours(8);
+
+        // Generate Sanctum plain text token with an absolute expiry
+        $token = $user->createToken(
+            'primepower-session',
+            ['*'],
+            $expiresAt
+        )->plainTextToken;
 
         return response()->json([
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role ?? 'hr_administrator',
-                'roleLabel' => $user->role_label ?? 'HR Administrator',
-                'department' => $user->department ?? 'HR Management',
+            'token'      => $token,
+            'expires_at' => $expiresAt->toIso8601String(),
+            'user'       => [
+                'id'             => $user->id,
+                'name'           => $user->name,
+                'email'          => $user->email,
+                'role'           => $user->role ?? 'hr_administrator',
+                'roleLabel'      => $user->role_label ?? 'HR Administrator',
+                'department'     => $user->department ?? 'HR Management',
                 'allowedModules' => $user->allowed_modules ?? [
                     'client-management',
                     'job-order-management',
@@ -50,7 +58,7 @@ class AuthController extends Controller
                     'ai-analytics',
                     'settings',
                 ],
-                'defaultRoute' => $user->default_route ?? '/client-management',
+                'defaultRoute'   => $user->default_route ?? '/client-management',
             ],
             'message' => 'Authentication successful.',
         ]);
