@@ -27,6 +27,5 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 RUN touch database/database.sqlite && chmod 777 database/database.sqlite
 RUN chmod -R 777 storage bootstrap/cache
 
-EXPOSE 8000
+CMD ["sh", "-c", "php -r \"file_exists('.env') || copy('.env.example', '.env');\" && php artisan key:generate --force && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000"]
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000"]
