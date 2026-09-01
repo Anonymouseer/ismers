@@ -27,6 +27,7 @@ export default function LoginPage() {
   const sessionExpired = new URLSearchParams(window.location.search).get('reason') === 'session_expired';
 
   useEffect(() => {
+    document.title = 'Login | PRIMEPOWER MANPOWER';
     try {
       const theme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', theme);

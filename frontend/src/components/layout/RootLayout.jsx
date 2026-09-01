@@ -47,6 +47,23 @@ export default function RootLayout() {
   else if (path.includes('deployment-assignment')) activeItem = 'deployment-assignment';
   else if (path.includes('ai-analytics')) activeItem = 'ai-analytics';
   else if (path.includes('settings')) activeItem = 'settings';
+  else if (path.includes('profile')) activeItem = 'profile';
+
+  // Dynamic Browser Tab Title
+  useEffect(() => {
+    const titles = {
+      'client-management': 'Client Management | PRIMEPOWER MANPOWER',
+      'job-order-management': 'Job Orders | PRIMEPOWER MANPOWER',
+      'applicant-registration': 'Applicant Registration | PRIMEPOWER MANPOWER',
+      'recruitment-selection': 'Recruitment & Selection | PRIMEPOWER MANPOWER',
+      'deployment-assignment': 'Deployment & Assignment | PRIMEPOWER MANPOWER',
+      'ai-analytics': 'AI Analytics & Scoring | PRIMEPOWER MANPOWER',
+      'settings': 'System Settings | PRIMEPOWER MANPOWER',
+      'profile': 'My Profile & Preferences | PRIMEPOWER MANPOWER',
+    };
+    const matched = Object.keys(titles).find((k) => location.pathname.includes(k));
+    document.title = matched ? titles[matched] : 'PRIMEPOWER MANPOWER | HR Smart Recruitment System';
+  }, [location.pathname]);
 
   return (
     <div className="root-layout-shell" style={{ height: '100vh', width: '100vw', background: 'var(--bg)', overflow: 'hidden' }}>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <radialGradient id="favGlobe" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#4fc3f7"/>
+      <stop offset="40%" stop-color="#0288d1"/>
+      <stop offset="80%" stop-color="#01579b"/>
+      <stop offset="100%" stop-color="#002171"/>
+    </radialGradient>
+    <radialGradient id="favHighlight" cx="30%" cy="25%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="favClip">
+      <circle cx="64" cy="64" r="58"/>
+    </clipPath>
+  </defs>
+
+  <!-- Base Globe Sphere -->
+  <circle cx="64" cy="64" r="58" fill="url(#favGlobe)" stroke="#001d4a" stroke-width="2.5"/>
+
+  <!-- Continents and Grids -->
+  <g clip-path="url(#favClip)">
+    <ellipse cx="64" cy="64" rx="58" ry="20" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.45"/>
+    <ellipse cx="64" cy="64" rx="58" ry="40" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.45"/>
+    <ellipse cx="64" cy="64" rx="25" ry="58" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.45"/>
+    <ellipse cx="64" cy="64" rx="45" ry="58" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.45"/>
+    <line x1="64" y1="6" x2="64" y2="122" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.45"/>
+    <line x1="6" y1="64" x2="122" y2="64" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.45"/>
+
+    <!-- Continents Shape -->
+    <path d="M 45,30 Q 58,26 68,32 T 76,44 Q 70,52 58,56 T 48,46 Z" fill="#ffffff" opacity="0.95"/>
+    <path d="M 32,36 Q 44,38 48,50 T 40,62 Q 28,58 30,42 Z" fill="#ffffff" opacity="0.95"/>
+    <path d="M 58,58 Q 74,62 78,76 T 70,98 Q 60,102 56,88 T 58,72 Z" fill="#ffffff" opacity="0.95"/>
+    <path d="M 80,32 Q 95,30 102,42 T 96,60 Q 82,56 78,44 Z" fill="#ffffff" opacity="0.95"/>
+    
+    <!-- 3D Specular Highlight -->
+    <circle cx="64" cy="64" r="58" fill="url(#favHighlight)"/>
+  </g>
+
+  <!-- PRIMEPOWER Red Dynamic Banner / Text -->
+  <g transform="rotate(-25 64 64)">
+    <rect x="8" y="52" width="112" height="24" rx="4" fill="#e51937" opacity="0.95"/>
+    <text x="64" y="69" font-family="'Arial Black', 'Impact', sans-serif" font-weight="900" font-size="14" fill="#ffffff" text-anchor="middle" letter-spacing="1.5">
+      PRIME
+    </text>
+  </g>
+</svg>

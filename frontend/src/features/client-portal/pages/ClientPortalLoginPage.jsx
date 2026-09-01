@@ -22,6 +22,7 @@ export default function ClientPortalLoginPage() {
 
   // Sync design system tokens
   useEffect(() => {
+    document.title = 'Client Portal Login | PRIMEPOWER MANPOWER';
     try {
       const theme = localStorage.getItem('theme') || 'light';
       const density = localStorage.getItem('density') || 'comfortable';
