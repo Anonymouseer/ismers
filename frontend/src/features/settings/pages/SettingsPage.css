@@ -347,15 +347,23 @@
 }
 
 /* COMPACT THEME CARDS */
+.settings-content-card .theme-compact-grid,
 .theme-compact-grid {
-  display: flex;
-  gap: 20px;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  gap: 20px !important;
+  max-width: 440px !important;
   margin-bottom: 24px;
 }
 
+.settings-content-card .compact-theme-card,
 .compact-theme-card {
   position: relative;
-  width: 170px;
+  width: 190px !important;
+  max-width: 200px !important;
+  flex: 0 0 190px !important;
   cursor: pointer;
   display: flex;
   flex-direction: column;

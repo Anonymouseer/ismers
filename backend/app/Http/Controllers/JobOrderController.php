@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\JobOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -181,6 +182,13 @@ class JobOrderController extends Controller
             'source'            => $data['source'] ?? 'internal',
         ]);
 
+        ActivityLog::record(
+            action: "Created new Job Order #{$job->ref} ({$job->title} - {$job->client}, Total: {$job->total} pax)",
+            module: 'Job Orders',
+            details: ['ref' => $job->ref, 'client' => $job->client, 'total' => $job->total],
+            request: $request
+        );
+
         return response()->json($this->format($job), 201);
     }
 
@@ -224,16 +232,35 @@ class JobOrderController extends Controller
 
         $job->update($data);
 
+        ActivityLog::record(
+            action: "Updated Job Order #{$job->ref} ({$job->title} - {$job->client})",
+            module: 'Job Orders',
+            details: ['ref' => $job->ref, 'updated_fields' => array_keys($data)],
+            request: $request
+        );
+
         return response()->json($this->format($job->fresh()));
     }
 
     /**
      * DELETE /api/v1/job-orders/{ref}
      */
-    public function destroy(string $ref): JsonResponse
+    public function destroy(Request $request, string $ref): JsonResponse
     {
         $job = JobOrder::where('ref', $ref)->orWhere('id', $ref)->firstOrFail();
+        $refNum = $job->ref;
+        $title = $job->title;
+        $client = $job->client;
+
         $job->delete();
+
+        ActivityLog::record(
+            action: "Archived/Deleted Job Order #{$refNum} ({$title} - {$client})",
+            module: 'Job Orders',
+            details: ['ref' => $refNum],
+            request: $request,
+            status: 'Warning'
+        );
 
         return response()->json(['ref' => $ref, 'deleted' => true]);
     }

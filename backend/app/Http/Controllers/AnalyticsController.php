@@ -2,133 +2,150 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Applicant;
+use App\Models\ApplicantHistory;
 use App\Models\ClientAccount;
 use App\Models\Deployment;
 use App\Models\JobOrder;
+use App\Services\PythonScoringService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AnalyticsController extends Controller
 {
+    protected PythonScoringService $scoringService;
+
+    public function __construct(PythonScoringService $scoringService)
+    {
+        $this->scoringService = $scoringService;
+    }
+
     /**
      * GET /api/v1/analytics/scoring
-     * Dynamic candidate match scoring against active job requisitions.
+     * Dynamic candidate match scoring and ranking via Python AI Engine.
      */
     public function scoring(Request $request): JsonResponse
     {
-        $jobOrders = JobOrder::with('clientAccount')
-            ->whereIn('status', ['open', 'filling', 'urgent', 'review'])
-            ->get();
-
-        $applicants = Applicant::with(['skills', 'workHistory', 'education', 'documents'])
-            ->get();
-
-        $clientGroups = [];
-
-        foreach ($jobOrders as $job) {
-            $clientName = $job->client ?: ($job->clientAccount->company ?? 'Internal Client');
-            $jobRef = $job->ref ?: $job->dep_ref ?: ('JO-' . $job->id);
-
-            $reqList = is_array($job->requirements) ? $job->requirements : (
-                is_string($job->requirements) ? json_decode($job->requirements, true) ?? [] : []
-            );
-
-            $tags = is_array($job->tags) ? $job->tags : (
-                is_string($job->tags) ? json_decode($job->tags, true) ?? [] : []
-            );
-
-            $keywords = array_unique(array_filter(array_merge(
-                preg_split('/[\s·,-\/()]+/', strtolower($job->title), -1, PREG_SPLIT_NO_EMPTY),
-                array_map('strtolower', $tags)
-            ), fn ($w) => strlen($w) > 2));
-
-            $matchedCandidates = [];
-
-            foreach ($applicants as $app) {
-                $appSkills = $app->skills->pluck('name')->map(fn ($s) => strtolower(trim($s)))->toArray();
-                $workRoles = $app->workHistory->map(fn ($w) => strtolower($w->role . ' ' . $w->company))->toArray();
-                $searchable = implode(' ', array_merge($appSkills, $workRoles));
-
-                $matchedCount = 0;
-                $matchedSkillsList = [];
-                $missingSkillsList = [];
-
-                foreach ($keywords as $kw) {
-                    if (str_contains($searchable, $kw)) {
-                        $matchedCount++;
-                        $matchedSkillsList[] = ucfirst($kw);
-                    } else {
-                        $missingSkillsList[] = ucfirst($kw);
-                    }
-                }
-
-                $totalKeywords = max(1, count($keywords));
-                $rawSkillScore = round(($matchedCount / $totalKeywords) * 100);
-                
-                // Base skills fit
-                $skillsFit = min(99, max(60, $rawSkillScore > 0 ? $rawSkillScore : 65 + (($app->id * 7) % 25)));
-                
-                // Experience fit based on work history count
-                $expYears = count($app->workHistory) * 1.5;
-                $expFit = min(98, max(65, 70 + (count($app->workHistory) * 10)));
-
-                // Location fit based on matching city address
-                $locFit = (str_contains(strtolower($app->city_address ?? ''), strtolower($job->location ?? '')) || empty($job->location)) ? 95 : 85;
-
-                // Weighted total score (45% Skills, 35% Exp, 20% Loc)
-                $overallScore = (int) round(($skillsFit * 0.45) + ($expFit * 0.35) + ($locFit * 0.20));
-
-                $status = $overallScore >= 85 ? 'Recommended' : ($overallScore >= 75 ? 'Qualified' : 'Under Review');
-
-                $matchedCandidates[] = [
-                    'id' => 'AI-APP-' . $app->id,
-                    'regId' => $app->reg_id,
-                    'name' => trim("{$app->first_name} {$app->last_name}"),
-                    'matchScore' => $overallScore,
-                    'skillsFit' => $skillsFit,
-                    'experienceFit' => $expFit,
-                    'locationFit' => $locFit,
-                    'yearsExp' => $expYears > 0 ? "{$expYears} Years" : '1+ Year',
-                    'matchedSkills' => array_slice(array_unique(array_merge($matchedSkillsList, $app->skills->pluck('name')->toArray())), 0, 5),
-                    'missingSkills' => array_slice(array_unique($missingSkillsList), 0, 3),
-                    'extraSkills' => ['Team Coordination', 'Workplace Safety'],
-                    'verifiedCertifications' => ['Class A Medical Fit-to-Work', 'NBI Cleared', 'Statutory Verified'],
-                    'workHistory' => count($app->workHistory) > 0
-                        ? "Previous experience: " . $app->workHistory->first()->role . " at " . $app->workHistory->first()->company
-                        : 'Entry-level talent with relevant vocational background.',
-                    'aiRecommendation' => $overallScore >= 85
-                        ? 'High-priority match. Strong domain alignment with verified pre-employment credentials.'
-                        : 'Viable candidate with core competencies; recommended for preliminary screening.',
-                    'status' => $status,
-                ];
-            }
-
-            // Sort candidates by matchScore descending
-            usort($matchedCandidates, fn ($a, $b) => $b['matchScore'] <=> $a['matchScore']);
-
-            $clientGroups[] = [
-                'client' => $clientName,
-                'industry' => $job->category ?: 'Operations & Services',
-                'jobRef' => $jobRef,
-                'jobTitle' => $job->title,
-                'headcount' => (int) ($job->total ?: 1),
-                'filled' => (int) ($job->filled ?: 0),
-                'site' => $job->location ?: 'Metro Manila, NCR',
-                'minExp' => '1+ Years in related field',
-                'salary' => $job->rate ?: '₱610.00 / Day',
-                'roleOverview' => $job->description ?: "Requisition for {$job->title} at {$clientName}.",
-                'requiredSkills' => !empty($reqList) ? array_slice($reqList, 0, 5) : ['Industry Competency', 'Operational Reliability'],
-                'preferredSkills' => ['TESDA NC II Certified', 'Safety Protocol Knowledge'],
-                'candidates' => array_slice($matchedCandidates, 0, 8),
+        $weights = null;
+        if ($request->has('skills_weight') || $request->has('weights')) {
+            $weights = $request->input('weights') ?: [
+                'skills' => (float) ($request->input('skills_weight', 45) / 100.0),
+                'experience' => (float) ($request->input('experience_weight', 35) / 100.0),
+                'location' => (float) ($request->input('location_weight', 15) / 100.0),
+                'certifications' => (float) ($request->input('certifications_weight', 5) / 100.0),
             ];
         }
 
+        $result = $this->scoringService->evaluateAll($weights);
+        $result['timestamp'] = Carbon::now()->toIso8601String();
+
+        return response()->json($result);
+    }
+
+    /**
+     * POST /api/v1/scoring/evaluate
+     * Trigger batch scoring and ranking with custom weights and parameters.
+     */
+    public function evaluate(Request $request): JsonResponse
+    {
+        $weights = $request->input('weights');
+        $jobRef = $request->input('job_ref') ?: $request->input('jobRef');
+
+        if ($jobRef) {
+            $job = JobOrder::where('ref', $jobRef)
+                ->orWhere('id', $jobRef)
+                ->orWhere('dep_ref', $jobRef)
+                ->first();
+
+            if ($job) {
+                $result = $this->scoringService->evaluateForJob($job, $weights);
+                $result['timestamp'] = Carbon::now()->toIso8601String();
+
+                ActivityLog::record(
+                    action: "Executed Python AI Scorer against Job Order #{$job->ref} ({$job->title})",
+                    module: 'AI Candidate Scoring',
+                    details: ['job_ref' => $job->ref, 'weights' => $weights],
+                    request: $request
+                );
+
+                return response()->json($result);
+            }
+        }
+
+        $result = $this->scoringService->evaluateAll($weights);
+        $result['timestamp'] = Carbon::now()->toIso8601String();
+
+        ActivityLog::record(
+            action: "Executed Python AI Scoring Engine batch evaluation across all active talent pools",
+            module: 'AI Candidate Scoring',
+            details: ['weights' => $weights],
+            request: $request
+        );
+
+        return response()->json($result);
+    }
+
+    /**
+     * POST /api/v1/scoring/auto-shortlist
+     * Automatically advance top-ranked candidates into the Recruitment Shortlist pipeline.
+     */
+    public function autoShortlist(Request $request): JsonResponse
+    {
+        $regIds = $request->input('candidate_reg_ids') ?: $request->input('reg_ids') ?: [];
+        $targetJobId = $request->input('target_job_id') ?: $request->input('job_ref');
+        $threshold = (int) $request->input('threshold', 85);
+
+        if (empty($regIds) && $targetJobId) {
+            // Auto-shortlist all candidates matching target job above threshold
+            $applicants = Applicant::where('target_job_id', $targetJobId)->get();
+            $regIds = $applicants->pluck('reg_id')->toArray();
+        }
+
+        $shortlistedCount = 0;
+        $updatedApplicants = [];
+
+        foreach ($regIds as $regId) {
+            $applicant = Applicant::where('reg_id', $regId)->orWhere('id', $regId)->first();
+            if ($applicant) {
+                $score = $this->scoringService->scoreSingleApplicant($applicant);
+                if ($score >= $threshold || ! empty($request->input('force'))) {
+                    $applicant->sent_to_recruitment = true;
+                    $applicant->recruitment_stage = 'shortlisted';
+                    $applicant->stage = 'profiled';
+                    if ($targetJobId && empty($applicant->target_job_id)) {
+                        $applicant->target_job_id = $targetJobId;
+                    }
+                    $applicant->save();
+
+                    ApplicantHistory::create([
+                        'applicant_id' => $applicant->id,
+                        'text' => "Auto-Shortlisted by Python AI Engine with {$score}% match fit score for Job Order #{$targetJobId}.",
+                    ]);
+
+                    $shortlistedCount++;
+                    $updatedApplicants[] = [
+                        'regId' => $applicant->reg_id,
+                        'name' => trim("{$applicant->first_name} {$applicant->last_name}"),
+                        'score' => $score,
+                        'stage' => 'shortlisted',
+                    ];
+                }
+            }
+        }
+
+        ActivityLog::record(
+            action: "Executed AI Auto-Shortlisting ({$shortlistedCount} candidate(s) advanced with >={$threshold}% fit score)",
+            module: 'AI Candidate Scoring',
+            details: ['target_job_id' => $targetJobId, 'threshold' => $threshold, 'count' => $shortlistedCount],
+            request: $request
+        );
+
         return response()->json([
-            'requisitions' => $clientGroups,
-            'totalRequisitions' => count($clientGroups),
-            'totalCandidatesScored' => count($applicants),
+            'message' => "Successfully auto-shortlisted {$shortlistedCount} candidate(s) to Recruitment Selection pipeline.",
+            'shortlistedCount' => $shortlistedCount,
+            'candidates' => $updatedApplicants,
             'timestamp' => Carbon::now()->toIso8601String(),
         ]);
     }

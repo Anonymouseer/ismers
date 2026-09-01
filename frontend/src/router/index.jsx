@@ -12,6 +12,7 @@ import JobOrderManagementPage from '../features/job-order-management/pages/JobOr
 import DeploymentAssignmentPage from '../features/deployment-assignment/pages/DeploymentAssignmentPage';
 import AiAnalyticsPage from '../features/ai-analytics/pages/AiAnalyticsPage';
 import SettingsPage from '../features/settings/pages/SettingsPage';
+import UserProfilePage from '../features/profile/pages/UserProfilePage';
 import ClientPortalPage from '../features/client-portal/pages/ClientPortalPage';
 import ClientPortalLoginPage from '../features/client-portal/pages/ClientPortalLoginPage';
 import ClientPortalRegisterPage from '../features/client-portal/pages/ClientPortalRegisterPage';
@@ -116,6 +117,12 @@ const router = createBrowserRouter([
             <SettingsPage />
           </ModuleRoute>
         ),
+      },
+
+      // My Profile & Account Preferences — All authenticated staff roles
+      {
+        path: 'profile',
+        element: <UserProfilePage />,
       },
     ],
   },

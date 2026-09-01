@@ -1,14 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useUIFeedback } from '../common/UIFeedback';
+import { useAuth } from '../../features/auth/store/AuthStore';
 import './Header.css';
 
 export default function Header({ onToggleMobileMenu }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
+  const { user, logout, canAccess } = useAuth();
+
   const [openNotifs, setOpenNotifs] = useState(false);
   const [notifFilter, setNotifFilter] = useState('all'); // 'all' | 'unread'
   const notifRef = useRef(null);
+
+  const [openUserMenu, setOpenUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
 
   const { notifications, unreadCount, markAllAsRead, markAsRead, clearNotifications } = useUIFeedback();
 
@@ -18,12 +25,18 @@ export default function Header({ onToggleMobileMenu }) {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
         setOpenNotifs(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setOpenUserMenu(false);
+      }
     };
     const handleEscape = (e) => {
-      if (e.key === 'Escape') setOpenNotifs(false);
+      if (e.key === 'Escape') {
+        setOpenNotifs(false);
+        setOpenUserMenu(false);
+      }
     };
 
-    if (openNotifs) {
+    if (openNotifs || openUserMenu) {
       document.addEventListener('mousedown', handleOutsideClick);
       document.addEventListener('keydown', handleEscape);
     }
@@ -31,7 +44,7 @@ export default function Header({ onToggleMobileMenu }) {
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [openNotifs]);
+  }, [openNotifs, openUserMenu]);
 
   // Dynamic system breadcrumbs based on route and query parameters
   const getBreadcrumb = () => {
@@ -48,35 +61,28 @@ export default function Header({ onToggleMobileMenu }) {
     if (path.includes('job-order-management')) {
       return (
         <>
-          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Management Operations &nbsp;›&nbsp; </span><b>Job Order Management</b>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; PRF Operations &nbsp;›&nbsp; </span><b>Job Order Management</b>
         </>
       );
     }
     if (path.includes('applicant-registration')) {
-      if (path.includes('/register')) {
-        return (
-          <>
-            <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; </span><b>Register Applicant</b>
-          </>
-        );
-      }
       return (
         <>
-          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; </span><b>Applicant Profiling</b>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Talent Sourcing &nbsp;›&nbsp; </span><b>Applicant Registration Board</b>
         </>
       );
     }
     if (path.includes('recruitment-selection')) {
       return (
         <>
-          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; </span><b>Recruitment &amp; Selection</b>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Selection Process &nbsp;›&nbsp; </span><b>Recruitment &amp; Selection</b>
         </>
       );
     }
     if (path.includes('deployment-assignment')) {
       return (
         <>
-          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Talent &amp; Deployment &nbsp;›&nbsp; </span><b>Deployment &amp; Assignment</b>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Manpower Mobilization &nbsp;›&nbsp; </span><b>Deployment &amp; Assignment</b>
         </>
       );
     }
@@ -95,7 +101,14 @@ export default function Header({ onToggleMobileMenu }) {
     if (path.includes('settings')) {
       return (
         <>
-          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; System &nbsp;›&nbsp; </span><b>Settings</b>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; System Administration &nbsp;›&nbsp; </span><b>System Settings</b>
+        </>
+      );
+    }
+    if (path.includes('profile')) {
+      return (
+        <>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; User Account &nbsp;›&nbsp; </span><b>My Profile &amp; Preferences</b>
         </>
       );
     }
@@ -116,6 +129,9 @@ export default function Header({ onToggleMobileMenu }) {
     if (notifFilter === 'unread') return !n.read;
     return true;
   });
+
+  const userName = user?.name || 'Administrator';
+  const userInitial = userName.charAt(0).toUpperCase();
 
   return (
     <header className="global-topbar">
@@ -257,12 +273,76 @@ export default function Header({ onToggleMobileMenu }) {
           )}
         </div>
 
-        <div className="global-who">
-          <div className="global-avatar">N</div>
-          <div className="global-who-info">
-            <div className="global-who-name">Name of Administrator</div>
-            <div className="global-who-date">{formattedToday}</div>
-          </div>
+        {/* USER PROFILE CARD WITH DROPDOWN */}
+        <div className="global-who-wrap" ref={userMenuRef}>
+          <button
+            type="button"
+            className={`global-who-btn ${openUserMenu ? 'active' : ''}`}
+            onClick={() => setOpenUserMenu((v) => !v)}
+            aria-label="User Account Menu"
+          >
+            <div className="global-avatar">{userInitial}</div>
+            <div className="global-who-info">
+              <div className="global-who-name">{userName}</div>
+              <div className="global-who-date">{formattedToday}</div>
+            </div>
+          </button>
+
+          {openUserMenu && (
+            <div className="user-dropdown-card" role="dialog" aria-label="User Menu">
+              <div className="user-dropdown-head">
+                <div className="user-dropdown-name">{userName}</div>
+                <div className="user-dropdown-email">{user?.email || 'staff@primepower.ph'}</div>
+                <span className="user-dropdown-role-pill">{user?.roleLabel || 'Staff Member'}</span>
+              </div>
+
+              <div className="user-dropdown-menu">
+                <Link
+                  to="/profile"
+                  className="user-dropdown-item"
+                  onClick={() => setOpenUserMenu(false)}
+                >
+                  <svg className="icon" viewBox="0 0 24 24">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  My Profile &amp; Preferences
+                </Link>
+
+                {canAccess('settings') && (
+                  <Link
+                    to="/settings"
+                    className="user-dropdown-item"
+                    onClick={() => setOpenUserMenu(false)}
+                  >
+                    <svg className="icon" viewBox="0 0 24 24">
+                      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    System Settings (Admin)
+                  </Link>
+                )}
+
+                <div className="user-dropdown-divider"></div>
+
+                <button
+                  type="button"
+                  className="user-dropdown-item danger"
+                  onClick={() => {
+                    setOpenUserMenu(false);
+                    logout();
+                  }}
+                >
+                  <svg className="icon" viewBox="0 0 24 24">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

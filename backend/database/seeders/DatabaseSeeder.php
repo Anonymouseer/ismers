@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             JobOrderSeeder::class,
             ApplicantSeeder::class,
             DeploymentSeeder::class,
+            ActivityLogSeeder::class,
         ]);
     }
 }

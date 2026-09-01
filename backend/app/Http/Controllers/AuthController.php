@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,10 +36,28 @@ class AuthController extends Controller
         }
 
         if (! $valid) {
+            ActivityLog::record(
+                action: "Failed authentication attempt for email: {$request->email}",
+                module: 'Authentication',
+                details: ['attempted_email' => $request->email],
+                request: $request,
+                status: 'Warning'
+            );
+
             return response()->json([
                 'message' => 'Invalid email address or password. Please verify your credentials.',
             ], 401);
         }
+
+        // Record successful login in audit trail
+        ActivityLog::record(
+            action: "User logged into PRIMEPOWER HR portal successfully",
+            module: 'Authentication',
+            details: ['role' => $user->role, 'department' => $user->department],
+            request: $request,
+            user: $user,
+            status: 'Success'
+        );
 
         // Session window: 8 hours from login
         $expiresAt = now()->addHours(8);
@@ -80,8 +99,16 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        if ($request->user()) {
-            $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        if ($user) {
+            ActivityLog::record(
+                action: "User signed out from system session",
+                module: 'Authentication',
+                request: $request,
+                user: $user,
+                status: 'Info'
+            );
+            $user->currentAccessToken()->delete();
         }
 
         return response()->json([

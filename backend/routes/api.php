@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientAccountController;
 use App\Http\Controllers\DeploymentController;
@@ -31,6 +32,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/scoring',   [AnalyticsController::class, 'scoring']);
         Route::get('/pipeline',  [AnalyticsController::class, 'pipeline']);
         Route::get('/retention', [AnalyticsController::class, 'retention']);
+    });
+
+    // ── AI Scoring & Ranking Engine ──
+    Route::prefix('scoring')->group(function () {
+        Route::post('/evaluate',       [AnalyticsController::class, 'evaluate']);
+        Route::post('/auto-shortlist', [AnalyticsController::class, 'autoShortlist']);
     });
     Route::get('/applicants', [ApplicantController::class, 'index']);
     Route::post('/applicants', [ApplicantController::class, 'store']);
@@ -97,6 +104,11 @@ Route::prefix('v1')->group(function () {
     Route::patch('/deployments/{id}/compliance',   [DeploymentController::class, 'updateCompliance']);
     Route::post('/deployments/{id}/intervention',  [DeploymentController::class, 'logIntervention']);
     Route::patch('/deployments/{id}/intervention', [DeploymentController::class, 'logIntervention']);
+
+    // ── System Audit & Activity Logs ──
+    Route::get('/audit-logs',        [AuditLogController::class, 'index']);
+    Route::post('/audit-logs',       [AuditLogController::class, 'store']);
+    Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
 });
 
 // ── Direct CRM Integration Endpoints (Top-level Aliases) ──

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\ClientAccount;
 use App\Models\JobOrder;
 use Illuminate\Http\JsonResponse;
@@ -215,6 +216,13 @@ class ClientAccountController extends Controller
             'agreed'         => true,
         ]);
 
+        ActivityLog::record(
+            action: "Registered new client company profile: {$client->company} ({$client->company_id})",
+            module: 'Client Management',
+            details: ['company_id' => $client->company_id, 'industry' => $client->industry],
+            request: $request
+        );
+
         return response()->json($this->formatClient($client), 201);
     }
 
@@ -275,6 +283,13 @@ class ClientAccountController extends Controller
 
         $client->update($updatePayload);
 
+        ActivityLog::record(
+            action: "Updated client company profile: {$client->company} ({$client->company_id})",
+            module: 'Client Management',
+            details: ['company_id' => $client->company_id, 'updated_fields' => array_keys($updatePayload)],
+            request: $request
+        );
+
         return response()->json($this->formatClient($client));
     }
 
@@ -282,7 +297,7 @@ class ClientAccountController extends Controller
      * DELETE /api/v1/clients/{id}
      * Delete a client account.
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $client = ClientAccount::where('id', $id)
             ->orWhere('company_id', $id)
@@ -292,7 +307,18 @@ class ClientAccountController extends Controller
             return response()->json(['message' => 'Client record not found'], 404);
         }
 
+        $companyName = $client->company;
+        $companyId = $client->company_id;
+
         $client->delete();
+
+        ActivityLog::record(
+            action: "Archived/Removed client company profile: {$companyName} ({$companyId})",
+            module: 'Client Management',
+            details: ['company_id' => $companyId],
+            request: $request,
+            status: 'Warning'
+        );
 
         return response()->json(['message' => 'Client record successfully removed']);
     }

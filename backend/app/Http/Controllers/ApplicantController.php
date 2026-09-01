@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Applicant;
 use App\Models\JobOrder;
+use App\Services\PythonScoringService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +13,12 @@ use Illuminate\Support\Facades\Storage;
 
 class ApplicantController extends Controller
 {
+    protected PythonScoringService $scoringService;
+
+    public function __construct(PythonScoringService $scoringService)
+    {
+        $this->scoringService = $scoringService;
+    }
     /**
      * Format an Applicant model into the exact JS camelCase shape the frontend expects.
      */
@@ -191,7 +199,7 @@ class ApplicantController extends Controller
     }
 
     /**
-     * Compute AI match score based on direct Job Order keyword matching against applicant skills and work history.
+     * Compute AI match score via Python AI Engine against target Job Order.
      */
     private function computeAiScore(Applicant $applicant): int
     {
@@ -200,49 +208,8 @@ class ApplicantController extends Controller
             return 0;
         }
 
-        $keywords = [];
-
-        // Dynamic JobOrder keyword extraction from database
         $job = $this->resolveJobOrder($targetId);
-        if ($job) {
-            $words = preg_split('/[\s·,-\/()]+/', strtolower($job->title), -1, PREG_SPLIT_NO_EMPTY);
-            $keywords = array_values(array_filter($words, fn ($w) => strlen($w) > 2));
-            if (is_array($job->tags)) {
-                foreach ($job->tags as $t) {
-                    $keywords[] = strtolower($t);
-                }
-            }
-        }
-
-        if (empty($keywords) && isset(self::JOB_KEYWORDS[$targetId])) {
-            $keywords = self::JOB_KEYWORDS[$targetId];
-        }
-
-        if (empty($keywords)) {
-            return 0;
-        }
-
-        $keywords = array_values(array_unique($keywords));
-        $skills = $applicant->skills->pluck('name')->toArray();
-        $work = $applicant->workHistory->map(fn ($w) => "{$w->role} {$w->company}")->toArray();
-        $searchable = strtolower(implode(' ', array_merge($skills, $work)));
-
-        if (empty(trim($searchable))) {
-            return 0;
-        }
-
-        $matched = 0;
-        foreach ($keywords as $kw) {
-            if (str_contains($searchable, strtolower($kw))) {
-                $matched++;
-            }
-        }
-
-        if ($matched === 0) {
-            return 0;
-        }
-
-        return (int) round(($matched / count($keywords)) * 100);
+        return $this->scoringService->scoreSingleApplicant($applicant, $job);
     }
 
     /**
@@ -450,6 +417,13 @@ class ApplicantController extends Controller
         }
 
         $applicant->load(['family', 'education', 'workHistory', 'skills', 'documents', 'references', 'history']);
+
+        ActivityLog::record(
+            action: "Registered new applicant profile: {$applicant->first_name} {$applicant->last_name} ({$applicant->reg_id})",
+            module: 'Applicant Registration',
+            details: ['reg_id' => $applicant->reg_id, 'category' => $applicant->category, 'phone' => $applicant->phone],
+            request: $request
+        );
 
         return response()->json(['ok' => true, 'regId' => $regId, 'applicant' => $this->formatApplicant($applicant)], 201);
     }
@@ -882,6 +856,12 @@ class ApplicantController extends Controller
         ]);
         $this->logHistory($applicant, 'Sent to Recruitment & Selection (Initialized in Pooling)');
 
+        ActivityLog::record(
+            action: "Endorsed applicant {$applicant->first_name} {$applicant->last_name} ({$applicant->reg_id}) to Recruitment & Selection pipeline",
+            module: 'Recruitment & Selection',
+            details: ['reg_id' => $applicant->reg_id, 'target_job_id' => $applicant->target_job_id]
+        );
+
         return response()->json(['ok' => true]);
     }
 
@@ -1203,6 +1183,13 @@ class ApplicantController extends Controller
 
         if ($request->filled('recruitment_stage')) {
             $this->logHistory($applicant, "Recruitment stage updated to: {$request->recruitment_stage}");
+
+            ActivityLog::record(
+                action: "Advanced candidate {$applicant->first_name} {$applicant->last_name} ({$applicant->reg_id}) to recruitment stage: {$request->recruitment_stage}",
+                module: 'Recruitment & Selection',
+                details: ['reg_id' => $applicant->reg_id, 'new_stage' => $request->recruitment_stage],
+                request: $request
+            );
         }
 
         return response()->json(['ok' => true]);

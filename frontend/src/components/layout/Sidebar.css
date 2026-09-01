@@ -193,7 +193,30 @@
       padding: 12px 14px 20px 14px !important;
     }
   }
-  .signout{flex-shrink:0;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted-fg);margin-top:12px;padding:8px 10px;border-radius:9px;transition:background .14s var(--ease),color .14s var(--ease);}
+  .sidebar-profile-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted-fg);
+    margin-top: 8px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    text-decoration: none;
+    transition: background 0.14s var(--ease), color 0.14s var(--ease);
+  }
+  .sidebar-profile-btn:hover {
+    background: var(--secondary);
+    color: var(--text);
+  }
+  .sidebar-profile-btn.active {
+    background: rgba(0, 125, 204, 0.12);
+    color: var(--primary);
+  }
+
+  .signout{flex-shrink:0;display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted-fg);margin-top:4px;padding:7px 10px;border-radius:9px;transition:background .14s var(--ease),color .14s var(--ease);}
   .signout:hover{background:var(--red-soft);color:var(--destructive);}
 
   /* COLLAPSE TOGGLE BUTTON WITH SMOOTH SLIDE */

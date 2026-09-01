@@ -38,6 +38,7 @@ class RbacUserSeeder extends Seeder
                 'department' => 'Talent Acquisition',
                 'allowed_modules' => [
                     'applicant-registration',
+                    'ai-analytics',
                 ],
                 'default_route' => '/applicant-registration',
             ],
@@ -49,7 +50,9 @@ class RbacUserSeeder extends Seeder
                 'role_label' => 'Recruitment Officer',
                 'department' => 'Recruitment & Selection',
                 'allowed_modules' => [
+                    'applicant-registration',
                     'recruitment-selection',
+                    'ai-analytics',
                 ],
                 'default_route' => '/recruitment-selection',
             ],
@@ -63,6 +66,7 @@ class RbacUserSeeder extends Seeder
                 'allowed_modules' => [
                     'client-management',
                     'job-order-management',
+                    'ai-analytics',
                 ],
                 'default_route' => '/job-order-management',
             ],
@@ -75,6 +79,7 @@ class RbacUserSeeder extends Seeder
                 'department' => 'Workforce Deployment',
                 'allowed_modules' => [
                     'deployment-assignment',
+                    'ai-analytics',
                 ],
                 'default_route' => '/deployment-assignment',
             ],

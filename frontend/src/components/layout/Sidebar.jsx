@@ -368,12 +368,13 @@ export default function Sidebar({
           </div>
           )}
 
-          {/* AI & ANALYTICS */}
+          {/* AI & ANALYTICS — Tab-level visibility by role */}
           {canAccess('ai-analytics') && (
           <div className="nav-group">
             <div className="nav-label">AI &amp; Analytics</div>
 
-            {/* AI Candidate Scoring */}
+            {/* AI Candidate Scoring — visible to: hr_administrator, registration_officer, recruitment_officer, job_order_coordinator */}
+            {(!user?.role || ['hr_administrator', 'registration_officer', 'recruitment_officer', 'job_order_coordinator'].includes(user.role)) && (
             <Link
               to="/ai-analytics?tab=scoring"
               className={`nav-item${activeItem === 'ai-analytics' && (!location.search || location.search.includes('tab=scoring')) ? ' active' : ''}`}
@@ -387,8 +388,10 @@ export default function Sidebar({
               </span>
               <span className="label">AI Candidate Scoring</span>
             </Link>
+            )}
 
-            {/* Recruitment Intelligence */}
+            {/* Recruitment Intelligence — visible to: hr_administrator, job_order_coordinator */}
+            {(!user?.role || ['hr_administrator', 'job_order_coordinator'].includes(user.role)) && (
             <Link
               to="/ai-analytics?tab=pipeline"
               className={`nav-item${activeItem === 'ai-analytics' && location.search.includes('tab=pipeline') ? ' active' : ''}`}
@@ -402,8 +405,10 @@ export default function Sidebar({
               </span>
               <span className="label">Recruitment Intelligence</span>
             </Link>
+            )}
 
-            {/* Workforce Retention Analysis */}
+            {/* Workforce Retention Analysis — visible to: hr_administrator, deployment_officer */}
+            {(!user?.role || ['hr_administrator', 'deployment_officer'].includes(user.role)) && (
             <Link
               to="/ai-analytics?tab=retention"
               className={`nav-item${activeItem === 'ai-analytics' && location.search.includes('tab=retention') ? ' active' : ''}`}
@@ -415,6 +420,7 @@ export default function Sidebar({
               </span>
               <span className="label">Workforce Retention Analysis</span>
             </Link>
+            )}
           </div>
           )}
 
@@ -439,13 +445,31 @@ export default function Sidebar({
         </div>
 
         {/* FOOTER USER SUMMARY */}
-        <div className="sidebar-foot">
+        <Link
+          to="/profile"
+          className="sidebar-foot"
+          title="My Profile & Preferences"
+          style={{ textDecoration: 'none', cursor: 'pointer' }}
+        >
           <div className="avatar">{adminName.charAt(0)}</div>
           <div className="foot-text">
             <div className="foot-name">{adminName}</div>
             <div className="foot-role">{adminRole}</div>
           </div>
-        </div>
+        </Link>
+
+        {/* EXPLICIT PROFILE SETTINGS BUTTON */}
+        <Link
+          to="/profile"
+          className={`sidebar-profile-btn${location.pathname === '/profile' ? ' active' : ''}`}
+          title="Profile Settings"
+        >
+          <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span className="label">Profile Settings</span>
+        </Link>
 
         <button type="button" onClick={logout} className="signout" style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}>
           <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}>

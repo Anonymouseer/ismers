@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Applicant;
 use App\Models\Deployment;
 use App\Models\JobOrder;
@@ -546,6 +547,13 @@ class DeploymentController extends Controller
             ],
         ]);
 
+        ActivityLog::record(
+            action: "Created deployment assignment #{$depRef} for {$deployment->employee_name} to {$deployment->client_name} ({$deployment->site_facility})",
+            module: 'Deployment & Assignment',
+            details: ['dep_ref' => $depRef, 'client' => $deployment->client_name, 'site' => $deployment->site_facility],
+            request: $request
+        );
+
         return response()->json($this->formatDeployment($deployment), 201);
     }
 
@@ -603,6 +611,13 @@ class DeploymentController extends Controller
                 ],
             ]);
 
+            ActivityLog::record(
+                action: "Initialized deployment #{$id} in stage: {$request->stage}",
+                module: 'Deployment & Assignment',
+                details: ['dep_ref' => $id, 'stage' => $request->stage],
+                request: $request
+            );
+
             return response()->json($this->formatDeployment($d));
         }
 
@@ -628,6 +643,13 @@ class DeploymentController extends Controller
             'stage' => $request->stage,
             'history' => $history,
         ]);
+
+        ActivityLog::record(
+            action: "Updated deployment #{$d->deployment_ref} stage to {$request->stage} ({$d->employee_name} - {$d->client_name})",
+            module: 'Deployment & Assignment',
+            details: ['dep_ref' => $d->deployment_ref, 'stage' => $request->stage],
+            request: $request
+        );
 
         return response()->json($this->formatDeployment($d));
     }
