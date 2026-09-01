@@ -1,6 +1,6 @@
 FROM php:8.3-cli-alpine
 
-# Install system dependencies & PHP extensions
+# Install system dependencies, PHP extensions, and Python 3 runtime
 RUN apk add --no-cache \
     sqlite-dev \
     postgresql-dev \
@@ -11,6 +11,8 @@ RUN apk add --no-cache \
     curl \
     libpng-dev \
     oniguruma-dev \
+    python3 \
+    py3-pip \
     && docker-php-ext-install pdo pdo_sqlite pdo_pgsql pdo_mysql bcmath mbstring zip pcntl
 
 # Install Composer
@@ -20,6 +22,10 @@ WORKDIR /app
 
 # Copy application code from backend directory
 COPY backend/ .
+
+# Copy Python AI scoring engine into container
+COPY ai_engine/ /app/ai_engine/
+COPY ai_engine/ /ai_engine/
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-interaction
@@ -31,4 +37,3 @@ RUN chmod -R 777 storage bootstrap/cache
 EXPOSE 8000
 
 CMD ["sh", "-c", "php -r \"file_exists('.env') || copy('.env.example', '.env');\" && php artisan key:generate --force && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000"]
-

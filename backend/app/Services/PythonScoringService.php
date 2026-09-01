@@ -125,13 +125,17 @@ class PythonScoringService
     {
         try {
             $pythonBin = PHP_OS_FAMILY === 'Windows' ? 'python' : 'python3';
-            $scriptPath = base_path('../ai_engine/cli.py');
+            $workingDir = base_path('..');
 
-            if (! file_exists($scriptPath)) {
-                $scriptPath = base_path('ai_engine/cli.py');
+            if (! file_exists($workingDir . '/ai_engine/cli.py')) {
+                if (file_exists(base_path('ai_engine/cli.py'))) {
+                    $workingDir = base_path();
+                } elseif (file_exists('/ai_engine/cli.py')) {
+                    $workingDir = '/';
+                }
             }
 
-            $process = new Process([$pythonBin, '-m', 'ai_engine.cli'], base_path('..'));
+            $process = new Process([$pythonBin, '-m', 'ai_engine.cli'], $workingDir);
             $process->setInput(json_encode($payload));
             $process->setTimeout(5.0);
             $process->run();
