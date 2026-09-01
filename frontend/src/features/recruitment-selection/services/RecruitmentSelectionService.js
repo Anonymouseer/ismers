@@ -1,5 +1,9 @@
 // RecruitmentSelectionService.js
 // Handles Recruitment & Selection candidate pipeline and stage mutations.
+//
+// Canonical API base: /api/v1/recruitment/*  (RecruitmentController)
+// Legacy aliases under /api/v1/applicants/* are kept server-side for backward
+// compatibility and will be removed in a future release.
 import api from '../../../services/apiClient';
 import { APPLICATIONS } from '../data/mockApplications';
 import { ISMERSBridge } from '../../deployment-assignment/services/ismersBridge';
@@ -144,7 +148,7 @@ export async function updateRecruitmentStage(applicantId, stage, status = null, 
 
   const target = encodeURIComponent(appName || applicantId);
   try {
-    const res = await api.patch(`/applicants/${target}/recruitment-stage`, {
+    const res = await api.patch(`/recruitment/${target}/stage`, {
       recruitment_stage: stage,
       ...(status ? { status } : {}),
     });
@@ -153,7 +157,7 @@ export async function updateRecruitmentStage(applicantId, stage, status = null, 
     if (applicantId && applicantId !== appName) {
       try {
         const fallbackTarget = encodeURIComponent(applicantId);
-        const res2 = await api.patch(`/applicants/${fallbackTarget}/recruitment-stage`, {
+        const res2 = await api.patch(`/recruitment/${fallbackTarget}/stage`, {
           recruitment_stage: stage,
           ...(status ? { status } : {}),
         });
@@ -258,13 +262,13 @@ export async function updateRecruitmentScreening(applicantId, fields, appName = 
 
   const target = encodeURIComponent(appName || applicantId);
   try {
-    const res = await api.patch(`/applicants/${target}/recruitment-screening`, body);
+    const res = await api.patch(`/recruitment/${target}/screening`, body);
     return res.data;
   } catch (err) {
     if (applicantId && applicantId !== appName) {
       try {
         const fallbackTarget = encodeURIComponent(applicantId);
-        const res2 = await api.patch(`/applicants/${fallbackTarget}/recruitment-screening`, body);
+        const res2 = await api.patch(`/recruitment/${fallbackTarget}/screening`, body);
         return res2.data;
       } catch {
         return { ok: false };

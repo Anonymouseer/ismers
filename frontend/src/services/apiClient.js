@@ -21,9 +21,12 @@ const api = axios.create({
 });
 
 // ── REQUEST INTERCEPTOR: Attach bearer token ────────────────────────────────
+// Priority: HR/Admin token → Client Portal token → none (public endpoints only)
 api.interceptors.request.use((config) => {
   try {
-    const token = localStorage.getItem('primepower_admin_token');
+    const token =
+      localStorage.getItem('primepower_admin_token') ||
+      localStorage.getItem('cp_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -38,18 +41,25 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Server rejected the token — clear session and redirect to login
+      // Server rejected the token — determine which session to clear and where to redirect
       try {
-        localStorage.removeItem('primepower_admin_token');
-        localStorage.removeItem('primepower_admin_user');
-        localStorage.removeItem('primepower_admin_token_expiry');
+        const isClientPortal = window.location.pathname.startsWith('/client-portal');
+        if (isClientPortal) {
+          localStorage.removeItem('cp_token');
+          localStorage.removeItem('cp_session');
+          if (!window.location.pathname.startsWith('/client-portal/login')) {
+            window.location.href = '/client-portal/login?reason=session_expired';
+          }
+        } else {
+          localStorage.removeItem('primepower_admin_token');
+          localStorage.removeItem('primepower_admin_user');
+          localStorage.removeItem('primepower_admin_token_expiry');
+          if (!window.location.pathname.startsWith('/login')) {
+            window.location.href = '/login?reason=session_expired';
+          }
+        }
       } catch {
         // ignore storage errors
-      }
-
-      // Avoid redirect loops on the login page itself
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login?reason=session_expired';
       }
     }
     return Promise.reject(error);

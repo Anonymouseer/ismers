@@ -122,6 +122,11 @@ export default function ClientPortalRegisterPage() {
     })
       .then((response) => {
         const newUser = response.data;
+        // Persist the Sanctum Bearer token so API calls to protected endpoints
+        // (e.g. POST /job-orders) include the Authorization header.
+        if (newUser?.token) {
+          localStorage.setItem('cp_token', newUser.token);
+        }
         localStorage.setItem('cp_session', JSON.stringify({ ...newUser, loggedIn: true }));
         navigate('/client-portal', { replace: true });
       })

@@ -1,0 +1,208 @@
+<mxfile host="app.diagrams.net" modified="2026-09-01T09:15:00.000Z" agent="Mozilla/5.0" version="21.0.0" type="device">
+  <diagram id="ISMERS_BPA_Core1" name="ISMERS BPA Diagram">
+    <mxGraphModel dx="1422" dy="850" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1350" pageHeight="900" background="#000000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Top External Boundary Line Indicator -->
+        <mxCell id="top_arrow" value="" style="endArrow=classic;startArrow=classic;html=1;strokeColor=#ffffff;strokeWidth=1.5;dashed=1;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="675" y="20" as="sourcePoint" />
+            <mxPoint x="675" y="70" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Subsystem 1: Client Management System -->
+        <mxCell id="cms" value="Client Management System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;fontColor=#ffffff;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="545" y="70" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 2: Applicant Registration and Profiling System -->
+        <mxCell id="arps" value="Applicant Registration and&#xa;Profiling System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;fontColor=#ffffff;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="290" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 3: Recruitment and Selection System -->
+        <mxCell id="rss" value="Recruitment and Selection&#xa;System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;fontColor=#ffffff;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="830" y="290" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 4: Job Order Management System -->
+        <mxCell id="joms" value="Job Order Management&#xa;System" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;fontColor=#ffffff;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="560" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Subsystem 5: Deployment and Assignment Subsystem -->
+        <mxCell id="das" value="Deployment and Assignment&#xa;Subsystem" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;fontColor=#ffffff;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="540" width="260" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- External System: Employee Information Management System (Core 2) -->
+        <mxCell id="eims" value="Employee Information Management&#xa;System (Core 2)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#ffffff;strokeWidth=2;dashed=1;dashPattern=8 8;fontColor=#ffffff;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="730" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Edge 1: CMS -> JOMS (Job Order Request) -->
+        <mxCell id="edge_cms_joms_1" value="Job Order Request" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.35;exitDx=0;exitDy=0;entryX=0.0;entryY=0.35;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="cms" target="joms">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="90" y="105" />
+              <mxPoint x="90" y="595" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 2: CMS -> JOMS (Job Order Information) -->
+        <mxCell id="edge_cms_joms_2" value="Job Order Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.7;exitDx=0;exitDy=0;entryX=0.0;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="cms" target="joms">
+          <mxGeometry x="-0.2" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="140" />
+              <mxPoint x="110" y="630" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 3: JOMS -> CMS (Job Order Details) -->
+        <mxCell id="edge_joms_cms" value="Job Order Details" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.15;exitDx=0;exitDy=0;entryX=0.0;entryY=0.85;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="joms" target="cms">
+          <mxGeometry x="0.1" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="130" y="575" />
+              <mxPoint x="130" y="155" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 4: ARPS -> RSS (Applicant Information) -->
+        <mxCell id="edge_arps_rss_1" value="Applicant Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1.0;exitY=0.35;exitDx=0;exitDy=0;entryX=0.0;entryY=0.35;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="arps" target="rss">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge 5: RSS -> ARPS (Requests Applicant Information) -->
+        <mxCell id="edge_arps_rss_2" value="Requests Applicant Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.7;exitDx=0;exitDy=0;entryX=1.0;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="rss" target="arps">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Edge 6: JOMS -> RSS (Number Hired, Remaining Vacancies, Job Order Status) -->
+        <mxCell id="edge_joms_rss" value="Number Hired, Remaining Vacancies, Job Order Status" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.05;exitDx=0;exitDy=0;entryX=0.6;entryY=0.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="joms" target="rss">
+          <mxGeometry x="-0.4" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="150" y="565" />
+              <mxPoint x="150" y="240" />
+              <mxPoint x="986" y="240" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 7: ARPS -> DAS (Applicant Status Information) -->
+        <mxCell id="edge_arps_das_1" value="Applicant Status Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.6;exitY=1.0;exitDx=0;exitDy=0;entryX=0.0;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="arps" target="das">
+          <mxGeometry x="0.1" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="356" y="470" />
+              <mxPoint x="680" y="470" />
+              <mxPoint x="680" y="610" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 8: DAS -> ARPS (Applicant Information request) -->
+        <mxCell id="edge_arps_das_2" value="Applicant Information request" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.4;exitDx=0;exitDy=0;entryX=0.8;entryY=1.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="das" target="arps">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="580" />
+              <mxPoint x="660" y="450" />
+              <mxPoint x="408" y="450" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 9: RSS -> DAS (Recruitment Information) -->
+        <mxCell id="edge_rss_das_1" value="Recruitment Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1.0;exitDx=0;exitDy=0;entryX=0.55;entryY=0.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="rss" target="das">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="895" y="470" />
+              <mxPoint x="893" y="470" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 10: DAS -> RSS (Recruit Information requests) -->
+        <mxCell id="edge_rss_das_2" value="Recruit Information requests" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.35;exitY=0.0;exitDx=0;exitDy=0;entryX=0.15;entryY=1.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="das" target="rss">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="841" y="490" />
+              <mxPoint x="869" y="490" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 11: DAS -> JOMS (Job Order Description) -->
+        <mxCell id="edge_das_joms_1" value="Job Order Description" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.3;exitY=1.0;exitDx=0;exitDy=0;entryX=0.7;entryY=1.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="das" target="joms">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="828" y="700" />
+              <mxPoint x="452" y="700" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 12: DAS -> JOMS (Vacancies Filled) -->
+        <mxCell id="edge_das_joms_2" value="Vacancies Filled" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.15;exitY=1.0;exitDx=0;exitDy=0;entryX=0.85;entryY=1.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="das" target="joms">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="789" y="730" />
+              <mxPoint x="491" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 13: DAS -> CMS (Deployment and Assignment Information) -->
+        <mxCell id="edge_das_cms" value="Deployment and&#xa;Assignment Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1.0;exitY=0.25;exitDx=0;exitDy=0;entryX=1.0;entryY=0.35;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="das" target="cms">
+          <mxGeometry x="-0.3" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1200" y="565" />
+              <mxPoint x="1200" y="105" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 14: CMS -> DAS (Client information, deployment location, client site) -->
+        <mxCell id="edge_cms_das" value="Client information,&#xa;deployment location, client site" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1.0;exitY=0.7;exitDx=0;exitDy=0;entryX=1.0;entryY=0.65;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="cms" target="das">
+          <mxGeometry x="-0.3" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1230" y="140" />
+              <mxPoint x="1230" y="605" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 15: DAS -> EIMS (Employee Information) -->
+        <mxCell id="edge_das_eims_1" value="Employee&#xa;Information" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.45;exitY=1.0;exitDx=0;exitDy=0;entryX=0.0;entryY=0.6;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;dashed=1;fontColor=#ffffff;fontSize=12;labelBackgroundColor=#000000;" edge="1" parent="1" source="das" target="eims">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="867" y="778" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Edge 16: EIMS -> DAS (Employee Information Request) -->
+        <mxCell id="edge_das_eims_2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.0;exitY=0.3;exitDx=0;exitDy=0;entryX=0.6;entryY=1.0;entryDx=0;entryDy=0;strokeColor=#ffffff;strokeWidth=1.5;dashed=1;" edge="1" parent="1" source="eims" target="das">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="906" y="754" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
