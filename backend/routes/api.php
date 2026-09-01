@@ -94,10 +94,10 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Backward-compatible aliases (kept during frontend transition) ──
+    // NOTE: GET /recruitment/applications is already registered via the prefix group above.
     Route::post('/applicants/{regId}/send-to-recruitment',       [RecruitmentController::class, 'enroll']);
     Route::post('/applicants/{regId}/return-to-profiling',       [RecruitmentController::class, 'returnToProfiling']);
     Route::post('/applicants/bulk-return-to-profiling',          [RecruitmentController::class, 'bulkReturn']);
-    Route::get('/recruitment/applications',                      [RecruitmentController::class, 'index']);
     Route::patch('/applicants/{id}/recruitment-stage',           [RecruitmentController::class, 'updateStage']);
     Route::patch('/applicants/{id}/recruitment-screening',       [RecruitmentController::class, 'updateScreening']);
     Route::patch('/applicants/{id}/client-endorsement-status',   [RecruitmentController::class, 'updateEndorsementStatus']);
