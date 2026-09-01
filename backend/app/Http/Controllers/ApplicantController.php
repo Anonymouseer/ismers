@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Applicant;
-use App\Models\JobOrder;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -115,134 +115,6 @@ class ApplicantController extends Controller
             'date' => now()->format('M d, Y'),
             'text' => $text,
         ]);
-    }
-
-    private const JOB_KEYWORDS = [
-        'jo1' => ['inventory', 'warehouse', 'pallet', 'logistics', 'stock', 'picking', 'packing'],
-        'jo2' => ['forklift', 'warehouse', 'logistics', 'pallet', 'material handling', 'inventory'],
-        'jo3' => ['inventory', 'stock', 'wms', 'cycle count', 'data entry', 'clerk'],
-        'jo4' => ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics'],
-        'jo5' => ['customer service', 'crm', 'english proficiency', 'call center', 'customer support', 'communication'],
-        'jo6' => ['technical troubleshooting', 'ticketing', 'networking', 'technical support', 'troubleshooting'],
-        'jo7' => ['sales', 'outbound', 'inbound', 'crm', 'cold calling', 'leads'],
-        'jo8' => ['team leader', 'supervisor', 'bpo', 'coaching', 'kpi', 'csat'],
-        'jo9' => ['machine operation', 'quality inspection', 'safety compliance', 'production', 'troubleshooting'],
-        'jo10' => ['quality control', 'inspection', 'qc', 'calipers', 'manufacturing', 'specifications'],
-        'jo11' => ['supervisor', 'production line', 'kpi', 'line balancing', 'manufacturing'],
-        'jo12' => ['packaging', 'sorting', 'labeling', 'finished goods', 'packing'],
-        'jo13' => ['admin', 'office', 'excel', 'documentation', 'scheduling', 'clerical'],
-        'jo14' => ['sales associate', 'retail', 'customer service', 'stocking', 'replenishment'],
-        'jo15' => ['cashier', 'pos', 'cash handling', 'retail', 'customer service'],
-        'jo16' => ['merchandiser', 'visual', 'display', 'retail layout', 'branding'],
-        'jo17' => ['front desk', 'guest relations', 'booking systems', 'hospitality', 'customer service', 'front office'],
-        'jo18' => ['housekeeping', 'cleaning', 'room turnaround', 'resort', 'hospitality'],
-        'jo19' => ['f&b', 'server', 'waiter', 'restaurant', 'dining', 'hospitality'],
-        'jo20' => ['maintenance', 'technician', 'electrical', 'plumbing', 'repairs'],
-        'jo21' => ['leasing', 'real estate', 'sales', 'viewings', 'property', 'contracts'],
-        'jo22' => ['property administrator', 'tenant records', 'lease renewals', 'admin'],
-        'jo23' => ['front desk', 'reception', 'lobby', 'concierge', 'visitor logs'],
-        'jo24' => ['maintenance coordinator', 'repairs', 'facilities', 'building systems'],
-        'jo25' => ['medical technologist', 'medtech', 'lab testing', 'specimen analysis', 'doh'],
-        'jo26' => ['radiologic', 'x-ray', 'imaging', 'radtech', 'radiation safety'],
-        'jo27' => ['patient service', 'registration', 'healthcare front desk', 'appointments'],
-        'jo28' => ['billing', 'hmo', 'insurance claims', 'patient accounts', 'accounting'],
-        'jo29' => ['packing', 'produce', 'grading', 'harvest', 'hygiene', 'export'],
-        'jo30' => ['qa inspector', 'quality control', 'export-grade', 'agri', 'produce'],
-        'jo31' => ['logistics coordinator', 'container bookings', 'freight', 'export documentation'],
-        'jo32' => ['farm supervisor', 'harvest scheduling', 'field crews', 'agriculture'],
-        'jo33' => ['construction', 'laborer', 'material handling', 'masonry', 'site work'],
-        'jo34' => ['site engineer', 'autocad', 'civil engineering', 'inspections', 'plans'],
-        'jo35' => ['safety officer', 'bosh', 'ppe', 'oshs', 'hazard inspection'],
-        'jo36' => ['heavy equipment', 'backhoe', 'excavator', 'operator license', 'grading'],
-    ];
-
-    private function resolveJobOrder(?string $targetId): ?JobOrder
-    {
-        if (! $targetId) {
-            return null;
-        }
-
-        // Try exact ref match (e.g. JO-001, JO-018)
-        $job = JobOrder::whereRaw('LOWER(ref) = ?', [strtolower($targetId)])->first();
-        if ($job) {
-            return $job;
-        }
-
-        // If targetId is like 'jo18' or 'jo-18', extract number and match ref or id
-        if (preg_match('/(?:jo|jo-)?(\d+)/i', $targetId, $m)) {
-            $num = (int) $m[1];
-            $paddedRef = 'JO-'.str_pad((string) $num, 3, '0', STR_PAD_LEFT);
-            $job = JobOrder::whereRaw('LOWER(ref) = ?', [strtolower($paddedRef)])
-                ->orWhere('id', $num)
-                ->first();
-            if ($job) {
-                return $job;
-            }
-        }
-
-        if (is_numeric($targetId)) {
-            $job = JobOrder::find((int) $targetId);
-            if ($job) {
-                return $job;
-            }
-        }
-
-        return JobOrder::whereRaw('LOWER(title) = ?', [strtolower(trim($targetId))])->first();
-    }
-
-    /**
-     * Compute AI match score based on direct Job Order keyword matching against applicant skills and work history.
-     */
-    private function computeAiScore(Applicant $applicant): int
-    {
-        $targetId = $applicant->target_job_id;
-        if (! $targetId) {
-            return 0;
-        }
-
-        $keywords = [];
-
-        // Dynamic JobOrder keyword extraction from database
-        $job = $this->resolveJobOrder($targetId);
-        if ($job) {
-            $words = preg_split('/[\s·,-\/()]+/', strtolower($job->title), -1, PREG_SPLIT_NO_EMPTY);
-            $keywords = array_values(array_filter($words, fn ($w) => strlen($w) > 2));
-            if (is_array($job->tags)) {
-                foreach ($job->tags as $t) {
-                    $keywords[] = strtolower($t);
-                }
-            }
-        }
-
-        if (empty($keywords) && isset(self::JOB_KEYWORDS[$targetId])) {
-            $keywords = self::JOB_KEYWORDS[$targetId];
-        }
-
-        if (empty($keywords)) {
-            return 0;
-        }
-
-        $keywords = array_values(array_unique($keywords));
-        $skills = $applicant->skills->pluck('name')->toArray();
-        $work = $applicant->workHistory->map(fn ($w) => "{$w->role} {$w->company}")->toArray();
-        $searchable = strtolower(implode(' ', array_merge($skills, $work)));
-
-        if (empty(trim($searchable))) {
-            return 0;
-        }
-
-        $matched = 0;
-        foreach ($keywords as $kw) {
-            if (str_contains($searchable, strtolower($kw))) {
-                $matched++;
-            }
-        }
-
-        if ($matched === 0) {
-            return 0;
-        }
-
-        return (int) round(($matched / count($keywords)) * 100);
     }
 
     /**
@@ -843,140 +715,16 @@ class ApplicantController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function sendToRecruitment(string $regId): JsonResponse
-    {
-        $applicant = $this->findApplicant($regId);
-        $applicant->update([
-            'sent_to_recruitment' => true,
-            'recruitment_stage' => 'pooling',
-            'client_endorsement_status' => 'Pending Review',
-            'recruiter_rating' => 0,
-            'screening_checklist' => [
-                'requirements' => false,
-                'identity' => false,
-                'history' => false,
-                'reference' => false,
-            ],
-            'document_status' => [
-                'resume' => false,
-                'certificate' => false,
-                'portfolio' => false,
-            ],
-            'interview_schedule' => null,
-            'pre_employment_checklist' => [
-                'medical_exam' => false,
-                'nbi_clearance' => false,
-                'sss_document' => false,
-                'philhealth_mdr' => false,
-                'pagibig_mid' => false,
-                'bir_tin' => false,
-                'psa_birth_cert' => false,
-            ],
-            'medical_referral' => null,
-            'statutory_numbers' => null,
-            'employment_contract' => null,
-            'orientation_modules' => null,
-            'atm_endorsement' => null,
-            'deployment_details' => null,
-            'ppe_issuance' => null,
-        ]);
-        $this->logHistory($applicant, 'Sent to Recruitment & Selection (Initialized in Pooling)');
 
-        return response()->json(['ok' => true]);
-    }
 
-    public function returnToProfiling(string $regId): JsonResponse
-    {
-        $applicant = $this->findApplicant($regId);
-        $applicant->update([
-            'sent_to_recruitment' => false,
-            'recruitment_stage' => null,
-            'stage' => $applicant->stage === 'sent' ? 'profiled' : $applicant->stage,
-            'client_endorsement_status' => 'Pending Review',
-            'recruiter_rating' => 0,
-            'screening_checklist' => [
-                'requirements' => false,
-                'identity' => false,
-                'history' => false,
-                'reference' => false,
-            ],
-            'document_status' => [
-                'resume' => false,
-                'certificate' => false,
-                'portfolio' => false,
-            ],
-            'interview_schedule' => null,
-            'pre_employment_checklist' => [
-                'medical_exam' => false,
-                'nbi_clearance' => false,
-                'sss_document' => false,
-                'philhealth_mdr' => false,
-                'pagibig_mid' => false,
-                'bir_tin' => false,
-                'psa_birth_cert' => false,
-            ],
-            'medical_referral' => null,
-            'statutory_numbers' => null,
-            'employment_contract' => null,
-            'orientation_modules' => null,
-            'atm_endorsement' => null,
-            'deployment_details' => null,
-            'ppe_issuance' => null,
-        ]);
-        $this->logHistory($applicant, 'Returned to Applicant Profiling');
+    // recruitmentApplications(), updateRecruitmentStage(), updateRecruitmentScreening(),
+    // updateClientEndorsementStatus() — moved to RecruitmentController.
 
-        return response()->json(['ok' => true]);
-    }
-
-    public function bulkReturnToProfiling(): JsonResponse
-    {
-        $applicants = Applicant::where('sent_to_recruitment', true)->get();
-        foreach ($applicants as $applicant) {
-            $applicant->update([
-                'sent_to_recruitment' => false,
-                'recruitment_stage' => null,
-                'stage' => $applicant->stage === 'sent' ? 'profiled' : $applicant->stage,
-                'client_endorsement_status' => 'Pending Review',
-                'recruiter_rating' => 0,
-                'screening_checklist' => [
-                    'requirements' => false,
-                    'identity' => false,
-                    'history' => false,
-                    'reference' => false,
-                ],
-                'document_status' => [
-                    'resume' => false,
-                    'certificate' => false,
-                    'portfolio' => false,
-                ],
-                'interview_schedule' => null,
-                'pre_employment_checklist' => [
-                    'medical_exam' => false,
-                    'nbi_clearance' => false,
-                    'sss_document' => false,
-                    'philhealth_mdr' => false,
-                    'pagibig_mid' => false,
-                    'bir_tin' => false,
-                    'psa_birth_cert' => false,
-                ],
-                'medical_referral' => null,
-                'statutory_numbers' => null,
-                'employment_contract' => null,
-                'orientation_modules' => null,
-                'atm_endorsement' => null,
-                'deployment_details' => null,
-                'ppe_issuance' => null,
-            ]);
-            $this->logHistory($applicant, 'Returned to Applicant Profiling');
-        }
-
-        return response()->json([
-            'ok' => true,
-            'count' => $applicants->count(),
-            'message' => "All {$applicants->count()} applicants returned to Profiling.",
-        ]);
-    }
-
+    /**
+     * @deprecated  Kept temporarily as an alias to avoid breaking any cached
+     *              frontend calls during the transition period. Will be removed
+     *              once all consumers point to /api/v1/recruitment/*.
+     */
     public function recruitmentApplications(): JsonResponse
     {
         $applicants = Applicant::where('sent_to_recruitment', true)

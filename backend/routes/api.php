@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientAccountController;
 use App\Http\Controllers\DeploymentController;
 use App\Http\Controllers\JobOrderController;
+use App\Http\Controllers\RecruitmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -55,38 +56,51 @@ Route::prefix('v1')->group(function () {
     Route::post('/applicants/{regId}/references', [ApplicantController::class, 'addReference']);
     Route::delete('/applicants/{regId}/references/{id}', [ApplicantController::class, 'removeReference']);
 
-    // Workflow actions
-    Route::patch('/applicants/{regId}/stage', [ApplicantController::class, 'updateStage']);
-    Route::patch('/applicants/{regId}/status', [ApplicantController::class, 'updateStatus']);
-    Route::patch('/applicants/{regId}/category', [ApplicantController::class, 'updateCategory']);
+    // ── Applicant workflow actions ──
+    Route::patch('/applicants/{regId}/stage',      [ApplicantController::class, 'updateStage']);
+    Route::patch('/applicants/{regId}/status',     [ApplicantController::class, 'updateStatus']);
+    Route::patch('/applicants/{regId}/category',   [ApplicantController::class, 'updateCategory']);
     Route::patch('/applicants/{regId}/target-job', [ApplicantController::class, 'updateTargetJob']);
-    Route::post('/applicants/{regId}/send-to-recruitment', [ApplicantController::class, 'sendToRecruitment']);
-    Route::post('/applicants/{regId}/return-to-profiling', [ApplicantController::class, 'returnToProfiling']);
-    Route::post('/applicants/bulk-return-to-profiling', [ApplicantController::class, 'bulkReturnToProfiling']);
-    Route::get('/recruitment/applications', [ApplicantController::class, 'recruitmentApplications']);
-    Route::patch('/applicants/{id}/recruitment-stage', [ApplicantController::class, 'updateRecruitmentStage']);
-    Route::patch('/applicants/{id}/recruitment-screening', [ApplicantController::class, 'updateRecruitmentScreening']);
-    Route::patch('/applicants/{id}/client-endorsement-status', [ApplicantController::class, 'updateClientEndorsementStatus']);
 
     // ── Client Management / CRM ──
-    Route::get('/clients',              [ClientAccountController::class, 'index']);
-    Route::post('/clients',             [ClientAccountController::class, 'store']);
-    Route::get('/clients/{id}',         [ClientAccountController::class, 'show']);
-    Route::put('/clients/{id}',         [ClientAccountController::class, 'update']);
-    Route::delete('/clients/{id}',      [ClientAccountController::class, 'destroy']);
+    Route::get('/clients',         [ClientAccountController::class, 'index']);
+    Route::post('/clients',        [ClientAccountController::class, 'store']);
+    Route::get('/clients/{id}',    [ClientAccountController::class, 'show']);
+    Route::put('/clients/{id}',    [ClientAccountController::class, 'update']);
+    Route::delete('/clients/{id}', [ClientAccountController::class, 'destroy']);
 
     // ── Client Portal Auth ──
     Route::prefix('client-portal')->group(function () {
-        Route::post('/login', [ClientAccountController::class, 'login']);
+        Route::post('/login',    [ClientAccountController::class, 'login']);
         Route::post('/register', [ClientAccountController::class, 'register']);
     });
 
     // ── Job Orders ──
-    Route::get('/job-orders',           [JobOrderController::class, 'index']);
-    Route::post('/job-orders',          [JobOrderController::class, 'store']);
-    Route::get('/job-orders/{ref}',     [JobOrderController::class, 'show']);
-    Route::put('/job-orders/{ref}',     [JobOrderController::class, 'update']);
-    Route::delete('/job-orders/{ref}',  [JobOrderController::class, 'destroy']);
+    Route::get('/job-orders',          [JobOrderController::class, 'index']);
+    Route::post('/job-orders',         [JobOrderController::class, 'store']);
+    Route::get('/job-orders/{ref}',    [JobOrderController::class, 'show']);
+    Route::put('/job-orders/{ref}',    [JobOrderController::class, 'update']);
+    Route::delete('/job-orders/{ref}', [JobOrderController::class, 'destroy']);
+
+    // ── Recruitment & Selection (dedicated controller) ──
+    Route::prefix('recruitment')->group(function () {
+        Route::get('/applications',              [RecruitmentController::class, 'index']);
+        Route::post('/{regId}/enroll',           [RecruitmentController::class, 'enroll']);
+        Route::post('/{regId}/return',           [RecruitmentController::class, 'returnToProfiling']);
+        Route::post('/bulk-return',              [RecruitmentController::class, 'bulkReturn']);
+        Route::patch('/{id}/stage',              [RecruitmentController::class, 'updateStage']);
+        Route::patch('/{id}/screening',          [RecruitmentController::class, 'updateScreening']);
+        Route::patch('/{id}/endorsement-status', [RecruitmentController::class, 'updateEndorsementStatus']);
+    });
+
+    // ── Backward-compatible aliases (kept during frontend transition) ──
+    Route::post('/applicants/{regId}/send-to-recruitment',       [RecruitmentController::class, 'enroll']);
+    Route::post('/applicants/{regId}/return-to-profiling',       [RecruitmentController::class, 'returnToProfiling']);
+    Route::post('/applicants/bulk-return-to-profiling',          [RecruitmentController::class, 'bulkReturn']);
+    Route::get('/recruitment/applications',                      [RecruitmentController::class, 'index']);
+    Route::patch('/applicants/{id}/recruitment-stage',           [RecruitmentController::class, 'updateStage']);
+    Route::patch('/applicants/{id}/recruitment-screening',       [RecruitmentController::class, 'updateScreening']);
+    Route::patch('/applicants/{id}/client-endorsement-status',   [RecruitmentController::class, 'updateEndorsementStatus']);
 
     // ── Deployments & Assignment ──
     Route::get('/deployments',                    [DeploymentController::class, 'index']);
@@ -98,10 +112,3 @@ Route::prefix('v1')->group(function () {
     Route::post('/deployments/{id}/intervention',  [DeploymentController::class, 'logIntervention']);
     Route::patch('/deployments/{id}/intervention', [DeploymentController::class, 'logIntervention']);
 });
-
-// ── Direct CRM Integration Endpoints (Top-level Aliases) ──
-Route::get('/clients',              [ClientAccountController::class, 'index']);
-Route::post('/clients',             [ClientAccountController::class, 'store']);
-Route::get('/clients/{id}',         [ClientAccountController::class, 'show']);
-Route::put('/clients/{id}',         [ClientAccountController::class, 'update']);
-Route::delete('/clients/{id}',      [ClientAccountController::class, 'destroy']);
