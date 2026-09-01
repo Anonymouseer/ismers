@@ -9,6 +9,7 @@ import { scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDa
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import { useUIFeedback } from '../../../components/common/UIFeedback';
 import PersonAvatar from '../../../components/common/PersonAvatar';
+import auditLogService from '../../../services/auditLogService';
 import './RecruitmentSelectionPage.css';
 
 /** Stage-specific metadata for the single-stage table view banners. */
@@ -399,6 +400,12 @@ export default function RecruitmentSelectionPage() {
           stage: nextKey,
           applicant: { ...targetApp, status: nextKey, clientEndorsementStatus: nextCpStatus },
         });
+
+        auditLogService.recordLog(
+          `Advanced candidate ${targetApp.name} from "${currentStageLabel}" to "${nextStageLabel}" (${targetApp.jobId || 'Open Placement'})`,
+          'Recruitment & Selection',
+          { candidate_id: targetApp.id, candidate_name: targetApp.name, from_stage: targetApp.status, to_stage: nextKey }
+        );
       },
       successTitle: 'Pipeline Stage Updated',
       successMessage: `${targetApp.name} successfully advanced to ${nextStageLabel}.`,

@@ -8,6 +8,7 @@ import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
 import { saveStoredStage, getCachedApplications, saveCachedApplications, updateRecruitmentStage, updateRecruitmentScreening } from '../../recruitment-selection/services/RecruitmentSelectionService';
 import { targetById } from '../../applicant-registration/services/ApplicantRegistrationService';
 import AnalyticsService from '../services/AnalyticsService';
+import auditLogService from '../../../services/auditLogService';
 
 export default function SmartScoringTab() {
   const [liveRequisitions, setLiveRequisitions] = useState(CLIENT_REQUISITIONS);
@@ -94,6 +95,12 @@ export default function SmartScoringTab() {
       topCandidates.forEach((c) => {
         handleShortlist(c.name, job.jobTitle, job.client);
       });
+
+      auditLogService.recordLog(
+        `Executed AI Auto-Shortlist for ${job.jobTitle} (${job.client}): ${topCandidates.length} candidate(s) promoted to Selection pipeline`,
+        'AI Candidate Scoring',
+        { job_ref: job.jobRef, job_title: job.jobTitle, client: job.client, count: topCandidates.length }
+      );
 
       showToast(res.message || `Auto-shortlisted ${topCandidates.length} candidate(s) for ${job.jobTitle} to Selection pipeline.`);
     } catch (err) {
@@ -391,6 +398,12 @@ export default function SmartScoringTab() {
     } catch (e) {
       console.warn('Could not broadcast shortlist event:', e);
     }
+
+    auditLogService.recordLog(
+      `Shortlisted candidate ${candidateName} for ${jobTitle} (${clientName})`,
+      'Recruitment & Selection',
+      { candidate: candidateName, job: jobTitle, client: clientName }
+    );
 
     showToast(`Candidate ${candidateName} successfully shortlisted & endorsed for Client Interview at ${clientName}!`);
   };

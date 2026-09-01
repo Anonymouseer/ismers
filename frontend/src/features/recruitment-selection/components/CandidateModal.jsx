@@ -18,6 +18,7 @@ import NoticeToReportModal from './NoticeToReportModal';
 import EmployeeIdModal from './EmployeeIdModal';
 import PpeIssuanceModal from './PpeIssuanceModal';
 import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
+import auditLogService from '../../../services/auditLogService';
 
 const SCORE_ROWS = [
   { key: 'skills', label: 'Skills Match' },
@@ -439,6 +440,12 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       stage: 'hired',
       applicant: { ...app, status: 'hired' },
     });
+
+    auditLogService.recordLog(
+      `Officially mobilized and deployed candidate ${app.name} to ${clientName} (${siteLocation}) for ${positionTitle} [${jobOrderRef}]`,
+      'Deployment & Assignment',
+      { candidate: app.name, client: clientName, job_order: jobOrderRef, site: siteLocation }
+    );
 
     onClose();
     if (typeof navigate === 'function') {

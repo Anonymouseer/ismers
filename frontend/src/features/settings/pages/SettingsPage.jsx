@@ -226,15 +226,21 @@ export default function SettingsPage() {
   const [auditMetrics, setAuditMetrics] = useState({ total_logs: 0, today_logs: 0, active_modules: 0 });
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [logFilterModule, setLogFilterModule] = useState('all');
+  const [logFilterStatus, setLogFilterStatus] = useState('all');
   const [logSearch, setLogSearch] = useState('');
+  const [logSortBy, setLogSortBy] = useState('created_at');
+  const [logSortDir, setLogSortDir] = useState('desc');
 
   // Fetch real activity logs from PostgreSQL database
   const fetchAuditLogs = useCallback(async () => {
     setLoadingLogs(true);
     try {
       const res = await auditLogService.getLogs({
-        search: logSearch,
-        module: logFilterModule,
+        search: logSearch || undefined,
+        module: logFilterModule !== 'all' ? logFilterModule : undefined,
+        status: logFilterStatus !== 'all' ? logFilterStatus : undefined,
+        sort_by: logSortBy,
+        sort_dir: logSortDir,
         limit: 100,
       });
       if (res?.success) {
@@ -248,7 +254,7 @@ export default function SettingsPage() {
     } finally {
       setLoadingLogs(false);
     }
-  }, [logSearch, logFilterModule]);
+  }, [logSearch, logFilterModule, logFilterStatus, logSortBy, logSortDir]);
 
   // Load live logs on mount and when audit tab is focused or filters change
   useEffect(() => {
@@ -508,8 +514,9 @@ export default function SettingsPage() {
   };
 
   const filteredLogs = useMemo(() => {
-    return auditLogs.filter((log) => {
+    const list = auditLogs.filter((log) => {
       if (logFilterModule !== 'all' && log.module !== logFilterModule) return false;
+      if (logFilterStatus !== 'all' && (log.status || 'Success').toLowerCase() !== logFilterStatus.toLowerCase()) return false;
       if (logSearch) {
         const q = logSearch.toLowerCase();
         const userName = (log.user_name || log.user || '').toLowerCase();
@@ -525,7 +532,26 @@ export default function SettingsPage() {
       }
       return true;
     });
-  }, [auditLogs, logFilterModule, logSearch]);
+
+    return list.sort((a, b) => {
+      let valA = a[logSortBy] ?? '';
+      let valB = b[logSortBy] ?? '';
+      if (logSortBy === 'created_at') {
+        valA = new Date(a.created_at || a.timestamp || 0).getTime();
+        valB = new Date(b.created_at || b.timestamp || 0).getTime();
+      } else if (logSortBy === 'id') {
+        valA = Number(a.id) || 0;
+        valB = Number(b.id) || 0;
+      } else {
+        valA = String(valA).toLowerCase();
+        valB = String(valB).toLowerCase();
+      }
+
+      if (valA < valB) return logSortDir === 'asc' ? -1 : 1;
+      if (valA > valB) return logSortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [auditLogs, logFilterModule, logFilterStatus, logSearch, logSortBy, logSortDir]);
 
   return (
     <div className="app">
@@ -741,8 +767,8 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Audit Filter Toolbar */}
-                  <div className="audit-toolbar">
-                    <div className="audit-search-box">
+                  <div className="audit-toolbar" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                    <div className="audit-search-box" style={{ flex: '1 1 240px' }}>
                       <svg className="icon" viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="8" />
                         <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -759,6 +785,7 @@ export default function SettingsPage() {
                       className="audit-select-filter"
                       value={logFilterModule}
                       onChange={(e) => setLogFilterModule(e.target.value)}
+                      style={{ minWidth: 160 }}
                     >
                       <option value="all">All Modules ({auditLogs.length})</option>
                       <option value="Authentication">Authentication</option>
@@ -767,10 +794,46 @@ export default function SettingsPage() {
                       <option value="Job Orders">Job Orders</option>
                       <option value="Deployment & Assignment">Deployment &amp; Assignment</option>
                       <option value="AI Candidate Scoring">AI Candidate Scoring</option>
+                      <option value="Communication & Alerts">Communication &amp; Alerts</option>
                       <option value="Client Management">Client Management</option>
                       <option value="System Administration">System Administration</option>
                       <option value="Security & Governance">Security &amp; Governance</option>
                       <option value="Data & Backup">Data &amp; Backup</option>
+                    </select>
+
+                    <select
+                      className="audit-select-filter"
+                      value={logFilterStatus}
+                      onChange={(e) => setLogFilterStatus(e.target.value)}
+                      style={{ minWidth: 130 }}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="success">Success Only</option>
+                      <option value="warning">Warning Only</option>
+                      <option value="danger">Danger Only</option>
+                      <option value="info">Info Only</option>
+                    </select>
+
+                    <select
+                      className="audit-select-filter"
+                      value={`${logSortBy}_${logSortDir}`}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'created_at_desc') { setLogSortBy('created_at'); setLogSortDir('desc'); }
+                        else if (val === 'created_at_asc') { setLogSortBy('created_at'); setLogSortDir('asc'); }
+                        else if (val === 'user_name_asc') { setLogSortBy('user_name'); setLogSortDir('asc'); }
+                        else if (val === 'user_name_desc') { setLogSortBy('user_name'); setLogSortDir('desc'); }
+                        else if (val === 'module_asc') { setLogSortBy('module'); setLogSortDir('asc'); }
+                        else if (val === 'status_asc') { setLogSortBy('status'); setLogSortDir('asc'); }
+                      }}
+                      style={{ minWidth: 160, fontWeight: 600 }}
+                    >
+                      <option value="created_at_desc">Sort: Newest First</option>
+                      <option value="created_at_asc">Sort: Oldest First</option>
+                      <option value="user_name_asc">Sort: Staff (A to Z)</option>
+                      <option value="user_name_desc">Sort: Staff (Z to A)</option>
+                      <option value="module_asc">Sort: Module (A to Z)</option>
+                      <option value="status_asc">Sort: Status</option>
                     </select>
                   </div>
 
@@ -779,13 +842,23 @@ export default function SettingsPage() {
                     <table className="audit-table">
                       <thead>
                         <tr>
-                          <th>LOG ID</th>
-                          <th>TIMESTAMP</th>
-                          <th>STAFF / USER</th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => { setLogSortBy('id'); setLogSortDir((d) => (d === 'asc' ? 'desc' : 'asc')); }}>
+                            LOG ID {logSortBy === 'id' ? (logSortDir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => { setLogSortBy('created_at'); setLogSortDir((d) => (d === 'asc' ? 'desc' : 'asc')); }}>
+                            TIMESTAMP {logSortBy === 'created_at' ? (logSortDir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => { setLogSortBy('user_name'); setLogSortDir((d) => (d === 'asc' ? 'desc' : 'asc')); }}>
+                            STAFF / USER {logSortBy === 'user_name' ? (logSortDir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
                           <th>ACTION / EVENT</th>
-                          <th>MODULE</th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => { setLogSortBy('module'); setLogSortDir((d) => (d === 'asc' ? 'desc' : 'asc')); }}>
+                            MODULE {logSortBy === 'module' ? (logSortDir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
                           <th>IP ADDRESS</th>
-                          <th>STATUS</th>
+                          <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => { setLogSortBy('status'); setLogSortDir((d) => (d === 'asc' ? 'desc' : 'asc')); }}>
+                            STATUS {logSortBy === 'status' ? (logSortDir === 'asc' ? '▲' : '▼') : ''}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>

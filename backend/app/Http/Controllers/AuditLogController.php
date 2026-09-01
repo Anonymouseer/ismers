@@ -50,8 +50,13 @@ class AuditLogController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
+        $sortBy = in_array($request->input('sort_by'), ['id', 'created_at', 'user_name', 'module', 'status', 'action'])
+            ? $request->input('sort_by')
+            : 'created_at';
+        $sortDir = strtolower($request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
         $limit = min((int)$request->input('limit', 50), 200);
-        $logs = $query->orderBy('created_at', 'desc')->paginate($limit);
+        $logs = $query->orderBy($sortBy, $sortDir)->paginate($limit);
 
         // Compute summary metrics for executive oversight
         $totalCount = ActivityLog::count();
