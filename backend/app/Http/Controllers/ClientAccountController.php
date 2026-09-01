@@ -346,16 +346,23 @@ class ClientAccountController extends Controller
 
         $companyId = $client->company_id ?? ('CLT-2026-' . str_pad((string)$client->id, 4, '0', STR_PAD_LEFT));
 
+        // Revoke any existing client portal tokens for this account to prevent
+        // token accumulation and enforce single active session per client.
+        $client->tokens()->where('name', 'client-portal')->delete();
+
+        $token = $client->createToken('client-portal', ['client-portal'])->plainTextToken;
+
         return response()->json([
-            'id' => $client->id,
-            'companyId' => $companyId,
-            'company' => $client->company,
-            'industry' => $client->industry,
+            'id'            => $client->id,
+            'companyId'     => $companyId,
+            'company'       => $client->company,
+            'industry'      => $client->industry,
             'contactPerson' => $client->contact_person,
-            'designation' => $client->designation,
-            'email' => $client->email,
-            'mobile' => $client->mobile,
-            'loggedIn' => true,
+            'designation'   => $client->designation,
+            'email'         => $client->email,
+            'mobile'        => $client->mobile,
+            'loggedIn'      => true,
+            'token'         => $token,
         ]);
     }
 
@@ -390,16 +397,19 @@ class ClientAccountController extends Controller
             'agreed' => $request->boolean('agreed'),
         ]);
 
+        $token = $client->createToken('client-portal', ['client-portal'])->plainTextToken;
+
         return response()->json([
-            'id' => $client->id,
-            'companyId' => $companyId,
-            'company' => $client->company,
-            'industry' => $client->industry,
+            'id'            => $client->id,
+            'companyId'     => $companyId,
+            'company'       => $client->company,
+            'industry'      => $client->industry,
             'contactPerson' => $client->contact_person,
-            'designation' => $client->designation,
-            'email' => $client->email,
-            'mobile' => $client->mobile,
-            'loggedIn' => true,
+            'designation'   => $client->designation,
+            'email'         => $client->email,
+            'mobile'        => $client->mobile,
+            'loggedIn'      => true,
+            'token'         => $token,
         ], 201);
     }
 }

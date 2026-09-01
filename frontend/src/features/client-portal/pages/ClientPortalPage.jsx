@@ -1228,6 +1228,7 @@ export default function ClientPortalPage() {
   const handleLogout = () => {
     try {
       localStorage.removeItem('cp_session');
+      localStorage.removeItem('cp_token');
     } catch {
       /* ignore */
     }

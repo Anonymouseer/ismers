@@ -89,6 +89,11 @@ export default function ClientPortalLoginPage() {
     clientPortalService.login({ email: email.trim(), password })
       .then((response) => {
         const sessionUser = response.data;
+        // Persist the Sanctum Bearer token so API calls to protected endpoints
+        // (e.g. POST /job-orders) include the Authorization header.
+        if (sessionUser?.token) {
+          localStorage.setItem('cp_token', sessionUser.token);
+        }
         localStorage.setItem('cp_session', JSON.stringify({ ...sessionUser, loggedIn: true }));
         navigate(from, { replace: true });
       })
