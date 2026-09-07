@@ -1105,7 +1105,7 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                 </select>
               </div>
 
-              <div className="table-responsive">
+              <div className="table-responsive audit-table-scroll">
                 <table className="audit-table">
                   <thead>
                     <tr>

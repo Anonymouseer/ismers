@@ -59,10 +59,10 @@ class AuthController extends Controller
             status: 'Success'
         );
 
-        // Session window: 8 hours from login
-        $expiresAt = now()->addHours(8);
+        // Absolute maximum session window: 10 minutes from login
+        $expiresAt = now()->addMinutes(10);
 
-        // Generate Sanctum plain text token with an absolute expiry
+        // Generate Sanctum plain text token with 10-minute maximum expiry
         $token = $user->createToken(
             'primepower-session',
             ['*'],

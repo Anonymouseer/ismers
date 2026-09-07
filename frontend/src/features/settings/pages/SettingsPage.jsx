@@ -170,7 +170,7 @@ export default function SettingsPage() {
 
   // Security Switches
   const [twoFa, setTwoFa] = useState(savedSettings.twoFa ?? true);
-  const [sessionTimeout, setSessionTimeout] = useState(savedSettings.sessionTimeout || '30');
+  const [sessionTimeout, setSessionTimeout] = useState(savedSettings.sessionTimeout || '5');
   const [autoBackup, setAutoBackup] = useState(savedSettings.autoBackup ?? true);
   const [passwordMinLength, setPasswordMinLength] = useState(savedSettings.passwordMinLength || '12');
   const [enforcePasswordExpiry, setEnforcePasswordExpiry] = useState(savedSettings.enforcePasswordExpiry ?? true);
@@ -194,12 +194,6 @@ export default function SettingsPage() {
   const [contractRenewalLeadDays, setContractRenewalLeadDays] = useState(savedSettings.contractRenewalLeadDays || '30');
   const [defaultContractTemplate, setDefaultContractTemplate] = useState(savedSettings.defaultContractTemplate || 'fixed_term_project');
 
-  // Integrations State
-  const [smsApiKey, setSmsApiKey] = useState(savedSettings.smsApiKey || 'sem_live_********************');
-  const [smsSenderId, setSmsSenderId] = useState(savedSettings.smsSenderId || 'PRIMEPOWER');
-  const [govApiEndpoint, setGovApiEndpoint] = useState(savedSettings.govApiEndpoint || 'https://api.compliance.primepower.ph/v1/verify');
-  const [autoVerifyGovId, setAutoVerifyGovId] = useState(savedSettings.autoVerifyGovId ?? true);
-  const [smsTestStatus, setSmsTestStatus] = useState('idle'); // 'idle' | 'sending' | 'sent'
 
   // Backup Manual Snapshot State
   const [backupProgress, setBackupProgress] = useState(null); // null | number
@@ -221,19 +215,22 @@ export default function SettingsPage() {
   const [newUserRole, setNewUserRole] = useState('Senior HR Recruiter');
   const [newUserDept, setNewUserDept] = useState('Talent Acquisition');
 
-  // Audit Logs State & Metrics
+  // Audit Logs State & Pagination
   const [auditLogs, setAuditLogs] = useState([]);
-  const [auditMetrics, setAuditMetrics] = useState({ total_logs: 0, today_logs: 0, active_modules: 0 });
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [logFilterModule, setLogFilterModule] = useState('all');
   const [logFilterStatus, setLogFilterStatus] = useState('all');
   const [logSearch, setLogSearch] = useState('');
   const [logSortBy, setLogSortBy] = useState('created_at');
   const [logSortDir, setLogSortDir] = useState('desc');
+  const [logPage, setLogPage] = useState(1);
+  const LOGS_PER_PAGE = 20;
 
-  // Fetch real activity logs from PostgreSQL database
-  const fetchAuditLogs = useCallback(async () => {
-    setLoadingLogs(true);
+  // Fetch real activity logs from PostgreSQL database with background sync
+  const fetchAuditLogs = useCallback(async (isBackground = false) => {
+    if (!isBackground) {
+      setLoadingLogs(true);
+    }
     try {
       const res = await auditLogService.getLogs({
         search: logSearch || undefined,
@@ -241,25 +238,37 @@ export default function SettingsPage() {
         status: logFilterStatus !== 'all' ? logFilterStatus : undefined,
         sort_by: logSortBy,
         sort_dir: logSortDir,
-        limit: 100,
+        limit: 300,
       });
       if (res?.success) {
         setAuditLogs(res.data || []);
-        if (res.metrics) {
-          setAuditMetrics(res.metrics);
-        }
       }
     } catch {
       // Fallback if offline
     } finally {
-      setLoadingLogs(false);
+      if (!isBackground) {
+        setLoadingLogs(false);
+      }
     }
   }, [logSearch, logFilterModule, logFilterStatus, logSortBy, logSortDir]);
 
-  // Load live logs on mount and when audit tab is focused or filters change
+  // Load live logs on mount and auto-poll in background when audit tab is focused
   useEffect(() => {
-    fetchAuditLogs();
+    if (activeTab !== 'audit') return;
+    fetchAuditLogs(false);
+
+    // Fast background sync every 4 seconds without manual refresh button
+    const pollTimer = setInterval(() => {
+      fetchAuditLogs(true);
+    }, 4000);
+
+    return () => clearInterval(pollTimer);
   }, [fetchAuditLogs, activeTab]);
+
+  // Reset pagination page when filters change
+  useEffect(() => {
+    setLogPage(1);
+  }, [logSearch, logFilterModule, logFilterStatus, logSortBy, logSortDir]);
 
   // Sync theme & density with DOM
   useEffect(() => {
@@ -322,10 +331,6 @@ export default function SettingsPage() {
       reqNc2,
       contractRenewalLeadDays,
       defaultContractTemplate,
-      smsApiKey,
-      smsSenderId,
-      govApiEndpoint,
-      autoVerifyGovId,
       lastBackupTime,
     };
     try {
@@ -340,11 +345,35 @@ export default function SettingsPage() {
       // ignore
     }
 
-    // Record real event in PostgreSQL database
+    // Record specific real-time event in PostgreSQL database
+    const tabLabelMap = {
+      'appearance': 'Appearance & Display Theme',
+      'notifications': 'System Notification Triggers',
+      'ai-config': 'Python AI Scoring Weights & Thresholds',
+      'workflows': 'Recruitment Workflows & Clearance Rules',
+      'profile': 'Organization Profile & Corporate Identity',
+      'org': 'Timezone, Currency & Operational Hours',
+      'users': 'User Accounts & Access Permissions',
+      'security': 'Security Governance & Session Rules',
+      'audit': 'Audit Logs Configuration',
+      'data': 'Data Backup & Snapshot Policies',
+    };
+    const activeTabLabel = tabLabelMap[activeTab] || 'Master System Configuration';
+
     auditLogService.recordLog(
-      'Updated Master System Configuration parameters and security rules',
+      `Updated System Settings: ${activeTabLabel} (Company: "${companyName}", Support: ${supportEmail})`,
       'System Administration',
-      { updated_at: new Date().toISOString() }
+      {
+        section: activeTabLabel,
+        company_name: companyName,
+        support_email: supportEmail,
+        contact_phone: contactPhone,
+        session_timeout: sessionTimeout,
+        two_fa: twoFa,
+        auto_shortlist_threshold: autoShortlistThreshold,
+        updated_at: new Date().toISOString()
+      },
+      'Success'
     ).then(() => {
       fetchAuditLogs();
     });
@@ -410,6 +439,16 @@ export default function SettingsPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    auditLogService.recordLog(
+      'Exported full system configuration and telemetry JSON backup archive',
+      'Data & Backup',
+      { exported_at: new Date().toISOString() },
+      'Info'
+    ).then(() => {
+      fetchAuditLogs();
+    });
+
     showToast('System snapshot exported successfully (JSON format).');
   };
 
@@ -426,6 +465,16 @@ export default function SettingsPage() {
       } catch {
         // ignore
       }
+
+      auditLogService.recordLog(
+        `Generated manual database snapshot archive (${nowTime})`,
+        'Data & Backup',
+        { snapshot_timestamp: nowTime },
+        'Success'
+      ).then(() => {
+        fetchAuditLogs();
+      });
+
       showToast('Manual database snapshot created and verified.');
       setTimeout(() => setBackupProgress(null), 1200);
     }, 850);
@@ -499,14 +548,6 @@ export default function SettingsPage() {
     showToast('User account status updated.');
   };
 
-  const handleTestSms = () => {
-    setSmsTestStatus('sending');
-    setTimeout(() => {
-      setSmsTestStatus('sent');
-      showToast(`Test SMS dispatched to ${contactPhone} via ${smsSenderId}`);
-      setTimeout(() => setSmsTestStatus('idle'), 3000);
-    }, 1000);
-  };
 
   const handleRevokeSessions = () => {
     auditLogService.recordLog('Revoked all remote sessions for current administrator account', 'Security & Governance');
@@ -552,6 +593,14 @@ export default function SettingsPage() {
       return 0;
     });
   }, [auditLogs, logFilterModule, logFilterStatus, logSearch, logSortBy, logSortDir]);
+
+  const totalLogPages = Math.max(1, Math.ceil(filteredLogs.length / LOGS_PER_PAGE));
+  const currentLogPage = Math.min(Math.max(1, logPage), totalLogPages);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (currentLogPage - 1) * LOGS_PER_PAGE;
+    return filteredLogs.slice(start, start + LOGS_PER_PAGE);
+  }, [filteredLogs, currentLogPage, LOGS_PER_PAGE]);
 
   return (
     <div className="app">
@@ -704,16 +753,6 @@ export default function SettingsPage() {
                   </svg>
                   Data & Backup
                 </button>
-                <button
-                  className={`nav-item-btn ${activeTab === 'integrations' ? 'active' : ''}`}
-                  onClick={() => setActiveTab('integrations')}
-                >
-                  <svg className="icon" viewBox="0 0 24 24">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                  Integrations
-                </button>
               </div>
             </div>
 
@@ -731,18 +770,6 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         className="btn-secondary-action"
-                        onClick={fetchAuditLogs}
-                        title="Reload latest system events"
-                        style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                      >
-                        <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
-                          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                        </svg>
-                        Refresh
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-secondary-action"
                         onClick={exportAuditLogsCsv}
                       >
                         Export Audit Log (CSV)
@@ -750,21 +777,6 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Audit Metrics Summary Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 16 }}>
-                    <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Recorded Logs</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginTop: 4 }}>{auditMetrics.total_logs || auditLogs.length}</div>
-                    </div>
-                    <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Today's Operations</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary)', marginTop: 4 }}>{auditMetrics.today_logs || 0}</div>
-                    </div>
-                    <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 14px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-fg)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Instrumented Modules</div>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: '#0d8050', marginTop: 4 }}>{auditMetrics.active_modules || 8} Active</div>
-                    </div>
-                  </div>
 
                   {/* Audit Filter Toolbar */}
                   <div className="audit-toolbar" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
@@ -838,7 +850,7 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Audit Log Table */}
-                  <div className="table-responsive">
+                  <div className="table-responsive audit-table-scroll">
                     <table className="audit-table">
                       <thead>
                         <tr>
@@ -868,7 +880,7 @@ export default function SettingsPage() {
                               Loading live audit trail from database...
                             </td>
                           </tr>
-                        ) : filteredLogs.map((log) => {
+                        ) : paginatedLogs.map((log) => {
                           const displayId = typeof log.id === 'number' ? `LOG-${String(log.id).padStart(4, '0')}` : (log.id || 'LOG-000');
                           const displayTime = log.created_at
                             ? new Date(log.created_at).toLocaleString('en-US', {
@@ -919,6 +931,129 @@ export default function SettingsPage() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Pagination Controls (20 per page) */}
+                  {filteredLogs.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 12,
+                        marginTop: 14,
+                        padding: '10px 14px',
+                        background: 'var(--bg)',
+                        border: '1px solid var(--border)',
+                        borderRadius: 10,
+                        fontSize: 12,
+                        color: 'var(--muted-fg)',
+                      }}
+                    >
+                      <div>
+                        Showing{' '}
+                        <strong style={{ color: 'var(--text)' }}>
+                          {(currentLogPage - 1) * LOGS_PER_PAGE + 1}
+                        </strong>{' '}
+                        to{' '}
+                        <strong style={{ color: 'var(--text)' }}>
+                          {Math.min(currentLogPage * LOGS_PER_PAGE, filteredLogs.length)}
+                        </strong>{' '}
+                        of <strong style={{ color: 'var(--text)' }}>{filteredLogs.length}</strong> activities
+                        <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.8 }}>
+                          (20 per page)
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button
+                          type="button"
+                          disabled={currentLogPage <= 1}
+                          onClick={() => setLogPage((p) => Math.max(1, p - 1))}
+                          className="btn-secondary-action"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: 11.5,
+                            fontWeight: 600,
+                            opacity: currentLogPage <= 1 ? 0.5 : 1,
+                            cursor: currentLogPage <= 1 ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          Previous
+                        </button>
+
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          {Array.from({ length: totalLogPages }, (_, i) => i + 1)
+                            .filter((page) => {
+                              if (totalLogPages <= 7) return true;
+                              if (page === 1 || page === totalLogPages) return true;
+                              return Math.abs(page - currentLogPage) <= 1;
+                            })
+                            .reduce((acc, page, idx, arr) => {
+                              if (idx > 0 && page - arr[idx - 1] > 1) {
+                                acc.push(-1 * idx);
+                              }
+                              acc.push(page);
+                              return acc;
+                            }, [])
+                            .map((item) => {
+                              if (item < 0) {
+                                return (
+                                  <span
+                                    key={`ellipsis-${item}`}
+                                    style={{ padding: '0 4px', alignSelf: 'center', color: 'var(--muted-fg)' }}
+                                  >
+                                    ...
+                                  </span>
+                                );
+                              }
+                              const isActive = item === currentLogPage;
+                              return (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => setLogPage(item)}
+                                  style={{
+                                    minWidth: 28,
+                                    height: 28,
+                                    padding: '0 6px',
+                                    borderRadius: 6,
+                                    border: isActive ? '1px solid var(--primary)' : '1px solid var(--border)',
+                                    background: isActive ? 'var(--primary)' : 'transparent',
+                                    color: isActive ? '#ffffff' : 'var(--text)',
+                                    fontWeight: isActive ? 700 : 500,
+                                    fontSize: 11.5,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.15s ease',
+                                  }}
+                                >
+                                  {item}
+                                </button>
+                              );
+                            })}
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={currentLogPage >= totalLogPages}
+                          onClick={() => setLogPage((p) => Math.min(totalLogPages, p + 1))}
+                          className="btn-secondary-action"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: 11.5,
+                            fontWeight: 600,
+                            opacity: currentLogPage >= totalLogPages ? 0.5 : 1,
+                            cursor: currentLogPage >= totalLogPages ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1853,15 +1988,15 @@ export default function SettingsPage() {
 
                   <div className="form-grid-2col">
                     <div className="form-group-compact">
-                      <label>Session Idle Timeout</label>
+                      <label>Session Idle Timeout (5–10 Min)</label>
                       <select
                         className="input-compact"
                         value={sessionTimeout}
                         onChange={(e) => setSessionTimeout(e.target.value)}
                       >
-                        <option value="15">15 Minutes</option>
-                        <option value="30">30 Minutes (Recommended)</option>
-                        <option value="60">60 Minutes</option>
+                        <option value="5">5 Minutes (Recommended / Strict)</option>
+                        <option value="7">7 Minutes</option>
+                        <option value="10">10 Minutes (Maximum Allowed)</option>
                       </select>
                     </div>
 
@@ -2011,128 +2146,7 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* INTEGRATIONS TAB */}
-              {activeTab === 'integrations' && (
-                <div className="section-block">
-                  <h2 className="section-title">Integrations &amp; External Gateways</h2>
-                  <p className="section-desc">Connect Philippine SMS notification gateways and statutory compliance verification endpoints.</p>
 
-                  {/* PHILIPPINE SMS GATEWAY */}
-                  <div
-                    style={{
-                      background: 'var(--bg)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      padding: '16px 18px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>
-                          Philippine SMS Gateway (Semaphore / Infobip)
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>
-                          Dispatches deployment confirmation SMS to candidates across Smart, Globe, and DITO networks.
-                        </div>
-                      </div>
-                      <span className="status-pill success">Connected</span>
-                    </div>
-
-                    <div className="form-grid-2col">
-                      <div className="form-group-compact">
-                        <label>SMS Gateway API Key</label>
-                        <input
-                          type="password"
-                          className="input-compact"
-                          value={smsApiKey}
-                          onChange={(e) => setSmsApiKey(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group-compact">
-                        <label>Registered Sender ID</label>
-                        <input
-                          type="text"
-                          className="input-compact"
-                          value={smsSenderId}
-                          onChange={(e) => setSmsSenderId(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <button
-                        type="button"
-                        className="btn-secondary-action"
-                        disabled={smsTestStatus === 'sending'}
-                        onClick={handleTestSms}
-                        style={{ fontSize: 11, padding: '6px 12px' }}
-                      >
-                        {smsTestStatus === 'sending' ? 'Dispatching Test SMS...' : 'Send Test SMS'}
-                      </button>
-                      {smsTestStatus === 'sent' && (
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--green)' }}>
-                          ✓ Test SMS successfully dispatched to {contactPhone}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="card-divider"></div>
-
-                  {/* GOVERNMENT VERIFICATION API */}
-                  <div
-                    style={{
-                      background: 'var(--bg)',
-                      border: '1px solid var(--border)',
-                      borderRadius: 12,
-                      padding: '16px 18px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 12,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)' }}>
-                          Statutory Pre-Employment Verification Service
-                        </div>
-                        <div style={{ fontSize: 11, color: 'var(--muted-fg)' }}>
-                          Automated check against NBI clearance database and SSS membership status records.
-                        </div>
-                      </div>
-                      <span className="status-pill info">Simulation Active</span>
-                    </div>
-
-                    <div className="form-group-compact">
-                      <label>Verification API Endpoint URL</label>
-                      <input
-                        type="text"
-                        className="input-compact"
-                        value={govApiEndpoint}
-                        onChange={(e) => setGovApiEndpoint(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="switch-row" style={{ padding: 0 }}>
-                      <div className="switch-text">
-                        <span className="switch-title">Auto-Verify Government IDs on Candidate Registration</span>
-                        <span className="switch-desc">Validate SSS, PhilHealth, and TIN syntax upon initial profiling</span>
-                      </div>
-                      <button
-                        type="button"
-                        className={`switch-toggle ${autoVerifyGovId ? 'on' : ''}`}
-                        onClick={() => setAutoVerifyGovId(!autoVerifyGovId)}
-                      >
-                        <span className="switch-thumb"></span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 

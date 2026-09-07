@@ -444,31 +444,23 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* FOOTER USER SUMMARY */}
+        {/* FOOTER USER SUMMARY & INTEGRATED PROFILE SETTINGS */}
         <Link
           to="/profile"
-          className="sidebar-foot"
-          title="My Profile & Preferences"
-          style={{ textDecoration: 'none', cursor: 'pointer' }}
+          className={`sidebar-foot${location.pathname === '/profile' ? ' active' : ''}`}
+          title="Profile Settings & Preferences"
         >
           <div className="avatar">{adminName.charAt(0)}</div>
           <div className="foot-text">
             <div className="foot-name">{adminName}</div>
-            <div className="foot-role">{adminRole}</div>
+            <div className="foot-role">Profile Settings</div>
           </div>
-        </Link>
-
-        {/* EXPLICIT PROFILE SETTINGS BUTTON */}
-        <Link
-          to="/profile"
-          className={`sidebar-profile-btn${location.pathname === '/profile' ? ' active' : ''}`}
-          title="Profile Settings"
-        >
-          <svg className="icon" viewBox="0 0 24 24" style={{ width: 15, height: 15 }}>
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
-          <span className="label">Profile Settings</span>
+          <div className="foot-action-icon" title="Open Profile Settings">
+            <svg className="icon" viewBox="0 0 24 24" style={{ width: 14, height: 14 }}>
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </div>
         </Link>
 
         <button type="button" onClick={logout} className="signout" style={{ background: 'transparent', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer' }}>

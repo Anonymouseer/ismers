@@ -11,7 +11,7 @@ const SETTINGS_KEY = 'ismers.settings';
 
 /**
  * Reads the configured Session Idle Timeout from the Settings page.
- * Falls back to 30 minutes if not configured.
+ * Default: 5 minutes idle timeout (bounded up to 10 minutes maximum).
  * The Settings UI stores the value as a string (minutes).
  */
 function getIdleTimeoutMs() {
@@ -21,15 +21,16 @@ function getIdleTimeoutMs() {
       const parsed = JSON.parse(raw);
       const minutes = parseInt(parsed.sessionTimeout, 10);
       if (!isNaN(minutes) && minutes > 0) {
-        return minutes * 60 * 1000;
+        const boundedMinutes = Math.min(10, Math.max(5, minutes));
+        return boundedMinutes * 60 * 1000;
       }
     }
   } catch { /* ignore */ }
-  return 30 * 60 * 1000; // Default: 30 minutes
+  return 5 * 60 * 1000; // Default: 5 minutes idle timeout
 }
 
-// Warn the user 2 minutes before expiry
-const EXPIRY_WARN_BEFORE_MS = 2 * 60 * 1000;
+// Warn the user 1 minute before expiry
+const EXPIRY_WARN_BEFORE_MS = 1 * 60 * 1000;
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 function readStorage(key) {
@@ -220,6 +221,17 @@ export function AuthProvider({ children }) {
   };
 
   /**
+   * Update logged-in user fields in real-time across components and storage.
+   */
+  const updateUser = useCallback((updatedFields) => {
+    setUser((prev) => {
+      const next = { ...prev, ...updatedFields };
+      writeStorage(USER_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  /**
    * Check if the logged-in user has access to a given module key.
    */
   const canAccess = (moduleKey) => {
@@ -238,6 +250,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        updateUser,
         canAccess,
       }}
     >

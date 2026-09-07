@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../auth/store/AuthStore';
+import auditLogService from '../../../services/auditLogService';
 import './UserProfilePage.css';
 
 const PROFILE_STORAGE_KEY = 'ismers.user_preferences';
 
 export default function UserProfilePage() {
   const { collapsed } = useOutletContext() || { collapsed: false };
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState('profile');
   const [toastMessage, setToastMessage] = useState(null);
@@ -59,10 +60,11 @@ export default function UserProfilePage() {
   // Handle Save Profile
   const handleSaveProfile = (e) => {
     if (e) e.preventDefault();
+    const oldName = user?.name || 'Administrator';
+    if (updateUser) {
+      updateUser({ name: fullName });
+    }
     try {
-      const storedUser = JSON.parse(localStorage.getItem('primepower_admin_user') || '{}');
-      const updatedUser = { ...storedUser, name: fullName };
-      localStorage.setItem('primepower_admin_user', JSON.stringify(updatedUser));
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({
         contactPhone,
         emailSignature,
@@ -75,6 +77,24 @@ export default function UserProfilePage() {
     } catch {
       // ignore
     }
+
+    const isNameChanged = oldName !== fullName;
+    const actionText = isNameChanged
+      ? `Updated personal profile: Changed staff name from "${oldName}" to "${fullName}" (Phone: ${contactPhone})`
+      : `Updated personal profile identification & signature (Phone: ${contactPhone})`;
+
+    auditLogService.recordLog(
+      actionText,
+      'Authentication',
+      {
+        previous_name: oldName,
+        new_name: fullName,
+        contact_phone: contactPhone,
+        default_route: defaultRoute,
+      },
+      'Success'
+    );
+
     showToast('Personal profile and signature updated successfully!');
   };
 
@@ -93,6 +113,14 @@ export default function UserProfilePage() {
       showToast('New password and confirmation do not match.');
       return;
     }
+
+    auditLogService.recordLog(
+      `User updated personal security password credentials`,
+      'Security & Governance',
+      { user_email: user?.email },
+      'Success'
+    );
+
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -111,16 +139,35 @@ export default function UserProfilePage() {
         notifSoundAlerts
       }));
     } catch {}
+
+    auditLogService.recordLog(
+      `Updated personal notification alert subscriptions (PRF Alerts: ${notifAssignedPrf ? 'ON' : 'OFF'}, Clearance Alerts: ${notifCandidateClearance ? 'ON' : 'OFF'})`,
+      'Communication & Alerts',
+      { notifAssignedPrf, notifCandidateClearance, notifDailyDigest, notifSoundAlerts },
+      'Success'
+    );
+
     showToast('Personal notification preferences saved!');
   };
 
   // Handle Save Workspace
   const handleSaveWorkspace = () => {
     try {
+      if (updateUser) {
+        updateUser({ defaultRoute });
+      }
       const storedUser = JSON.parse(localStorage.getItem('primepower_admin_user') || '{}');
       const updatedUser = { ...storedUser, defaultRoute };
       localStorage.setItem('primepower_admin_user', JSON.stringify(updatedUser));
     } catch {}
+
+    auditLogService.recordLog(
+      `Updated personal workspace display preferences (Theme: ${theme}, Density: ${density}, Route: ${defaultRoute})`,
+      'System Administration',
+      { theme, density, defaultRoute },
+      'Success'
+    );
+
     showToast('Workspace display and startup route saved!');
   };
 

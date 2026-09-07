@@ -55,7 +55,7 @@ class AuditLogController extends Controller
             : 'created_at';
         $sortDir = strtolower($request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
-        $limit = min((int)$request->input('limit', 50), 200);
+        $limit = min((int)$request->input('limit', 50), 500);
         $logs = $query->orderBy($sortBy, $sortDir)->paginate($limit);
 
         // Compute summary metrics for executive oversight

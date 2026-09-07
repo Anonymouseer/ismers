@@ -825,6 +825,32 @@
   border-radius: 10px;
 }
 
+.table-responsive.audit-table-scroll {
+  max-height: 480px;
+  overflow-y: auto;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.table-responsive.audit-table-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-responsive.audit-table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-responsive.audit-table-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.table-responsive.audit-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-fg);
+}
+
 .audit-table {
   width: 100%;
   border-collapse: collapse;
@@ -833,6 +859,9 @@
 }
 
 .audit-table th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   background-color: var(--secondary);
   color: var(--muted-fg);
   font-size: 10.5px;
@@ -841,6 +870,7 @@
   letter-spacing: 0.6px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 var(--border);
 }
 
 .audit-table td {
