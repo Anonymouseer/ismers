@@ -20,6 +20,7 @@ class User extends Authenticatable
         'role',
         'role_label',
         'department',
+        'status',
         'allowed_modules',
         'default_route',
         'photo',

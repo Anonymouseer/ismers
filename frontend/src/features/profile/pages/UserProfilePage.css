@@ -328,9 +328,11 @@
 }
 
 .input-compact {
-  height: 36px;
-  padding: 0 12px;
-  font-size: 12px;
+  min-height: 38px;
+  height: auto;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  line-height: 1.4;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -338,6 +340,13 @@
   outline: none;
   transition: border-color 0.15s ease;
   width: 100%;
+  box-sizing: border-box;
+}
+
+select.input-compact {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  cursor: pointer;
 }
 
 .input-compact:focus {
@@ -352,6 +361,7 @@
 }
 
 .input-compact.text-area {
+  min-height: 70px;
   height: auto;
   padding: 8px 12px;
   resize: vertical;

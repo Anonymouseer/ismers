@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeploymentController;
 use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\RecruitmentController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -144,6 +145,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/audit-logs',        [AuditLogController::class, 'index']);
         Route::post('/audit-logs',       [AuditLogController::class, 'store']);
         Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
+
+        // ── Staff User Management (RBAC) ──
+        Route::get('/users',               [UserController::class, 'index']);
+        Route::post('/users',              [UserController::class, 'store']);
+        Route::patch('/users/{id}/status', [UserController::class, 'updateStatus']);
 
     }); // end auth:sanctum
 });

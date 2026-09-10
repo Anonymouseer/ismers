@@ -634,15 +634,25 @@
 
 .input-compact {
   width: 100%;
-  padding: 10px 14px;
+  min-height: 38px;
+  height: auto;
+  padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background-color: var(--bg);
   color: var(--text);
   font-size: 12.5px;
+  line-height: 1.4;
   outline: none;
   font-family: inherit;
   transition: border-color 0.16s var(--ease);
+  box-sizing: border-box;
+}
+
+select.input-compact {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  cursor: pointer;
 }
 
 .input-compact:focus {
@@ -651,7 +661,7 @@
 
 .text-area {
   resize: vertical;
-  min-height: 60px;
+  min-height: 70px;
 }
 
 /* USER PROFILE BOX */
@@ -809,13 +819,17 @@
 }
 
 .audit-select-filter {
-  padding: 8px 14px;
+  min-height: 38px;
+  height: auto;
+  padding: 6px 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background-color: var(--bg);
   color: var(--text);
   font-size: 12px;
+  line-height: 1.4;
   outline: none;
+  box-sizing: border-box;
 }
 
 .table-responsive {

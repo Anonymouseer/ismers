@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../auth/store/AuthStore';
 import auditLogService from '../../../services/auditLogService';
+import api from '../../../services/apiClient';
 import './SettingsPage.css';
 
 const MOCK_AUDIT_LOGS = [
@@ -77,45 +78,6 @@ const MOCK_AUDIT_LOGS = [
   }
 ];
 
-const INITIAL_USERS = [
-  {
-    id: 'USR-001',
-    name: 'ADMIN USER',
-    email: 'admin@primepower.ph',
-    role: 'Super Administrator',
-    dept: 'Executive Management',
-    status: 'Active',
-    lastActive: 'Active Now'
-  },
-  {
-    id: 'USR-002',
-    name: 'Clarissa Ramos',
-    email: 'recruiter.lead@primepower.ph',
-    role: 'Senior HR Recruiter',
-    dept: 'Talent Acquisition',
-    status: 'Active',
-    lastActive: '12 mins ago'
-  },
-  {
-    id: 'USR-003',
-    name: 'Mark Anthony Santos',
-    email: 'deployment.ops@primepower.ph',
-    role: 'Operations Officer',
-    dept: 'Manpower Deployment',
-    status: 'Active',
-    lastActive: '1 hour ago'
-  },
-  {
-    id: 'USR-004',
-    name: 'Patricia Joy Gomez',
-    email: 'accounts@primepower.ph',
-    role: 'Client Relations Officer',
-    dept: 'Client Accounts',
-    status: 'Active',
-    lastActive: 'Yesterday'
-  }
-];
-
 export default function SettingsPage() {
   const { collapsed, setCollapsed } = useOutletContext() || { collapsed: false, setCollapsed: () => { } };
   const { user: currentUser } = useAuth();
@@ -138,7 +100,6 @@ export default function SettingsPage() {
 
   const SETTINGS_STORAGE_KEY = 'ismers.settings';
   const LOGS_STORAGE_KEY = 'ismers.audit_logs';
-  const USERS_STORAGE_KEY = 'ismers.system_users';
 
   const loadSavedSettings = () => {
     try {
@@ -201,21 +162,41 @@ export default function SettingsPage() {
   const [backupProgress, setBackupProgress] = useState(null); // null | number
   const [lastBackupTime, setLastBackupTime] = useState(savedSettings.lastBackupTime || '2026-08-04 18:40:00 (Midnight Auto)');
 
-  // Users Directory State
-  const [usersList, setUsersList] = useState(() => {
-    try {
-      const saved = localStorage.getItem(USERS_STORAGE_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch {
-      // ignore
-    }
-    return INITIAL_USERS;
-  });
+  // Users Directory State (Real Database Staff)
+  const [usersList, setUsersList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [submittingUser, setSubmittingUser] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserRole, setNewUserRole] = useState('Senior HR Recruiter');
-  const [newUserDept, setNewUserDept] = useState('Talent Acquisition');
+  const [newUserRole, setNewUserRole] = useState('recruitment_officer');
+  const [newUserDept, setNewUserDept] = useState('Recruitment & Selection');
+
+  // Fetch real verified staff accounts from MySQL
+  const fetchUsers = useCallback(async (quiet = false) => {
+    if (!quiet) setLoadingUsers(true);
+    try {
+      const res = await api.get('/users');
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        setUsersList(res.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to load system staff users:', err);
+    } finally {
+      if (!quiet) setLoadingUsers(false);
+    }
+  }, []);
+
+  // Pre-load staff accounts on mount and whenever Users tab is opened
+  useEffect(() => {
+    fetchUsers(true);
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers(false);
+    }
+  }, [activeTab, fetchUsers]);
 
   // Audit Logs State & Pagination
   const [auditLogs, setAuditLogs] = useState([]);
@@ -482,72 +463,57 @@ export default function SettingsPage() {
     }, 850);
   };
 
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     if (!newUserName.trim() || !newUserEmail.trim()) {
-      showToast('Please provide valid name and email address.');
+      showToast('Please provide valid name and corporate email address.');
       return;
     }
-    const newUser = {
-      id: `USR-00${usersList.length + 1}`,
-      name: newUserName.trim(),
-      email: newUserEmail.trim(),
-      role: newUserRole,
-      dept: newUserDept,
-      status: 'Active',
-      lastActive: 'Just registered'
-    };
-    const updatedUsers = [newUser, ...usersList];
-    setUsersList(updatedUsers);
+    setSubmittingUser(true);
     try {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    } catch {
-      // ignore
+      const res = await api.post('/users', {
+        name: newUserName.trim(),
+        email: newUserEmail.trim(),
+        role: newUserRole,
+        department: newUserDept,
+      });
+
+      if (res.data?.success) {
+        showToast(`Staff account created successfully for ${newUserName.trim()}`);
+        setNewUserName('');
+        setNewUserEmail('');
+        setShowAddUserModal(false);
+        await fetchUsers(true);
+        fetchAuditLogs();
+      } else {
+        showToast(res.data?.message || 'Failed to create staff account.');
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to create staff user account.';
+      showToast(msg);
+    } finally {
+      setSubmittingUser(false);
     }
-
-    auditLogService.recordLog(
-      `Created new user account: ${newUser.name} (${newUser.role})`,
-      'Security & Governance',
-      { name: newUser.name, role: newUser.role, email: newUser.email }
-    ).then(() => {
-      fetchAuditLogs();
-    });
-
-    setNewUserName('');
-    setNewUserEmail('');
-    setShowAddUserModal(false);
-    showToast(`User account created for ${newUser.name}`);
   };
 
-  const handleToggleUserStatus = (userId) => {
-    let affectedUser = null;
-    let newStatus = 'Active';
-    const updatedUsers = usersList.map((u) => {
-      if (u.id === userId) {
-        newStatus = u.status === 'Active' ? 'Suspended' : 'Active';
-        affectedUser = u;
-        return { ...u, status: newStatus };
-      }
-      return u;
-    });
-    setUsersList(updatedUsers);
+  const handleToggleUserStatus = async (userId, userName) => {
+    if (userId === currentUser?.id || (currentUser?.email && usersList.find((u) => u.id === userId)?.email === currentUser?.email)) {
+      showToast('Cannot suspend your own active administrator account.');
+      return;
+    }
+
     try {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    } catch {
-      // ignore
-    }
-
-    if (affectedUser) {
-      auditLogService.recordLog(
-        `Updated account status for ${affectedUser.name} to ${newStatus}`,
-        'Security & Governance',
-        { user_id: userId, new_status: newStatus }
-      ).then(() => {
+      const res = await api.patch(`/users/${userId}/status`);
+      if (res.data?.success) {
+        showToast(`Staff account status updated to ${res.data.new_status}.`);
+        await fetchUsers(true);
         fetchAuditLogs();
-      });
+      } else {
+        showToast(res.data?.message || 'Failed to update account status.');
+      }
+    } catch (err) {
+      showToast('Failed to update staff account status.');
     }
-
-    showToast('User account status updated.');
   };
 
 
@@ -910,7 +876,7 @@ export default function SettingsPage() {
                           );
 
                           const isSystem = displayName.toLowerCase().includes('system');
-                          const userPhoto = (isCurrentUser && currentUser?.photo) || log.photo || log.avatar || null;
+                          const userPhoto = log.photo || log.user_photo || (isCurrentUser && currentUser?.photo) || log.avatar || null;
                           const userInitial = (displayName || 'U').charAt(0).toUpperCase();
 
                           const getRoleBadgeBg = (role) => {
@@ -940,6 +906,9 @@ export default function SettingsPage() {
                                         src={userPhoto}
                                         alt={displayName}
                                         className="audit-avatar-img"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display = 'none';
+                                        }}
                                       />
                                     ) : isSystem ? (
                                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -1820,8 +1789,8 @@ export default function SettingsPage() {
                     <table className="audit-table">
                       <thead>
                         <tr>
-                          <th>USER</th>
-                          <th>EMAIL</th>
+                          <th>STAFF MEMBER</th>
+                          <th>CORPORATE EMAIL</th>
                           <th>ROLE / PRIVILEGES</th>
                           <th>DEPARTMENT</th>
                           <th>STATUS</th>
@@ -1830,78 +1799,128 @@ export default function SettingsPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {usersList.map((u) => (
-                          <tr key={u.id}>
-                            <td>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div
-                                  style={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: '50%',
-                                    background: 'var(--primary)',
-                                    color: '#fff',
-                                    fontWeight: 800,
-                                    fontSize: 11,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    overflow: 'hidden',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {u.email === currentUser?.email && currentUser?.photo ? (
-                                    <img src={currentUser.photo} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  ) : (
-                                    u.name.charAt(0)
-                                  )}
-                                </div>
-                                <span style={{ fontWeight: 700, color: 'var(--text)' }}>{u.name}</span>
-                              </div>
-                            </td>
-                            <td style={{ color: 'var(--muted-fg)', fontSize: 11.5 }}>{u.email}</td>
-                            <td>
-                              <span
-                                style={{
-                                  fontSize: 10.5,
-                                  fontWeight: 800,
-                                  padding: '2px 8px',
-                                  borderRadius: 6,
-                                  background: u.role.includes('Admin') ? 'rgba(139, 92, 246, 0.12)' : 'var(--secondary)',
-                                  color: u.role.includes('Admin') ? 'var(--purple)' : 'var(--text)',
-                                  border: '1px solid var(--border)',
-                                }}
-                              >
-                                {u.role}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: 11.5, color: 'var(--text)' }}>{u.dept}</td>
-                            <td>
-                              <span className={`status-pill ${u.status === 'Active' ? 'success' : 'info'}`}>
-                                {u.status}
-                              </span>
-                            </td>
-                            <td style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{u.lastActive}</td>
-                            <td style={{ textAlign: 'right' }}>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleUserStatus(u.id)}
-                                style={{
-                                  padding: '3px 8px',
-                                  fontSize: 10.5,
-                                  fontWeight: 700,
-                                  borderRadius: 6,
-                                  border: '1px solid var(--border)',
-                                  background: 'var(--bg)',
-                                  color: 'var(--text)',
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                {u.status === 'Active' ? 'Suspend' : 'Activate'}
-                              </button>
+                        {loadingUsers && usersList.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '28px 12px', color: 'var(--muted-fg)' }}>
+                              Loading verified staff accounts from database...
                             </td>
                           </tr>
-                        ))}
+                        ) : usersList.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '28px 12px', color: 'var(--muted-fg)' }}>
+                              No staff accounts found.
+                            </td>
+                          </tr>
+                        ) : (
+                          usersList.map((u) => {
+                            const isSelf = u.id === currentUser?.id || (currentUser?.email && u.email?.toLowerCase() === currentUser?.email?.toLowerCase());
+                            const userAvatar = u.photo || (isSelf && currentUser?.photo ? currentUser.photo : null);
+                            const roleName = u.role_label || u.role || 'Staff';
+                            const isAdminRole = (u.role && u.role.includes('admin')) || roleName.toLowerCase().includes('admin');
+
+                            return (
+                              <tr key={u.id}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <div
+                                      style={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        background: 'var(--primary)',
+                                        color: '#fff',
+                                        fontWeight: 800,
+                                        fontSize: 12,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        overflow: 'hidden',
+                                        flexShrink: 0,
+                                        border: '1px solid var(--border)',
+                                      }}
+                                    >
+                                      {userAvatar ? (
+                                        <img src={userAvatar} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                      ) : (
+                                        u.name?.charAt(0)?.toUpperCase() || 'U'
+                                      )}
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{ fontWeight: 700, color: 'var(--text)' }}>{u.name}</span>
+                                        {isSelf && (
+                                          <span
+                                            style={{
+                                              fontSize: 9,
+                                              fontWeight: 800,
+                                              padding: '1px 5px',
+                                              borderRadius: 4,
+                                              background: 'rgba(59, 130, 246, 0.15)',
+                                              color: 'var(--primary, #3b82f6)',
+                                              letterSpacing: '0.04em',
+                                            }}
+                                          >
+                                            YOU
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span style={{ fontSize: 10.5, color: 'var(--muted-fg)', fontFamily: 'monospace' }}>
+                                        {u.user_code || `USR-00${u.id}`}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td style={{ color: 'var(--muted-fg)', fontSize: 11.5 }}>{u.email}</td>
+                                <td>
+                                  <span
+                                    style={{
+                                      fontSize: 10.5,
+                                      fontWeight: 800,
+                                      padding: '2px 8px',
+                                      borderRadius: 6,
+                                      background: isAdminRole ? 'rgba(139, 92, 246, 0.12)' : 'var(--secondary)',
+                                      color: isAdminRole ? 'var(--purple, #8b5cf6)' : 'var(--text)',
+                                      border: '1px solid var(--border)',
+                                    }}
+                                  >
+                                    {roleName}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: 11.5, color: 'var(--text)' }}>{u.department || u.dept || 'Operations'}</td>
+                                <td>
+                                  <span className={`status-pill ${u.status === 'Active' ? 'success' : 'danger'}`}>
+                                    {u.status || 'Active'}
+                                  </span>
+                                </td>
+                                <td style={{ fontSize: 11, color: 'var(--muted-fg)' }}>{u.last_active || u.lastActive || 'Recently active'}</td>
+                                <td style={{ textAlign: 'right' }}>
+                                  {isSelf ? (
+                                    <span style={{ fontSize: 11, color: 'var(--muted-fg)', fontStyle: 'italic' }}>
+                                      Active Session
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleUserStatus(u.id, u.name)}
+                                      style={{
+                                        padding: '4px 10px',
+                                        fontSize: 10.5,
+                                        fontWeight: 700,
+                                        borderRadius: 6,
+                                        border: '1px solid var(--border)',
+                                        background: u.status === 'Active' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                                        color: u.status === 'Active' ? '#dc2626' : '#059669',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      {u.status === 'Active' ? 'Suspend' : 'Reactivate'}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1979,10 +1998,11 @@ export default function SettingsPage() {
                               value={newUserRole}
                               onChange={(e) => setNewUserRole(e.target.value)}
                             >
-                              <option value="Senior HR Recruiter">Senior HR Recruiter (Sourcing &amp; Scoring)</option>
-                              <option value="Operations Officer">Operations Officer (Pre-Employment &amp; Deployment)</option>
-                              <option value="Client Relations Officer">Client Relations Officer (Job Orders &amp; Endorsement)</option>
-                              <option value="Super Administrator">Super Administrator (Full System Control)</option>
+                              <option value="recruitment_officer">Recruitment Officer (Sourcing &amp; Scoring)</option>
+                              <option value="registration_officer">Applicant Registration Officer (Intake &amp; Profiling)</option>
+                              <option value="job_order_coordinator">Job Order Coordinator (PRF &amp; Endorsement)</option>
+                              <option value="deployment_officer">Deployment Officer (Pre-Employment &amp; Deployment)</option>
+                              <option value="hr_administrator">HR Administrator (Full System Control)</option>
                             </select>
                           </div>
 
@@ -1993,10 +2013,11 @@ export default function SettingsPage() {
                               value={newUserDept}
                               onChange={(e) => setNewUserDept(e.target.value)}
                             >
+                              <option value="Recruitment & Selection">Recruitment &amp; Selection</option>
                               <option value="Talent Acquisition">Talent Acquisition</option>
-                              <option value="Manpower Deployment">Manpower Deployment</option>
-                              <option value="Client Accounts">Client Accounts</option>
-                              <option value="Executive Management">Executive Management</option>
+                              <option value="Operations">Operations</option>
+                              <option value="Workforce Deployment">Workforce Deployment</option>
+                              <option value="HR Management">HR Management</option>
                             </select>
                           </div>
 
@@ -2004,6 +2025,7 @@ export default function SettingsPage() {
                             <button
                               type="button"
                               className="btn-secondary-action"
+                              disabled={submittingUser}
                               onClick={() => setShowAddUserModal(false)}
                             >
                               Cancel
@@ -2011,9 +2033,10 @@ export default function SettingsPage() {
                             <button
                               type="submit"
                               className="btn-save"
-                              style={{ padding: '8px 16px', fontSize: 12 }}
+                              disabled={submittingUser}
+                              style={{ padding: '8px 16px', fontSize: 12, opacity: submittingUser ? 0.7 : 1 }}
                             >
-                              Create User Account
+                              {submittingUser ? 'Creating Account...' : 'Create User Account'}
                             </button>
                           </div>
                         </form>

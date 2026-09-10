@@ -15,44 +15,54 @@ class AuditLogController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = ActivityLog::query();
+        $query = ActivityLog::query()
+            ->leftJoin('users', function ($join) {
+                $join->on('activity_logs.user_id', '=', 'users.id')
+                     ->orOn('activity_logs.user_email', '=', 'users.email');
+            })
+            ->select([
+                'activity_logs.*',
+                'users.photo as photo',
+                'users.photo as user_photo',
+            ]);
 
         // Search across action, user_name, user_email, module, and ip
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('action', 'like', "%{$search}%")
-                  ->orWhere('user_name', 'like', "%{$search}%")
-                  ->orWhere('user_email', 'like', "%{$search}%")
-                  ->orWhere('module', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%");
+                $q->where('activity_logs.action', 'like', "%{$search}%")
+                  ->orWhere('activity_logs.user_name', 'like', "%{$search}%")
+                  ->orWhere('activity_logs.user_email', 'like', "%{$search}%")
+                  ->orWhere('activity_logs.module', 'like', "%{$search}%")
+                  ->orWhere('activity_logs.ip_address', 'like', "%{$search}%");
             });
         }
 
         // Filter by module
         if ($module = $request->input('module')) {
             if ($module !== 'All' && $module !== 'all') {
-                $query->where('module', $module);
+                $query->where('activity_logs.module', $module);
             }
         }
 
         // Filter by status
         if ($status = $request->input('status')) {
             if ($status !== 'All' && $status !== 'all') {
-                $query->where('status', $status);
+                $query->where('activity_logs.status', $status);
             }
         }
 
         // Filter by date
         if ($dateFrom = $request->input('date_from')) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereDate('activity_logs.created_at', '>=', $dateFrom);
         }
         if ($dateTo = $request->input('date_to')) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereDate('activity_logs.created_at', '<=', $dateTo);
         }
 
-        $sortBy = in_array($request->input('sort_by'), ['id', 'created_at', 'user_name', 'module', 'status', 'action'])
+        $sortColumn = in_array($request->input('sort_by'), ['id', 'created_at', 'user_name', 'module', 'status', 'action'])
             ? $request->input('sort_by')
             : 'created_at';
+        $sortBy = 'activity_logs.' . $sortColumn;
         $sortDir = strtolower($request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         $limit = min((int)$request->input('limit', 50), 500);
