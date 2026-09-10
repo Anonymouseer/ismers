@@ -182,6 +182,9 @@ export function ApplicantRegistrationProvider({ children }) {
         await loadCandidates();
         return { ok: false, duplicate: res.duplicate, message: res.message };
       }
+      if (res.applicant) {
+        patchCandidateLocal(regId, () => res.applicant);
+      }
       return { ok: true };
     } catch (err) {
       await loadCandidates();

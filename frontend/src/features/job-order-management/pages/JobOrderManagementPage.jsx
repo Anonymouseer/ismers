@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import useJobOrderManagementStore from '../store/JobOrderManagementStore';
-import DispatchStrip from '../components/DispatchStrip';
 import ControlsBar from '../components/ControlsBar';
 import BulkBar from '../components/BulkBar';
 import JobOrderTableView from '../components/JobOrderTableView';
@@ -54,8 +53,6 @@ export default function JobOrderManagementPage() {
             </div>
           </div>
         </div>
-
-        <DispatchStrip stats={store.stats} />
 
         <ControlsBar
           search={store.search} setSearch={store.setSearch}

@@ -482,6 +482,20 @@ class ApplicantController extends Controller
     {
         $applicant = $this->findApplicant($regId);
 
+        if (! $request->has('firstName')) {
+            if ($request->has('first_name')) {
+                $request->merge(['firstName' => $request->input('first_name')]);
+            } elseif ($request->has('name')) {
+                $request->merge(['firstName' => $request->input('name')]);
+            }
+        }
+        if (! $request->has('lastName') && $request->has('last_name')) {
+            $request->merge(['lastName' => $request->input('last_name')]);
+        }
+        if (! $request->has('middleName') && $request->has('middle_name')) {
+            $request->merge(['middleName' => $request->input('middle_name')]);
+        }
+
         $validated = $request->validate([
             'firstName' => 'sometimes|required|string|max:100',
             'lastName' => 'sometimes|required|string|max:100',

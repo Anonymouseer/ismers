@@ -5,8 +5,8 @@ const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say'];
 const CIVIL_STATUS_OPTIONS = ['Single', 'Married', 'Widowed', 'Separated'];
 
 const emptyForm = (c) => ({
-  name: c.name || '',
-  lastName: c.lastName || '',
+  firstName: c.firstName || (c.name ? c.name.split(' ')[0] : '') || '',
+  lastName: c.lastName || (c.name ? c.name.split(' ').slice(1).join(' ') : '') || '',
   middleName: c.middleName || '',
   suffix: c.suffix || '',
   dateOfBirth: c.dateOfBirth || '',
@@ -24,6 +24,7 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(() => emptyForm(candidate));
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Reset the draft form whenever a different candidate is opened.
   useEffect(() => {
@@ -36,18 +37,37 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSave = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.phone.trim()) {
-      setError('Name, email, and mobile number are required.');
+  const handleSave = async () => {
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) {
+      setError('First name, last name, email, and mobile number are required.');
       return;
     }
-    const result = onSave(candidate.regId, form);
-    if (!result.ok) {
-      setError(result.message);
-      return;
+
+    const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
+
+    const patch = {
+      ...form,
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      middleName: form.middleName ? form.middleName.trim() : '',
+      suffix: form.suffix ? form.suffix.trim() : '',
+      name: fullName,
+    };
+
+    setSaving(true);
+    try {
+      const result = await onSave(candidate.regId, patch);
+      if (result && result.ok === false) {
+        setError(result.message || 'Failed to update applicant information.');
+        return;
+      }
+      setError('');
+      setEditing(false);
+    } catch (err) {
+      setError('Server error updating information.');
+    } finally {
+      setSaving(false);
     }
-    setError('');
-    setEditing(false);
   };
 
   const handleCancel = () => {
@@ -55,6 +75,10 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
     setError('');
     setEditing(false);
   };
+
+  const displayFullName = candidate.firstName && candidate.lastName
+    ? [candidate.firstName, candidate.middleName, candidate.lastName].filter(Boolean).join(' ') + (candidate.suffix ? `, ${candidate.suffix}` : '')
+    : (candidate.name || '') + (candidate.suffix ? `, ${candidate.suffix}` : '');
 
   if (!editing) {
     return (
@@ -73,7 +97,7 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
           )}
         </div>
         <div className="meta-grid">
-          <div className="meta-row"><div className="k">Full Name</div><div className="v">{[candidate.name, candidate.middleName, candidate.lastName].filter(Boolean).join(' ')}{candidate.suffix ? `, ${candidate.suffix}` : ''}</div></div>
+          <div className="meta-row"><div className="k">Full Name</div><div className="v">{displayFullName}</div></div>
           <div className="meta-row"><div className="k">Contact</div><div className="v">{candidate.email} · {candidate.phone}</div></div>
           {candidate.alternateContact && (
             <div className="meta-row"><div className="k">Alt. Contact</div><div className="v">{candidate.alternateContact}</div></div>
@@ -106,7 +130,7 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
         </span>
       </div>
       <div className="edit-form-grid">
-        <label>First Name<input type="text" value={form.name} onChange={set('name')} /></label>
+        <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} /></label>
         <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} /></label>
         <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} /></label>
         <label>Suffix<input type="text" placeholder="Jr., Sr., III..." value={form.suffix} onChange={set('suffix')} /></label>
@@ -134,8 +158,10 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
       </div>
       {error && <div className="actions-warning" style={{ textAlign: 'left', marginTop: 8 }}>{error}</div>}
       <div className="stage-btn-row" style={{ marginTop: 10 }}>
-        <button type="button" className="stage-btn go" onClick={handleSave}>Save Changes</button>
-        <button type="button" className="stage-btn" onClick={handleCancel}>Cancel</button>
+        <button type="button" className="stage-btn go" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+        <button type="button" className="stage-btn" onClick={handleCancel} disabled={saving}>Cancel</button>
       </div>
     </div>
   );

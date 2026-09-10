@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
+  color-scheme: light;
   /* Light Mode Palette */
   --background: #F2F7FC;
   --bg: #F2F7FC;
@@ -52,6 +53,7 @@
 
 /* Dark Mode Palette */
 [data-theme="dark"], .dark, body.dark-mode {
+  color-scheme: dark;
   --background: #0F1B26;
   --bg: #0F1B26;
   --foreground: #E3EDF5;
@@ -115,6 +117,11 @@ a {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  color-scheme: inherit;
 }
 
 svg.icon {
