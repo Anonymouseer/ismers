@@ -48,10 +48,12 @@ export default function RootLayout() {
   else if (path.includes('ai-analytics')) activeItem = 'ai-analytics';
   else if (path.includes('settings')) activeItem = 'settings';
   else if (path.includes('profile')) activeItem = 'profile';
+  else if (path.includes('dashboard') || path === '/') activeItem = 'dashboard';
 
   // Dynamic Browser Tab Title
   useEffect(() => {
     const titles = {
+      'dashboard': 'Operational Dashboard | PRIMEPOWER MANPOWER',
       'client-management': 'Client Management | PRIMEPOWER MANPOWER',
       'job-order-management': 'Job Orders | PRIMEPOWER MANPOWER',
       'applicant-registration': 'Applicant Registration | PRIMEPOWER MANPOWER',

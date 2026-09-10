@@ -25,7 +25,7 @@ function SortIcon({ direction }) {
   );
 }
 
-export default function ClientsTable({ clients, onSelect }) {
+export default function ClientsTable({ clients, onSelect, onUpdateStatus }) {
   const [sortKey, setSortKey] = useState('name');
   const [sortDir, setSortDir] = useState('asc');
 
@@ -102,8 +102,35 @@ export default function ClientsTable({ clients, onSelect }) {
                     </div>
                   </div>
                 </td>
-                <td>
-                  <span className={`status-pill ${c.status}`}><span className="dot"></span>{statusLabel}</span>
+                <td onClick={(e) => e.stopPropagation()}>
+                  <select
+                    className={`status-pill ${c.status}`}
+                    value={c.status}
+                    onChange={(e) => {
+                      if (onUpdateStatus) {
+                        onUpdateStatus(c.id || c.companyId || c.name, e.target.value);
+                      }
+                    }}
+                    title="Click to update client status"
+                    style={{
+                      cursor: 'pointer',
+                      border: 'none',
+                      outline: 'none',
+                      fontFamily: 'inherit',
+                      fontWeight: 700,
+                      padding: '4px 18px 4px 10px',
+                      borderRadius: '20px',
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 6px center',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    }}
+                  >
+                    <option value="active">Active</option>
+                    <option value="prospect">Prospect</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
                 </td>
                 <td>{c.industry}</td>
                 <td className="ct-address">{c.address || '—'}</td>

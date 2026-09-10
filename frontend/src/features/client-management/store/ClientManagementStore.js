@@ -3,7 +3,7 @@ import { CLIENTS } from '../data/mockClients.js';
 import clientManagementService from '../services/ClientManagementService.js';
 import { ISMERSBridge } from '../../deployment-assignment/services/ismersBridge.js';
 import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService.js';
-import { subscribeRealtimeEvents } from '../../../utils/realtimeSync.js';
+import { subscribeRealtimeEvents, broadcastRealtimeEvent } from '../../../utils/realtimeSync.js';
 
 const DEPLOYMENTS_STORAGE_KEYS = ['ismers.deployments.v7', 'ismers.deployments.v6'];
 
@@ -312,9 +312,33 @@ export function mergeClientsWithDeployments(baseClients, deploymentsList = []) {
   });
 }
 
+const CLIENTS_CACHE_KEY = 'ismers_clients_live_cache';
+let memoryClientsCache = null;
+
+function getInitialClients() {
+  if (memoryClientsCache && memoryClientsCache.length > 0) {
+    return memoryClientsCache;
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(CLIENTS_CACHE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          memoryClientsCache = parsed;
+          return parsed;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return CLIENTS;
+}
+
 export function useClientManagementStore() {
   const [deployments, setDeployments] = useState(loadStoredDeployments);
-  const [rawClients, setRawClients] = useState(CLIENTS);
+  const [rawClients, setRawClients] = useState(getInitialClients);
   const [loading, setLoading] = useState(false);
   const [triggerCount, setTriggerCount] = useState(0);
 
@@ -323,6 +347,10 @@ export function useClientManagementStore() {
       setLoading(true);
       const res = await clientManagementService.getAll();
       if (Array.isArray(res.data) && res.data.length > 0) {
+        memoryClientsCache = res.data;
+        try {
+          localStorage.setItem(CLIENTS_CACHE_KEY, JSON.stringify(res.data));
+        } catch { /* ignore */ }
         setRawClients(res.data);
       }
     } catch (err) {
@@ -388,6 +416,42 @@ export function useClientManagementStore() {
     };
   }, [reloadData]);
 
+  const updateClientStatus = useCallback(async (clientId, newStatus) => {
+    // 1. Optimistic local update so UI reflects immediately
+    setRawClients((prev) => {
+      const updated = prev.map((c) => {
+        if (c.id === clientId || c.companyId === clientId || c.name === clientId) {
+          return { ...c, status: newStatus };
+        }
+        return c;
+      });
+      memoryClientsCache = updated;
+      try {
+        localStorage.setItem(CLIENTS_CACHE_KEY, JSON.stringify(updated));
+      } catch { /* ignore */ }
+      return updated;
+    });
+
+    // 2. Persist update to Laravel backend
+    try {
+      if (clientId) {
+        await clientManagementService.update(clientId, { status: newStatus });
+      }
+    } catch (err) {
+      console.error('Failed to update client status in backend:', err);
+    }
+
+    // 3. Broadcast real-time event across tabs & SPA modules
+    broadcastRealtimeEvent('CLIENT_UPDATED', { id: clientId, status: newStatus });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('ismers:client-status-updated', {
+          detail: { id: clientId, status: newStatus },
+        })
+      );
+    }
+  }, []);
+
   const clients = useMemo(() => {
     // eslint-disable-next-line no-unused-expressions
     triggerCount;
@@ -399,6 +463,7 @@ export function useClientManagementStore() {
     deployments,
     loading,
     refreshClients: reloadData,
+    updateClientStatus,
   };
 }
 

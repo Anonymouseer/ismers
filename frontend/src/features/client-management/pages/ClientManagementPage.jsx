@@ -8,7 +8,7 @@ import './ClientManagementPage.css';
 
 export default function ClientManagementPage() {
   const { collapsed } = useOutletContext() || { collapsed: false };
-  const { clients } = useClientManagementStore();
+  const { clients, updateClientStatus } = useClientManagementStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -40,7 +40,7 @@ export default function ClientManagementPage() {
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
         <div className="title-row">
           <h1 className="page-title">Client Management</h1>
-          <div className="page-sub">{clients.length} registered clients</div>
+          <div className="page-sub">{clients.length} registered corporate accounts</div>
         </div>
 
         <div className="workspace">
@@ -68,17 +68,20 @@ export default function ClientManagementPage() {
                   <option value="active">Active</option>
                   <option value="prospect">Prospect</option>
                   <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="archived">Archived</option>
                 </select>
               </div>
-              <ClientsTable clients={filteredClients} onSelect={setSelectedIndex} />
+              <ClientsTable
+                clients={filteredClients}
+                onSelect={setSelectedIndex}
+                onUpdateStatus={updateClientStatus}
+              />
             </div>
           ) : (
             <ClientProfile
               client={selectedClient}
               clientIndex={selectedIndex}
               onBack={() => setSelectedIndex(null)}
+              onUpdateStatus={updateClientStatus}
             />
           )}
         </div>

@@ -59,7 +59,7 @@ export default function LoginPage() {
     const res = await login(email.trim(), password);
     if (res.success) {
       const from = location.state?.from?.pathname;
-      const roleDefault = res.user?.defaultRoute || '/client-management';
+      const roleDefault = res.user?.defaultRoute || '/dashboard';
       navigate(from || roleDefault, { replace: true });
     } else {
       setError(res.message || 'Invalid email address or password.');

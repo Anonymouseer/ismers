@@ -19,6 +19,7 @@ import ClientPortalRegisterPage from '../features/client-portal/pages/ClientPort
 import ClientPortalResetPasswordPage from '../features/client-portal/pages/ClientPortalResetPasswordPage';
 import PublicApplyPage from '../features/applicant-registration/pages/PublicApplyPage';
 import LoginPage from '../features/auth/pages/LoginPage';
+import DashboardPage from '../features/dashboard/pages/DashboardPage';
 import RoleDefaultRedirect from '../components/auth/RoleDefaultRedirect';
 
 const router = createBrowserRouter([
@@ -36,6 +37,12 @@ const router = createBrowserRouter([
     children: [
       // Root → redirect to role's own default module
       { index: true, element: <RoleDefaultRedirect /> },
+
+      // Dashboard — Executive Overview for all authenticated roles
+      {
+        path: 'dashboard',
+        element: <DashboardPage />,
+      },
 
       // Client Management — hr_administrator, job_order_coordinator
       {

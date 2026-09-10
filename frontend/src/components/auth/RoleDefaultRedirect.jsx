@@ -7,6 +7,6 @@ import { useAuth } from '../../features/auth/store/AuthStore';
  */
 export default function RoleDefaultRedirect() {
   const { user } = useAuth();
-  const destination = user?.defaultRoute || '/client-management';
+  const destination = user?.defaultRoute || '/dashboard';
   return <Navigate to={destination} replace />;
 }

@@ -5,6 +5,7 @@ use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientAccountController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeploymentController;
 use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\RecruitmentController;
@@ -36,6 +37,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/login',    [ClientAccountController::class, 'login']);
         Route::post('/register', [ClientAccountController::class, 'register']);
     });
+
+    // ── Dashboard ──
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 
     // ── AI Analytics & Intelligence ──
     Route::prefix('analytics')->group(function () {

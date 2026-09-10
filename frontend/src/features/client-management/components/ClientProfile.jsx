@@ -6,7 +6,7 @@ import {
   colorFor, softFor, getCompanyId,
 } from '../utils/clientDisplay';
 
-export default function ClientProfile({ client, clientIndex, onBack }) {
+export default function ClientProfile({ client, clientIndex, onBack, onUpdateStatus }) {
   const c = client;
   const [openJobIndex, setOpenJobIndex] = useState(null);
   const [status, setStatus] = useState(c.status);
@@ -16,7 +16,15 @@ export default function ClientProfile({ client, clientIndex, onBack }) {
     setOpenJobIndex(null);
     setStatus(c.status);
     setStatusMenuOpen(false);
-  }, [clientIndex]);
+  }, [clientIndex, c.status]);
+
+  const handleStatusSelect = async (newStatus) => {
+    setStatus(newStatus);
+    setStatusMenuOpen(false);
+    if (onUpdateStatus) {
+      await onUpdateStatus(c.id || c.companyId || c.name, newStatus);
+    }
+  };
 
   const openPositions = openPositionsFor(c);
   const statusLabel = STATUS_LABEL_MAP[status] || 'Active Client';
@@ -59,32 +67,26 @@ export default function ClientProfile({ client, clientIndex, onBack }) {
               <div className="hero-actions">
                 <button className="hero-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
                 <div className="status-menu-wrap">
-                  <button className="hero-btn" onClick={() => setStatusMenuOpen((v) => !v)}>
+                  <button className="hero-btn" onClick={(e) => { e.stopPropagation(); setStatusMenuOpen((v) => !v); }}>
                     Status <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 11, height: 11 }}><path d="m6 9 6 6 6-6" /></svg>
                   </button>
                   {statusMenuOpen && (
-                    <div className="status-menu open">
-                      {status !== 'suspended' && (
-                        <div className="status-menu-item warn" onClick={() => { setStatus('suspended'); setStatusMenuOpen(false); }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5v5M14.5 9.5v5" /></svg>
-                          Suspend Client
-                        </div>
-                      )}
-                      {status !== 'archived' && (
-                        <div className="status-menu-item danger" onClick={() => { setStatus('archived'); setStatusMenuOpen(false); }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" /></svg>
-                          Archive Client
-                        </div>
-                      )}
-                      {status !== 'active' && (
-                        <>
-                          <div className="status-menu-divider"></div>
-                          <div className="status-menu-item ok" onClick={() => { setStatus('active'); setStatusMenuOpen(false); }}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9" /><path d="M3 4v5h5" /></svg>
-                            Reactivate
-                          </div>
-                        </>
-                      )}
+                    <div className="status-menu open" onClick={(e) => e.stopPropagation()}>
+                      <div style={{ padding: '8px 12px 6px', fontSize: '11px', fontWeight: 700, color: 'var(--muted)', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+                        Update Client Status
+                      </div>
+                      <div className={`status-menu-item ok ${status === 'active' ? 'active' : ''}`} onClick={() => handleStatusSelect('active')}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                        Set Active
+                      </div>
+                      <div className={`status-menu-item info ${status === 'prospect' ? 'active' : ''}`} onClick={() => handleStatusSelect('prospect')}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                        Set Prospect
+                      </div>
+                      <div className={`status-menu-item danger ${status === 'inactive' ? 'active' : ''}`} onClick={() => handleStatusSelect('inactive')}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></svg>
+                        Set Inactive
+                      </div>
                     </div>
                   )}
                 </div>
