@@ -22,12 +22,13 @@ Route::get('/ping', function () {
 });
 
 // ── Top-level alias routes for legacy compatibility (Protected) ──
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/clients',        [ClientAccountController::class, 'index']);
-    Route::post('/clients',       [ClientAccountController::class, 'store']);
-    Route::get('/clients/{id}',   [ClientAccountController::class, 'show']);
-    Route::put('/clients/{id}',   [ClientAccountController::class, 'update']);
-    Route::delete('/clients/{id}',[ClientAccountController::class, 'destroy']);
+Route::middleware(['auth:sanctum', 'module:client-management'])->group(function () {
+    Route::get('/clients',         [ClientAccountController::class, 'index']);
+    Route::post('/clients',        [ClientAccountController::class, 'store']);
+    Route::get('/clients/{id}',    [ClientAccountController::class, 'show']);
+    Route::put('/clients/{id}',    [ClientAccountController::class, 'update']);
+    Route::delete('/clients/{id}', [ClientAccountController::class, 'destroy'])
+        ->middleware('role:hr_administrator');
 });
 
 // ── Application API (v1) ──
@@ -48,10 +49,10 @@ Route::prefix('v1')->group(function () {
     // ── Protected Endpoints (require valid Sanctum session token) ──
     Route::middleware('auth:sanctum')->group(function () {
 
-        // ── Dashboard Metrics ──
+        // ── Dashboard Metrics & Common Profile ──
         Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 
-        // ── Authentication (Admin / HR) ──
+        // ── Authentication & Account Management ──
         Route::prefix('auth')->group(function () {
             Route::post('/logout',  [AuthController::class, 'logout']);
             Route::post('/refresh', [AuthController::class, 'refresh']);
@@ -59,102 +60,119 @@ Route::prefix('v1')->group(function () {
             Route::put('/profile',  [AuthController::class, 'updateProfile']);
         });
 
-        // ── AI Analytics & Intelligence ──
-        Route::prefix('analytics')->group(function () {
-            Route::get('/scoring',   [AnalyticsController::class, 'scoring']);
-            Route::get('/pipeline',  [AnalyticsController::class, 'pipeline']);
-            Route::get('/retention', [AnalyticsController::class, 'retention']);
+        // ── AI Analytics & Intelligence Module ──
+        Route::middleware('module:ai-analytics')->group(function () {
+            Route::prefix('analytics')->group(function () {
+                Route::get('/scoring',   [AnalyticsController::class, 'scoring']);
+                Route::get('/pipeline',  [AnalyticsController::class, 'pipeline']);
+                Route::get('/retention', [AnalyticsController::class, 'retention']);
+            });
+
+            Route::prefix('scoring')->group(function () {
+                Route::post('/evaluate',       [AnalyticsController::class, 'evaluate']);
+                Route::post('/auto-shortlist', [AnalyticsController::class, 'autoShortlist']);
+            });
         });
 
-        // ── AI Scoring & Ranking Engine ──
-        Route::prefix('scoring')->group(function () {
-            Route::post('/evaluate',       [AnalyticsController::class, 'evaluate']);
-            Route::post('/auto-shortlist', [AnalyticsController::class, 'autoShortlist']);
+        // ── Applicant Management & Profiling Module ──
+        Route::middleware('module:applicant-registration')->group(function () {
+            Route::get('/applicants',            [ApplicantController::class, 'index']);
+            Route::get('/applicants/{regId}',    [ApplicantController::class, 'show']);
+            Route::put('/applicants/{regId}',    [ApplicantController::class, 'update']);
+            Route::delete('/applicants/{regId}', [ApplicantController::class, 'destroy'])
+                ->middleware('role:hr_administrator,registration_officer');
+
+            // Sub-resources
+            Route::post('/applicants/{regId}/skills',                        [ApplicantController::class, 'addSkill']);
+            Route::delete('/applicants/{regId}/skills/{id}',                 [ApplicantController::class, 'removeSkill']);
+
+            Route::post('/applicants/{regId}/work-history',                  [ApplicantController::class, 'addWorkHistory']);
+            Route::delete('/applicants/{regId}/work-history/{id}',           [ApplicantController::class, 'removeWorkHistory']);
+
+            Route::post('/applicants/{regId}/education',                     [ApplicantController::class, 'addEducation']);
+            Route::delete('/applicants/{regId}/education/{id}',              [ApplicantController::class, 'removeEducation']);
+
+            Route::post('/applicants/{regId}/documents',                     [ApplicantController::class, 'addDocument']);
+            Route::get('/applicants/{regId}/documents/{id}/download',        [ApplicantController::class, 'downloadDocument']);
+            Route::get('/applicants/{regId}/documents/{id}/preview',         [ApplicantController::class, 'previewDocument']);
+            Route::delete('/applicants/{regId}/documents/{id}',              [ApplicantController::class, 'removeDocument']);
+
+            Route::post('/applicants/{regId}/references',                    [ApplicantController::class, 'addReference']);
+            Route::delete('/applicants/{regId}/references/{id}',             [ApplicantController::class, 'removeReference']);
+
+            // Applicant workflow actions
+            Route::patch('/applicants/{regId}/stage',      [ApplicantController::class, 'updateStage']);
+            Route::patch('/applicants/{regId}/status',     [ApplicantController::class, 'updateStatus']);
+            Route::patch('/applicants/{regId}/category',   [ApplicantController::class, 'updateCategory']);
+            Route::patch('/applicants/{regId}/target-job', [ApplicantController::class, 'updateTargetJob']);
+            Route::post('/applicants/{regId}/send-to-recruitment', [ApplicantController::class, 'sendToRecruitment']);
         });
 
-        // ── Applicant Management & Confidential Profiling ──
-        Route::get('/applicants',            [ApplicantController::class, 'index']);
-        Route::get('/applicants/{regId}',    [ApplicantController::class, 'show']);
-        Route::put('/applicants/{regId}',    [ApplicantController::class, 'update']);
-        Route::delete('/applicants/{regId}', [ApplicantController::class, 'destroy']);
-
-        // Sub-resources
-        Route::post('/applicants/{regId}/skills',                        [ApplicantController::class, 'addSkill']);
-        Route::delete('/applicants/{regId}/skills/{id}',                 [ApplicantController::class, 'removeSkill']);
-
-        Route::post('/applicants/{regId}/work-history',                  [ApplicantController::class, 'addWorkHistory']);
-        Route::delete('/applicants/{regId}/work-history/{id}',           [ApplicantController::class, 'removeWorkHistory']);
-
-        Route::post('/applicants/{regId}/education',                     [ApplicantController::class, 'addEducation']);
-        Route::delete('/applicants/{regId}/education/{id}',              [ApplicantController::class, 'removeEducation']);
-
-        Route::post('/applicants/{regId}/documents',                     [ApplicantController::class, 'addDocument']);
-        Route::get('/applicants/{regId}/documents/{id}/download',        [ApplicantController::class, 'downloadDocument']);
-        Route::get('/applicants/{regId}/documents/{id}/preview',         [ApplicantController::class, 'previewDocument']);
-        Route::delete('/applicants/{regId}/documents/{id}',              [ApplicantController::class, 'removeDocument']);
-
-        Route::post('/applicants/{regId}/references',                    [ApplicantController::class, 'addReference']);
-        Route::delete('/applicants/{regId}/references/{id}',             [ApplicantController::class, 'removeReference']);
-
-        // Applicant workflow actions
-        Route::patch('/applicants/{regId}/stage',      [ApplicantController::class, 'updateStage']);
-        Route::patch('/applicants/{regId}/status',     [ApplicantController::class, 'updateStatus']);
-        Route::patch('/applicants/{regId}/category',   [ApplicantController::class, 'updateCategory']);
-        Route::patch('/applicants/{regId}/target-job', [ApplicantController::class, 'updateTargetJob']);
-
-        // ── Client Management / CRM ──
-        Route::get('/clients',         [ClientAccountController::class, 'index']);
-        Route::post('/clients',        [ClientAccountController::class, 'store']);
-        Route::get('/clients/{id}',    [ClientAccountController::class, 'show']);
-        Route::put('/clients/{id}',    [ClientAccountController::class, 'update']);
-        Route::delete('/clients/{id}', [ClientAccountController::class, 'destroy']);
-
-        // ── Job Orders ──
-        Route::get('/job-orders',          [JobOrderController::class, 'index']);
-        Route::post('/job-orders',         [JobOrderController::class, 'store']);
-        Route::get('/job-orders/{ref}',    [JobOrderController::class, 'show']);
-        Route::put('/job-orders/{ref}',    [JobOrderController::class, 'update']);
-        Route::delete('/job-orders/{ref}', [JobOrderController::class, 'destroy']);
-
-        // ── Recruitment & Selection ──
-        Route::prefix('recruitment')->group(function () {
-            Route::get('/applications',              [RecruitmentController::class, 'index']);
-            Route::post('/{regId}/enroll',           [RecruitmentController::class, 'enroll']);
-            Route::post('/{regId}/return',           [RecruitmentController::class, 'returnToProfiling']);
-            Route::post('/bulk-return',              [RecruitmentController::class, 'bulkReturn']);
-            Route::patch('/{id}/stage',              [RecruitmentController::class, 'updateStage']);
-            Route::patch('/{id}/screening',          [RecruitmentController::class, 'updateScreening']);
-            Route::patch('/{id}/endorsement-status', [RecruitmentController::class, 'updateEndorsementStatus']);
+        // ── Client Management / CRM Module ──
+        Route::middleware('module:client-management')->group(function () {
+            Route::get('/clients',         [ClientAccountController::class, 'index']);
+            Route::post('/clients',        [ClientAccountController::class, 'store']);
+            Route::get('/clients/{id}',    [ClientAccountController::class, 'show']);
+            Route::put('/clients/{id}',    [ClientAccountController::class, 'update']);
+            Route::delete('/clients/{id}', [ClientAccountController::class, 'destroy'])
+                ->middleware('role:hr_administrator');
         });
 
-        // Backward-compatible aliases
-        Route::get('/recruitment/applications',                    [RecruitmentController::class, 'index']);
-        Route::post('/applicants/{regId}/send-to-recruitment',     [ApplicantController::class, 'sendToRecruitment']);
-        Route::post('/applicants/{regId}/return-to-profiling',     [RecruitmentController::class, 'returnToProfiling']);
-        Route::post('/applicants/bulk-return-to-profiling',        [RecruitmentController::class, 'bulkReturn']);
-        Route::patch('/applicants/{id}/recruitment-stage',         [RecruitmentController::class, 'updateStage']);
-        Route::patch('/applicants/{id}/recruitment-screening',     [RecruitmentController::class, 'updateScreening']);
-        Route::patch('/applicants/{id}/client-endorsement-status', [RecruitmentController::class, 'updateEndorsementStatus']);
+        // ── Job Orders Module ──
+        Route::middleware('module:job-order-management')->group(function () {
+            Route::get('/job-orders',          [JobOrderController::class, 'index']);
+            Route::post('/job-orders',         [JobOrderController::class, 'store']);
+            Route::get('/job-orders/{ref}',    [JobOrderController::class, 'show']);
+            Route::put('/job-orders/{ref}',    [JobOrderController::class, 'update']);
+            Route::delete('/job-orders/{ref}', [JobOrderController::class, 'destroy'])
+                ->middleware('role:hr_administrator');
+        });
 
-        // ── Deployments & Assignment ──
-        Route::get('/deployments',                     [DeploymentController::class, 'index']);
-        Route::post('/deployments',                    [DeploymentController::class, 'store']);
-        Route::get('/deployments/pending-hires',       [DeploymentController::class, 'pendingHires']);
-        Route::get('/deployments/{id}',                [DeploymentController::class, 'show']);
-        Route::patch('/deployments/{id}/stage',        [DeploymentController::class, 'updateStage']);
-        Route::patch('/deployments/{id}/compliance',   [DeploymentController::class, 'updateCompliance']);
-        Route::post('/deployments/{id}/intervention',  [DeploymentController::class, 'logIntervention']);
-        Route::patch('/deployments/{id}/intervention', [DeploymentController::class, 'logIntervention']);
+        // ── Recruitment & Selection Module ──
+        Route::middleware('module:recruitment-selection')->group(function () {
+            Route::prefix('recruitment')->group(function () {
+                Route::get('/applications',              [RecruitmentController::class, 'index']);
+                Route::post('/{regId}/enroll',           [RecruitmentController::class, 'enroll']);
+                Route::post('/{regId}/return',           [RecruitmentController::class, 'returnToProfiling']);
+                Route::post('/bulk-return',              [RecruitmentController::class, 'bulkReturn']);
+                Route::patch('/{id}/stage',              [RecruitmentController::class, 'updateStage']);
+                Route::patch('/{id}/screening',          [RecruitmentController::class, 'updateScreening']);
+                Route::patch('/{id}/endorsement-status', [RecruitmentController::class, 'updateEndorsementStatus']);
+            });
+
+            // Backward-compatible aliases
+            Route::get('/recruitment/applications',                    [RecruitmentController::class, 'index']);
+            Route::post('/applicants/{regId}/return-to-profiling',     [RecruitmentController::class, 'returnToProfiling']);
+            Route::post('/applicants/bulk-return-to-profiling',        [RecruitmentController::class, 'bulkReturn']);
+            Route::patch('/applicants/{id}/recruitment-stage',         [RecruitmentController::class, 'updateStage']);
+            Route::patch('/applicants/{id}/recruitment-screening',     [RecruitmentController::class, 'updateScreening']);
+            Route::patch('/applicants/{id}/client-endorsement-status', [RecruitmentController::class, 'updateEndorsementStatus']);
+        });
+
+        // ── Deployments & Assignment Module ──
+        Route::middleware('module:deployment-assignment')->group(function () {
+            Route::get('/deployments',                     [DeploymentController::class, 'index']);
+            Route::post('/deployments',                    [DeploymentController::class, 'store']);
+            Route::get('/deployments/pending-hires',       [DeploymentController::class, 'pendingHires']);
+            Route::get('/deployments/{id}',                [DeploymentController::class, 'show']);
+            Route::patch('/deployments/{id}/stage',        [DeploymentController::class, 'updateStage']);
+            Route::patch('/deployments/{id}/compliance',   [DeploymentController::class, 'updateCompliance']);
+            Route::post('/deployments/{id}/intervention',  [DeploymentController::class, 'logIntervention']);
+            Route::patch('/deployments/{id}/intervention', [DeploymentController::class, 'logIntervention']);
+        });
 
         // ── System Audit & Activity Logs ──
         Route::get('/audit-logs',        [AuditLogController::class, 'index']);
         Route::post('/audit-logs',       [AuditLogController::class, 'store']);
-        Route::get('/audit-logs/export', [AuditLogController::class, 'export']);
+        Route::get('/audit-logs/export', [AuditLogController::class, 'export'])
+            ->middleware('role:hr_administrator');
 
-        // ── Staff User Management (RBAC) ──
-        Route::get('/users',               [UserController::class, 'index']);
-        Route::post('/users',              [UserController::class, 'store']);
-        Route::patch('/users/{id}/status', [UserController::class, 'updateStatus']);
+        // ── Staff User Management (Restricted to HR Administrator) ──
+        Route::middleware('role:hr_administrator')->group(function () {
+            Route::get('/users',               [UserController::class, 'index']);
+            Route::post('/users',              [UserController::class, 'store']);
+            Route::patch('/users/{id}/status', [UserController::class, 'updateStatus']);
+        });
 
     }); // end auth:sanctum
 });

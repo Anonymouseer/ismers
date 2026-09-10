@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Support ?token= query parameter for embedded previews and file downloads
         $middleware->prepend(\App\Http\Middleware\AuthenticateWithQueryToken::class);
 
+        // RBAC middleware aliases
+        $middleware->alias([
+            'role'   => \App\Http\Middleware\EnsureRole::class,
+            'module' => \App\Http\Middleware\CheckModuleAccess::class,
+        ]);
+
         // Return 401 JSON for unauthenticated requests on API routes
         $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : '/login');
     })
