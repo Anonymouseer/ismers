@@ -39,8 +39,7 @@ export default function LoginPage() {
   }, []);
 
   if (isAuthenticated) {
-    const destination = location.state?.from?.pathname || '/';
-    return <Navigate to={destination} replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -58,9 +57,7 @@ export default function LoginPage() {
 
     const res = await login(email.trim(), password);
     if (res.success) {
-      const from = location.state?.from?.pathname;
-      const roleDefault = res.user?.defaultRoute || '/dashboard';
-      navigate(from || roleDefault, { replace: true });
+      navigate('/dashboard', { replace: true });
     } else {
       setError(res.message || 'Invalid email address or password.');
     }

@@ -88,7 +88,7 @@ class AuthController extends Controller
                     'ai-analytics',
                     'settings',
                 ],
-                'defaultRoute'   => $user->default_route ?? '/client-management',
+                'defaultRoute'   => $user->default_route ?? '/dashboard',
             ],
             'message' => 'Authentication successful.',
         ]);
@@ -136,7 +136,7 @@ class AuthController extends Controller
             'roleLabel' => $user->role_label ?? 'HR Administrator',
             'department' => $user->department ?? 'HR Management',
             'allowedModules' => $user->allowed_modules ?? [],
-            'defaultRoute' => $user->default_route ?? '/client-management',
+            'defaultRoute' => $user->default_route ?? '/dashboard',
         ]);
     }
 }

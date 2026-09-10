@@ -4,6 +4,27 @@ import { useUIFeedback } from '../common/UIFeedback';
 import { useAuth } from '../../features/auth/store/AuthStore';
 import './Header.css';
 
+function formatNotifTime(item) {
+  if (item?.timestamp) {
+    const d = new Date(item.timestamp);
+    if (!isNaN(d.getTime())) {
+      const now = new Date();
+      const isToday =
+        d.getDate() === now.getDate() &&
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear();
+
+      const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      if (isToday) return timeStr;
+      return `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+    }
+  }
+  if (item?.time && item.time !== 'Just now') {
+    return item.time;
+  }
+  return 'Recent';
+}
+
 export default function Header({ onToggleMobileMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -255,7 +276,9 @@ export default function Header({ onToggleMobileMenu }) {
                       <div className="notif-item-content">
                         <div className="notif-meta-row">
                           <span className="notif-module-tag">{item.module || 'Workflow'}</span>
-                          <span className="notif-time-ago">{item.time || 'Recent'}</span>
+                          <span className="notif-time-ago" title={item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}>
+                            {formatNotifTime(item)}
+                          </span>
                         </div>
                         <div className="notif-item-title">{item.title}</div>
                         <div className="notif-item-desc">{item.message}</div>

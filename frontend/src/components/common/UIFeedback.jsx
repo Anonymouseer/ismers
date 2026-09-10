@@ -69,14 +69,16 @@ export function UIFeedbackProvider({ children }) {
 
   const addNotification = useCallback(({ title, message, type = 'success', module = 'System' }) => {
     const id = `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     const newNotif = {
       id,
       title,
       message,
       type,
       module,
-      time: 'Just now',
-      timestamp: Date.now(),
+      time: timeStr,
+      timestamp: now.getTime(),
       read: false,
     };
     setNotifications((prev) => [newNotif, ...prev.slice(0, 49)]);
