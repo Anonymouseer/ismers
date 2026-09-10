@@ -126,42 +126,46 @@ class ApplicantController extends Controller
     }
 
     private const JOB_KEYWORDS = [
-        'jo1' => ['inventory', 'warehouse', 'pallet', 'logistics', 'stock', 'picking', 'packing'],
-        'jo2' => ['forklift', 'warehouse', 'logistics', 'pallet', 'material handling', 'inventory'],
-        'jo3' => ['inventory', 'stock', 'wms', 'cycle count', 'data entry', 'clerk'],
-        'jo4' => ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics'],
-        'jo5' => ['customer service', 'crm', 'english proficiency', 'call center', 'customer support', 'communication'],
-        'jo6' => ['technical troubleshooting', 'ticketing', 'networking', 'technical support', 'troubleshooting'],
-        'jo7' => ['sales', 'outbound', 'inbound', 'crm', 'cold calling', 'leads'],
-        'jo8' => ['team leader', 'supervisor', 'bpo', 'coaching', 'kpi', 'csat'],
-        'jo9' => ['machine operation', 'quality inspection', 'safety compliance', 'production', 'troubleshooting'],
-        'jo10' => ['quality control', 'inspection', 'qc', 'calipers', 'manufacturing', 'specifications'],
-        'jo11' => ['supervisor', 'production line', 'kpi', 'line balancing', 'manufacturing'],
-        'jo12' => ['packaging', 'sorting', 'labeling', 'finished goods', 'packing'],
-        'jo13' => ['admin', 'office', 'excel', 'documentation', 'scheduling', 'clerical'],
-        'jo14' => ['sales associate', 'retail', 'customer service', 'stocking', 'replenishment'],
-        'jo15' => ['cashier', 'pos', 'cash handling', 'retail', 'customer service'],
-        'jo16' => ['merchandiser', 'visual', 'display', 'retail layout', 'branding'],
-        'jo17' => ['front desk', 'guest relations', 'booking systems', 'hospitality', 'customer service', 'front office'],
-        'jo18' => ['housekeeping', 'cleaning', 'room turnaround', 'resort', 'hospitality'],
-        'jo19' => ['f&b', 'server', 'waiter', 'restaurant', 'dining', 'hospitality'],
-        'jo20' => ['maintenance', 'technician', 'electrical', 'plumbing', 'repairs'],
-        'jo21' => ['leasing', 'real estate', 'sales', 'viewings', 'property', 'contracts'],
-        'jo22' => ['property administrator', 'tenant records', 'lease renewals', 'admin'],
-        'jo23' => ['front desk', 'reception', 'lobby', 'concierge', 'visitor logs'],
-        'jo24' => ['maintenance coordinator', 'repairs', 'facilities', 'building systems'],
-        'jo25' => ['medical technologist', 'medtech', 'lab testing', 'specimen analysis', 'doh'],
-        'jo26' => ['radiologic', 'x-ray', 'imaging', 'radtech', 'radiation safety'],
-        'jo27' => ['patient service', 'registration', 'healthcare front desk', 'appointments'],
-        'jo28' => ['billing', 'hmo', 'insurance claims', 'patient accounts', 'accounting'],
-        'jo29' => ['packing', 'produce', 'grading', 'harvest', 'hygiene', 'export'],
-        'jo30' => ['qa inspector', 'quality control', 'export-grade', 'agri', 'produce'],
-        'jo31' => ['logistics coordinator', 'container bookings', 'freight', 'export documentation'],
-        'jo32' => ['farm supervisor', 'harvest scheduling', 'field crews', 'agriculture'],
-        'jo33' => ['construction', 'laborer', 'material handling', 'masonry', 'site work'],
-        'jo34' => ['site engineer', 'autocad', 'civil engineering', 'inspections', 'plans'],
-        'jo35' => ['safety officer', 'bosh', 'ppe', 'oshs', 'hazard inspection'],
-        'jo36' => ['heavy equipment', 'backhoe', 'excavator', 'operator license', 'grading'],
+        'jo1'      => ['warehouse', 'associate', 'logistics', 'pallet', 'stock', 'picking', 'packing', 'inventory'],
+        'jo2'      => ['forklift', 'operator', 'warehouse', 'logistics', 'pallet', 'stacking', 'material handling', 'wms', 'inventory'],
+        'jo3'      => ['inventory', 'clerk', 'stock', 'wms', 'cycle count', 'sorting', 'packing', 'pallet', 'barcode', 'scanning', 'counting', 'tallying', 'warehouse', 'logistics'],
+        'jo4'      => ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics', 'warehouse'],
+        'jo5'      => ['customer service', 'csr', 'crm', 'english proficiency', 'call center', 'customer support', 'communication', 'bpo', 'voice'],
+        'jo6'      => ['technical support', 'troubleshooting', 'ticketing', 'networking', 'bpo', 'it support'],
+        'jo7'      => ['sales', 'outbound', 'inbound', 'crm', 'cold calling', 'leads', 'bpo', 'sdr'],
+        'jo8'      => ['team leader', 'supervisor', 'bpo', 'coaching', 'kpi', 'csat', 'leadership'],
+        'jo9'      => ['machine operation', 'quality inspection', 'safety compliance', 'production', 'troubleshooting', 'manufacturing', 'assembly'],
+        'jo10'     => ['quality control', 'inspection', 'qc', 'calipers', 'manufacturing', 'specifications', 'qa'],
+        'jo11'     => ['supervisor', 'production line', 'kpi', 'line balancing', 'manufacturing', 'leadership'],
+        'jo12'     => ['packaging', 'sorting', 'labeling', 'finished goods', 'packing', 'manufacturing'],
+        'jo13'     => ['admin', 'assistant', 'clerical', 'data entry', 'scheduling', 'office', 'retail'],
+        'jo14'     => ['sales', 'associate', 'retail', 'customer facing', 'stocking', 'upselling'],
+        'jo15'     => ['cashier', 'pos', 'cash handling', 'retail', 'receipt issuance', 'customer service'],
+        'jo16'     => ['merchandiser', 'visual', 'display', 'retail layout', 'branding', 'retail'],
+        'jo17'     => ['front desk', 'guest relations', 'booking systems', 'hospitality', 'customer service', 'reception', 'visitor log'],
+        'jo18'     => ['housekeeping', 'cleaning', 'room turnaround', 'resort', 'hospitality', 'sanitation'],
+        'jo19'     => ['f&b', 'server', 'waiter', 'restaurant', 'dining', 'hospitality', 'table service', 'banquet'],
+        'jo20'     => ['maintenance', 'technician', 'electrical', 'plumbing', 'repairs', 'facilities'],
+        'jo21'     => ['leasing', 'real estate', 'sales', 'viewings', 'property', 'contracts'],
+        'jo22'     => ['property administrator', 'tenant records', 'lease renewals', 'admin', 'real estate'],
+        'jo23'     => ['front desk', 'reception', 'lobby', 'concierge', 'visitor logs', 'real estate'],
+        'jo24'     => ['maintenance coordinator', 'repairs', 'facilities', 'building systems', 'real estate'],
+        'jo25'     => ['medical technologist', 'medtech', 'lab testing', 'specimen analysis', 'doh', 'healthcare'],
+        'jo26'     => ['radiologic', 'x-ray', 'imaging', 'radtech', 'radiation safety', 'healthcare'],
+        'jo27'     => ['patient service', 'registration', 'healthcare front desk', 'appointments', 'hmo'],
+        'jo28'     => ['billing', 'hmo', 'insurance claims', 'patient accounts', 'accounting', 'medical records'],
+        'jo29'     => ['packing', 'produce', 'grading', 'harvest', 'hygiene', 'export', 'cold chain'],
+        'jo30'     => ['qa inspector', 'quality control', 'export-grade', 'agri', 'produce', 'standards'],
+        'jo31'     => ['logistics coordinator', 'container bookings', 'freight', 'export documentation', 'shipping'],
+        'jo32'     => ['farm supervisor', 'harvest scheduling', 'field crews', 'agriculture', 'supervision'],
+        'jo33'     => ['construction', 'laborer', 'material handling', 'masonry', 'site work', 'safety'],
+        'jo34'     => ['site engineer', 'autocad', 'civil engineering', 'inspections', 'plans', 'construction'],
+        'jo35'     => ['safety officer', 'bosh', 'ppe', 'oshs', 'hazard inspection', 'safety'],
+        'jo36'     => ['tower crane', 'crane operator', 'heavy equipment', 'tesda', 'rigging', 'construction'],
+        'jo-abc-1' => ['warehouse', 'associate', 'logistics', 'pallet', 'stock', 'picking', 'packing', 'inventory'],
+        'jo-abc-2' => ['forklift', 'operator', 'warehouse', 'logistics', 'pallet', 'stacking', 'material handling', 'wms', 'inventory'],
+        'jo-abc-3' => ['inventory', 'clerk', 'stock', 'wms', 'cycle count', 'sorting', 'packing', 'pallet', 'barcode', 'scanning', 'counting', 'tallying', 'warehouse', 'logistics'],
+        'jo-abc-4' => ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics', 'warehouse'],
     ];
 
     private static ?\Illuminate\Support\Collection $cachedJobs = null;
@@ -183,22 +187,24 @@ class ApplicantController extends Controller
         $cleanTarget = strtolower(trim($targetId));
         $all = $this->getCachedJobOrders();
 
-        $job = $all->first(fn ($j) => strtolower($j->ref ?? '') === $cleanTarget);
+        // 1. Explicit ABC Logistics legacy / client portal targets
+        if ($cleanTarget === 'jo-abc-1') return $all->first(fn ($j) => strtolower($j->ref ?? '') === 'jo-001');
+        if ($cleanTarget === 'jo-abc-2') return $all->first(fn ($j) => strtolower($j->ref ?? '') === 'jo-002');
+        if ($cleanTarget === 'jo-abc-3') return $all->first(fn ($j) => strtolower($j->ref ?? '') === 'jo-003');
+        if ($cleanTarget === 'jo-abc-4') return $all->first(fn ($j) => strtolower($j->ref ?? '') === 'jo-004');
+
+        // 2. Direct match on ref or id
+        $job = $all->first(fn ($j) => strtolower($j->ref ?? '') === $cleanTarget || strtolower($j->id ?? '') === $cleanTarget);
         if ($job) {
             return $job;
         }
 
-        if (preg_match('/(?:jo|jo-)?(\d+)/i', $targetId, $m)) {
+        // 3. Numeric extraction: e.g. 'jo3' -> 3, 'JO-003' -> 3, 'jo-abc-3' -> 3
+        if (preg_match('/(\d+)/', $targetId, $m)) {
             $num       = (int) $m[1];
             $paddedRef = 'jo-' . str_pad((string) $num, 3, '0', STR_PAD_LEFT);
-            $job       = $all->first(fn ($j) => strtolower($j->ref ?? '') === $paddedRef || (int) $j->id === $num);
-            if ($job) {
-                return $job;
-            }
-        }
-
-        if (is_numeric($targetId)) {
-            $job = $all->first(fn ($j) => (int) $j->id === (int) $targetId);
+            $rawId     = 'jo' . $num;
+            $job       = $all->first(fn ($j) => strtolower($j->ref ?? '') === $paddedRef || strtolower($j->id ?? '') === $rawId);
             if ($job) {
                 return $job;
             }
@@ -208,56 +214,162 @@ class ApplicantController extends Controller
     }
 
     /**
-     * Fast in-process AI match score calculation against target Job Order.
+     * Fast in-process AI match score calculation against target Job Order
+     * using the unified progressive weighted algorithm.
      */
     private function computeAiScore(Applicant $applicant): int
     {
         $targetId = $applicant->target_job_id;
         if (! $targetId) {
-            return 75;
+            return 0;
         }
 
-        $keywords = [];
         $job = $this->resolveJobOrder($targetId);
-        if ($job) {
-            $words    = preg_split('/[\s·,\-\/()]+/', strtolower($job->title), -1, PREG_SPLIT_NO_EMPTY);
-            $keywords = array_values(array_filter($words, fn ($w) => strlen($w) > 2));
-            if (is_array($job->tags)) {
-                foreach ($job->tags as $t) {
-                    $keywords[] = strtolower($t);
+        if (! $job) {
+            return 0;
+        }
+
+        $candSkills = $applicant->skills->pluck('name')->map(fn ($s) => strtolower(trim($s)))->filter()->values()->toArray();
+        $workHistory = $applicant->workHistory;
+        $workHistoryText = strtolower(trim($workHistory->map(fn ($w) => "{$w->role} {$w->company}")->implode(' ')));
+        $summaryText = strtolower(trim($applicant->experience_summary ?? ''));
+
+        if (empty($candSkills) && empty($workHistoryText) && empty($summaryText)) {
+            return 0;
+        }
+
+        $candCat = strtolower(trim($applicant->category ?? ''));
+        $jobCat = strtolower(trim($job->category ?? ''));
+        $jobTitle = strtolower(trim($job->title ?? ''));
+
+        $words = preg_split('/[\s·,\-\/()]+/', $jobTitle, -1, PREG_SPLIT_NO_EMPTY);
+        $excluded = ['and', 'for', 'the', 'with', 'associate', 'officer', 'staff', 'operator', 'attendant', 'crew'];
+        $rawKeywords = array_filter($words, fn ($w) => strlen($w) > 2 && ! in_array($w, $excluded));
+
+        if (is_array($job->tags)) {
+            foreach ($job->tags as $t) {
+                $rawKeywords[] = strtolower(trim($t));
+            }
+        }
+
+        $cleanTargetId = strtolower(trim($targetId ?? ''));
+        $cleanJobRef   = strtolower(trim($job->ref ?? ''));
+        $cleanJobId    = strtolower(trim((string)($job->id ?? '')));
+
+        $canonicalKey = null;
+        if ($cleanTargetId === 'jo-abc-1' || $cleanJobRef === 'jo-001') $canonicalKey = 'jo1';
+        elseif ($cleanTargetId === 'jo-abc-2' || $cleanJobRef === 'jo-002') $canonicalKey = 'jo2';
+        elseif ($cleanTargetId === 'jo-abc-3' || $cleanJobRef === 'jo-003') $canonicalKey = 'jo3';
+        elseif ($cleanTargetId === 'jo-abc-4' || $cleanJobRef === 'jo-004') $canonicalKey = 'jo4';
+        elseif (preg_match('/(\d+)/', $cleanTargetId, $m)) $canonicalKey = 'jo' . (int)$m[1];
+        elseif (preg_match('/(\d+)/', $cleanJobRef, $m))   $canonicalKey = 'jo' . (int)$m[1];
+        elseif (preg_match('/(\d+)/', $cleanJobId, $m))    $canonicalKey = 'jo' . (int)$m[1];
+
+        $matchedKeywords = [];
+        if ($canonicalKey && isset(self::JOB_KEYWORDS[$canonicalKey])) {
+            $matchedKeywords = self::JOB_KEYWORDS[$canonicalKey];
+        } elseif (isset(self::JOB_KEYWORDS[$cleanTargetId])) {
+            $matchedKeywords = self::JOB_KEYWORDS[$cleanTargetId];
+        } elseif (isset(self::JOB_KEYWORDS[$cleanJobId])) {
+            $matchedKeywords = self::JOB_KEYWORDS[$cleanJobId];
+        }
+
+        foreach ($matchedKeywords as $k) {
+            $rawKeywords[] = strtolower(trim($k));
+        }
+
+        $filler = ['high', 'school', 'graduate', 'least', 'year', 'years', 'month', 'months', 'willing', 'work', 'able', 'plus', 'preferred', 'good', 'with', 'must', 'have', 'experience', 'relocate', 'provided', 'housing'];
+        $coreKeywords = array_values(array_unique(array_filter($rawKeywords, fn ($k) => strlen($k) > 2 && ! in_array($k, $filler))));
+
+        $allCandidateText = trim(implode(' ', array_merge($candSkills, [$workHistoryText, $summaryText])));
+
+        $matchingSkillCount = 0;
+        foreach ($candSkills as $skill) {
+            $directHit = false;
+            foreach ($coreKeywords as $kw) {
+                if (str_contains($skill, $kw) || str_contains($kw, $skill)) {
+                    $directHit = true;
+                    break;
+                }
+            }
+            $catWords = preg_split('/[\s&\/()]+/', $jobCat, -1, PREG_SPLIT_NO_EMPTY);
+            $catHit = false;
+            foreach ($catWords as $cw) {
+                if (strlen($cw) > 2 && (str_contains($skill, $cw) || str_contains($cw, $skill))) {
+                    $catHit = true;
+                    break;
+                }
+            }
+            $titleWords = preg_split('/[\s&\/()]+/', $jobTitle, -1, PREG_SPLIT_NO_EMPTY);
+            $titleHit = false;
+            foreach ($titleWords as $tw) {
+                if (strlen($tw) > 2 && (str_contains($skill, $tw) || str_contains($tw, $skill))) {
+                    $titleHit = true;
+                    break;
+                }
+            }
+            if ($directHit || $titleHit || $catHit) {
+                $matchingSkillCount++;
+            }
+        }
+
+        $keywordHits = 0;
+        foreach ($coreKeywords as $kw) {
+            if (str_contains($allCandidateText, $kw)) {
+                $keywordHits++;
+            }
+        }
+
+        if ($matchingSkillCount === 0 && $keywordHits === 0) {
+            return 0;
+        }
+
+        $skillsScore = min($matchingSkillCount * 18, 70);
+        $keywordScore = count($coreKeywords) > 0 ? (int) round(($keywordHits / count($coreKeywords)) * 15) : 0;
+
+        $categoryBonus = 0;
+        if (! empty($candCat) && ! empty($jobCat) && $matchingSkillCount > 0) {
+            if ($candCat === $jobCat) {
+                $categoryBonus = 10;
+            } elseif (
+                (str_contains($candCat, 'logistics') || str_contains($candCat, 'warehousing')) &&
+                (str_contains($jobCat, 'logistics') || str_contains($jobCat, 'warehousing'))
+            ) {
+                $categoryBonus = 8;
+            } elseif (
+                (str_contains($candCat, 'bpo') || str_contains($candCat, 'customer')) &&
+                (str_contains($jobCat, 'bpo') || str_contains($jobCat, 'customer'))
+            ) {
+                $categoryBonus = 8;
+            } elseif (
+                str_contains($candCat, 'manufacturing') && str_contains($jobCat, 'manufacturing')
+            ) {
+                $categoryBonus = 8;
+            } elseif (
+                str_contains($candCat, 'retail') && str_contains($jobCat, 'retail')
+            ) {
+                $categoryBonus = 8;
+            } elseif (
+                (str_contains($candCat, 'hospitality') || str_contains($candCat, 'food')) &&
+                (str_contains($jobCat, 'hospitality') || str_contains($jobCat, 'food'))
+            ) {
+                $categoryBonus = 8;
+            }
+        }
+
+        $historyBonus = 0;
+        if (! empty($workHistoryText)) {
+            foreach ($coreKeywords as $kw) {
+                if (str_contains($workHistoryText, $kw)) {
+                    $historyBonus = 8;
+                    break;
                 }
             }
         }
 
-        if (empty($keywords) && isset(self::JOB_KEYWORDS[$targetId])) {
-            $keywords = self::JOB_KEYWORDS[$targetId];
-        }
+        $total = (int) round($skillsScore + $keywordScore + $categoryBonus + $historyBonus);
 
-        if (empty($keywords)) {
-            return 75;
-        }
-
-        $keywords   = array_values(array_unique($keywords));
-        $skills     = $applicant->skills->pluck('name')->toArray();
-        $work       = $applicant->workHistory->map(fn ($w) => "{$w->role} {$w->company}")->toArray();
-        $searchable = strtolower(implode(' ', array_merge($skills, $work)));
-
-        if (empty(trim($searchable))) {
-            return 70;
-        }
-
-        $matched = 0;
-        foreach ($keywords as $kw) {
-            if (str_contains($searchable, strtolower($kw))) {
-                $matched++;
-            }
-        }
-
-        if ($matched === 0) {
-            return 65;
-        }
-
-        return min(98, max(50, (int) round(($matched / count($keywords)) * 100)));
+        return min(max($total, 0), 98);
     }
     /**
      * GET /api/v1/applicants

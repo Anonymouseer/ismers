@@ -16,7 +16,6 @@ import { CLIENTS } from '../../client-management/data/mockClients';
 import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
 import { getDeployments } from '../../deployment-assignment/services/DeploymentAssignmentService';
 import { getCachedApplications, saveCachedApplications, getStoredStages, saveStoredStage } from '../../recruitment-selection/services/RecruitmentSelectionService';
-import { APPLICATIONS } from '../../recruitment-selection/data/mockApplications';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import './ClientPortalPage.css';
 

@@ -462,28 +462,30 @@ export function ApplicantRegistrationProvider({ children }) {
       ];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
 
-      const stagesKey = 'ismers_recruitment_stages_v5';
-      const raw = localStorage.getItem(stagesKey);
-      if (raw) {
-        const stages = JSON.parse(raw);
-        delete stages[String(targetCand.id)];
-        delete stages[String(targetCand.regId)];
-        delete stages[String(targetCand.name)];
-        localStorage.setItem(stagesKey, JSON.stringify(stages));
-      }
+      ['ismers_recruitment_stages_v5', 'ismers_recruitment_stages_v6', 'ismers_recruitment_stages_v7'].forEach((stagesKey) => {
+        const raw = localStorage.getItem(stagesKey);
+        if (raw) {
+          const stages = JSON.parse(raw);
+          delete stages[String(targetCand.id)];
+          delete stages[String(targetCand.regId)];
+          delete stages[String(targetCand.name)];
+          localStorage.setItem(stagesKey, JSON.stringify(stages));
+        }
+      });
 
-      const appsCacheKey = 'ismers_recruitment_apps_cache_v5';
-      const appsRaw = localStorage.getItem(appsCacheKey);
-      if (appsRaw) {
-        const apps = JSON.parse(appsRaw);
-        const filtered = apps.filter(
-          (a) =>
-            String(a.id) !== String(targetCand.id) &&
-            String(a.regId) !== String(targetCand.regId) &&
-            a.name !== targetCand.name
-        );
-        localStorage.setItem(appsCacheKey, JSON.stringify(filtered));
-      }
+      ['ismers_recruitment_apps_cache_v5', 'ismers_recruitment_apps_cache_v6', 'ismers_recruitment_apps_cache_v7'].forEach((appsCacheKey) => {
+        const appsRaw = localStorage.getItem(appsCacheKey);
+        if (appsRaw) {
+          const apps = JSON.parse(appsRaw);
+          const filtered = apps.filter(
+            (a) =>
+              String(a.id) !== String(targetCand.id) &&
+              String(a.regId) !== String(targetCand.regId) &&
+              a.name !== targetCand.name
+          );
+          localStorage.setItem(appsCacheKey, JSON.stringify(filtered));
+        }
+      });
     } catch (e) {
       console.warn('Error clearing applicant recruitment cache:', e);
     }
@@ -538,7 +540,9 @@ export function ApplicantRegistrationProvider({ children }) {
   const bulkReturnToProfiling = async () => {
     try {
       localStorage.removeItem('ismers_recruitment_stages_v5');
+      localStorage.removeItem('ismers_recruitment_stages_v6');
       localStorage.removeItem('ismers_recruitment_apps_cache_v5');
+      localStorage.removeItem('ismers_recruitment_apps_cache_v6');
       const allKeys = Object.keys(localStorage);
       allKeys.forEach((k) => {
         if (k.startsWith('cp_endorsement_') || k.startsWith('cp_interview_')) {

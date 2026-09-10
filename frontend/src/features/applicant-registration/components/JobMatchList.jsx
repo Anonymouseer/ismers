@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { jobMatchesForCandidate } from '../services/ApplicantRegistrationService';
+import { jobMatchesForCandidate, targetById } from '../services/ApplicantRegistrationService';
 import { subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 
 function scoreTier(score) {
@@ -54,7 +54,19 @@ export default function JobMatchList({ candidate, canSelect, onSelect }) {
     <div className="jobmatch-list">
       {matches.map(({ job, score }) => {
         const tier = scoreTier(score);
-        const selected = candidate.targetJobId === job.id || candidate.targetJobId === job.ref;
+        const targetJob = targetById(candidate?.targetJobId);
+        const selected = Boolean(
+          (candidate?.targetJobId && (
+            candidate.targetJobId === job.id ||
+            candidate.targetJobId === job.ref ||
+            (job.aliases && job.aliases.includes(candidate.targetJobId))
+          )) ||
+          (targetJob && (
+            targetJob.ref === job.ref ||
+            targetJob.id === job.id ||
+            (targetJob.title?.toLowerCase() === job.title?.toLowerCase() && targetJob.client?.toLowerCase() === job.client?.toLowerCase())
+          ))
+        );
 
         return (
           <button

@@ -29,9 +29,6 @@ export const JOB_ORDERS = [
 
 export function jobById(id) {
   if (!id) return null;
-  const matchInOrders = JOB_ORDERS.find((j) => j.id === id || j.depRef === id || j.ref === id);
-  if (matchInOrders) return matchInOrders;
-
   const targetMatch = targetById(id);
   if (targetMatch) {
     return {
@@ -39,6 +36,10 @@ export function jobById(id) {
       depRef: targetMatch.depRef || targetMatch.ref || `JO-${String(id).replace(/\D/g, '').padStart(3, '0')}`,
     };
   }
+
+  const matchInOrders = JOB_ORDERS.find((j) => j.id === id || j.depRef === id || j.ref === id);
+  if (matchInOrders) return matchInOrders;
+
   return null;
 }
 

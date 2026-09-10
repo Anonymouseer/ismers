@@ -5,7 +5,6 @@
 // Legacy aliases under /api/v1/applicants/* are kept server-side for backward
 // compatibility and will be removed in a future release.
 import api from '../../../services/apiClient';
-import { APPLICATIONS } from '../data/mockApplications';
 import { ISMERSBridge } from '../../deployment-assignment/services/ismersBridge';
 
 export function keyFor(name, depRef) {
@@ -20,8 +19,60 @@ export function upsertHire(key, data) {
   ISMERSBridge.upsertHire(key, data);
 }
 
-const STAGE_CACHE_KEY = 'ismers_recruitment_stages_v5';
-const APPS_CACHE_KEY = 'ismers_recruitment_apps_cache_v5';
+const STAGE_CACHE_KEY = 'ismers_recruitment_stages_v7';
+const APPS_CACHE_KEY = 'ismers_recruitment_apps_cache_v7';
+
+/**
+ * Purges all recruitment-related client-side caches and localStorage keys
+ * across all versions (v1 through v7), including stage overrides, application
+ * caches, client portal endorsements, signatures, and deployment notices.
+ */
+export function clearRecruitmentCache() {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const knownKeys = [
+      'ismers_recruitment_stages_v1',
+      'ismers_recruitment_stages_v2',
+      'ismers_recruitment_stages_v3',
+      'ismers_recruitment_stages_v4',
+      'ismers_recruitment_stages_v5',
+      'ismers_recruitment_stages_v6',
+      'ismers_recruitment_stages_v7',
+      'ismers_recruitment_apps_cache_v1',
+      'ismers_recruitment_apps_cache_v2',
+      'ismers_recruitment_apps_cache_v3',
+      'ismers_recruitment_apps_cache_v4',
+      'ismers_recruitment_apps_cache_v5',
+      'ismers_recruitment_apps_cache_v6',
+      'ismers_recruitment_apps_cache_v7',
+      'ismers_latest_deployment_alert',
+      'ismers_newly_deployed_name',
+      'ismers_newly_deployed_client',
+    ];
+    knownKeys.forEach((k) => localStorage.removeItem(k));
+
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (
+        key &&
+        (key.startsWith('ismers_recruitment_') ||
+          key.startsWith('cp_endorsement_') ||
+          key.startsWith('contract_signature_') ||
+          key.startsWith('ismers_newly_deployed_'))
+      ) {
+        toRemove.push(key);
+      }
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+
+    try {
+      window.dispatchEvent(new CustomEvent('ismers_recruitment_cache_cleared', { detail: { timestamp: Date.now() } }));
+    } catch {}
+  } catch (e) {
+    console.warn('Error clearing recruitment cache:', e);
+  }
+}
 
 export function getStoredStages() {
   try {

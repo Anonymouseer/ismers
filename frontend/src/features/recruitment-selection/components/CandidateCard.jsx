@@ -19,8 +19,12 @@ function DeploymentBadge({ app, job }) {
 }
 
 export default function CandidateCard({ app, job, onSelect }) {
-  const targetJob = job || targetById(app.jobId) || targetById(app.targetJobId);
-  const currentScore = targetJob ? computeMatchScore(app, targetJob) : (app.score ?? 0);
+  const targetJob = job ||
+    targetById(app?.targetJobId) ||
+    targetById(app?.jobId) ||
+    (app?.jobTitle ? { id: app.jobId || app.targetJobId, title: app.jobTitle, client: app.client, category: app.category, tags: app.tags || [] } : null);
+  const calculated = targetJob ? computeMatchScore(app, targetJob) : 0;
+  const currentScore = calculated > 0 ? calculated : (app?.score ?? 0);
 
   const preChecklist = app.preEmploymentChecklist || {};
   const preCount = Object.values(preChecklist).filter(Boolean).length;

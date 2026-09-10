@@ -1,4 +1,4 @@
-import api from '../../../services/apiClient';
+import api from '../../../services/apiClient.js';
 
 // ── API CLIENT FUNCTIONS ──
 
@@ -127,8 +127,8 @@ export async function bulkReturnToProfilingApi() {
 }
 
 // ── MATCH SCORING & CLIENT MANAGEMENT DATA SYNC ──
-import { CLIENTS } from '../../client-management/data/mockClients';
-import { buildSynchronizedJobOrders } from '../../job-order-management/services/JobOrderManagementService';
+import { CLIENTS } from '../../client-management/data/mockClients.js';
+import { buildSynchronizedJobOrders } from '../../job-order-management/services/JobOrderManagementService.js';
 
 export function mapCategoryForJob(job) {
   if (job.category) return job.category;
@@ -165,67 +165,124 @@ export function mapCategoryForJob(job) {
   return 'Customer Service (BPO)';
 }
 
+export const CANONICAL_JOB_ORDERS = [
+  { id: 'jo1', ref: 'JO-001', title: 'Warehouse Associate', client: 'ABC Logistics', category: 'Warehousing & Logistics', tags: ['Warehousing', 'Entry-level', 'Shifting Schedule', 'On-site'], keywords: ['warehouse', 'associate', 'logistics', 'pallet', 'stock', 'picking', 'packing', 'inventory'], aliases: ['jo-abc-1'] },
+  { id: 'jo2', ref: 'JO-002', title: 'Forklift Operator', client: 'ABC Logistics', category: 'Warehousing & Logistics', tags: ['Warehousing', 'Licensed', 'Heavy Equipment', 'On-site'], keywords: ['forklift', 'operator', 'warehouse', 'logistics', 'pallet', 'stacking', 'material handling', 'wms', 'inventory'], aliases: ['jo-abc-2'] },
+  { id: 'jo3', ref: 'JO-003', title: 'Inventory Clerk', client: 'ABC Logistics', category: 'Warehousing & Logistics', tags: ['Warehousing', 'Inventory', 'Completed'], keywords: ['inventory', 'clerk', 'stock', 'wms', 'cycle count', 'sorting', 'packing', 'pallet', 'barcode', 'scanning', 'counting', 'tallying', 'warehouse', 'logistics'], aliases: ['jo-abc-3'] },
+  { id: 'jo4', ref: 'JO-004', title: 'Delivery Driver', client: 'ABC Logistics', category: 'Warehousing & Logistics', tags: ['Logistics', 'Driving', 'On-site'], keywords: ['driver', 'delivery', 'license', 'courier', 'transport', 'logistics', 'warehouse'], aliases: ['jo-abc-4'] },
+  { id: 'jo5', ref: 'JO-005', title: 'Customer Service Representative', client: 'Northline BPO', category: 'Customer Service (BPO)', tags: ['BPO', 'Voice/Non-Voice', 'Night Shift', 'Urgent'], keywords: ['customer service', 'csr', 'crm', 'english proficiency', 'call center', 'customer support', 'communication', 'bpo', 'voice'] },
+  { id: 'jo6', ref: 'JO-006', title: 'Technical Support Agent', client: 'Northline BPO', category: 'Customer Service (BPO)', tags: ['BPO', 'Technical', 'Night Shift'], keywords: ['technical support', 'troubleshooting', 'ticketing', 'networking', 'bpo', 'it support'] },
+  { id: 'jo7', ref: 'JO-007', title: 'Sales Development Representative', client: 'Northline BPO', category: 'Customer Service (BPO)', tags: ['BPO', 'Sales', 'Night Shift'], keywords: ['sales', 'outbound', 'inbound', 'crm', 'cold calling', 'leads', 'bpo', 'sdr'] },
+  { id: 'jo8', ref: 'JO-008', title: 'Team Leader - Customer Experience', client: 'Northline BPO', category: 'Customer Service (BPO)', tags: ['BPO', 'Leadership', 'Night Shift'], keywords: ['team leader', 'supervisor', 'bpo', 'coaching', 'kpi', 'csat', 'leadership'] },
+  { id: 'jo9', ref: 'JO-009', title: 'Machine Operator', client: 'Delta Manufacturing', category: 'Manufacturing', tags: ['Manufacturing', 'Urgent', 'Rotating Shift', 'On-site'], keywords: ['machine operation', 'quality inspection', 'safety compliance', 'production', 'troubleshooting', 'manufacturing', 'assembly'] },
+  { id: 'jo10', ref: 'JO-010', title: 'Quality Control Inspector', client: 'Delta Manufacturing', category: 'Manufacturing', tags: ['Manufacturing', 'Quality Control', 'Technical'], keywords: ['quality control', 'inspection', 'qc', 'calipers', 'manufacturing', 'specifications', 'qa'] },
+  { id: 'jo11', ref: 'JO-011', title: 'Production Line Supervisor', client: 'Delta Manufacturing', category: 'Manufacturing', tags: ['Manufacturing', 'Leadership', 'Industrial'], keywords: ['supervisor', 'production line', 'kpi', 'line balancing', 'manufacturing', 'leadership'] },
+  { id: 'jo12', ref: 'JO-012', title: 'Packaging Associate', client: 'Delta Manufacturing', category: 'Manufacturing', tags: ['Manufacturing', 'Packaging', 'Entry-level'], keywords: ['packaging', 'sorting', 'labeling', 'finished goods', 'packing', 'manufacturing'] },
+  { id: 'jo13', ref: 'JO-013', title: 'Admin Assistant', client: 'Coastal Retail Group', category: 'Retail & Store Operations', tags: ['Retail', 'Administrative', 'Office'], keywords: ['admin', 'assistant', 'clerical', 'data entry', 'scheduling', 'office', 'retail'] },
+  { id: 'jo14', ref: 'JO-014', title: 'Sales Associate', client: 'Coastal Retail Group', category: 'Retail & Store Operations', tags: ['Retail', 'Sales', 'Customer Facing'], keywords: ['sales', 'associate', 'retail', 'customer facing', 'stocking', 'upselling'] },
+  { id: 'jo15', ref: 'JO-015', title: 'Store Cashier', client: 'Coastal Retail Group', category: 'Retail & Store Operations', tags: ['Retail', 'Cashier', 'POS'], keywords: ['cashier', 'pos', 'cash handling', 'retail', 'receipt issuance', 'customer service'] },
+  { id: 'jo16', ref: 'JO-016', title: 'Visual Merchandiser', client: 'Coastal Retail Group', category: 'Retail & Store Operations', tags: ['Retail', 'Visual Merchandising', 'Creative'], keywords: ['merchandiser', 'visual', 'display', 'retail layout', 'branding', 'retail'] },
+  { id: 'jo17', ref: 'JO-017', title: 'Front Desk Associate', client: 'Sunrise Hospitality Group', category: 'Hospitality & Front Desk', tags: ['Hospitality', 'Front Desk', 'Resort'], keywords: ['front desk', 'guest relations', 'booking systems', 'hospitality', 'customer service', 'reception', 'visitor log'] },
+  { id: 'jo18', ref: 'JO-018', title: 'Housekeeping Staff', client: 'Sunrise Hospitality Group', category: 'Hospitality & Front Desk', tags: ['Hospitality', 'Housekeeping', 'Resort'], keywords: ['housekeeping', 'cleaning', 'room turnaround', 'resort', 'hospitality', 'sanitation'] },
+  { id: 'jo19', ref: 'JO-019', title: 'Food & Beverage Server', client: 'Sunrise Hospitality Group', category: 'Food & Beverage (F&B / Cook)', tags: ['Hospitality', 'F&B', 'Resort'], keywords: ['f&b', 'server', 'waiter', 'restaurant', 'dining', 'hospitality', 'table service', 'banquet'] },
+  { id: 'jo20', ref: 'JO-020', title: 'Maintenance Technician', client: 'Sunrise Hospitality Group', category: 'Hospitality & Front Desk', tags: ['Hospitality', 'Facilities', 'Maintenance'], keywords: ['maintenance', 'technician', 'electrical', 'plumbing', 'repairs', 'facilities'] },
+  { id: 'jo21', ref: 'JO-021', title: 'Leasing Consultant', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', tags: ['Real Estate', 'Leasing', 'Commercial'], keywords: ['leasing', 'real estate', 'sales', 'viewings', 'property', 'contracts'] },
+  { id: 'jo22', ref: 'JO-022', title: 'Property Administrator', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', tags: ['Real Estate', 'Property Management', 'Admin'], keywords: ['property administrator', 'tenant records', 'lease renewals', 'admin', 'real estate'] },
+  { id: 'jo23', ref: 'JO-023', title: 'Front Desk Officer', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', tags: ['Real Estate', 'Front Desk', 'Concierge'], keywords: ['front desk', 'reception', 'lobby', 'concierge', 'visitor logs', 'real estate'] },
+  { id: 'jo24', ref: 'JO-024', title: 'Maintenance Coordinator', client: 'Prime Realty Corp', category: 'Real Estate & Property Management', tags: ['Real Estate', 'Facilities', 'Operations'], keywords: ['maintenance coordinator', 'repairs', 'facilities', 'building systems', 'real estate'] },
+  { id: 'jo25', ref: 'JO-025', title: 'Medical Technologist', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', tags: ['Healthcare', 'PRC Licensed', 'Laboratory'], keywords: ['medical technologist', 'medtech', 'lab testing', 'specimen analysis', 'doh', 'healthcare'] },
+  { id: 'jo26', ref: 'JO-026', title: 'Radiologic Technologist', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', tags: ['Healthcare', 'RadTech', 'PRC Licensed'], keywords: ['radiologic', 'x-ray', 'imaging', 'radtech', 'radiation safety', 'healthcare'] },
+  { id: 'jo27', ref: 'JO-027', title: 'Patient Service Representative', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', tags: ['Healthcare', 'Patient Care', 'HMO'], keywords: ['patient service', 'registration', 'healthcare front desk', 'appointments', 'hmo'] },
+  { id: 'jo28', ref: 'JO-028', title: 'Billing Clerk', client: 'Metro Health Diagnostics', category: 'Healthcare & Diagnostics', tags: ['Healthcare', 'Billing', 'Finance'], keywords: ['billing', 'hmo', 'insurance claims', 'patient accounts', 'accounting', 'medical records'] },
+  { id: 'jo29', ref: 'JO-029', title: 'Packing Associate', client: 'GreenFields Agri Export', category: 'Agriculture & Export', tags: ['Agriculture', 'Cold Chain', 'Export'], keywords: ['packing', 'produce', 'grading', 'harvest', 'hygiene', 'export', 'cold chain'] },
+  { id: 'jo30', ref: 'JO-030', title: 'QA Inspector (Agri)', client: 'GreenFields Agri Export', category: 'Agriculture & Export', tags: ['Agriculture', 'Quality Assurance', 'Export'], keywords: ['qa inspector', 'quality control', 'export-grade', 'agri', 'produce', 'standards'] },
+  { id: 'jo31', ref: 'JO-031', title: 'Logistics Coordinator', client: 'GreenFields Agri Export', category: 'Agriculture & Export', tags: ['Agriculture', 'Logistics', 'Shipping'], keywords: ['logistics coordinator', 'container bookings', 'freight', 'export documentation', 'shipping'] },
+  { id: 'jo32', ref: 'JO-032', title: 'Farm Supervisor', client: 'GreenFields Agri Export', category: 'Agriculture & Export', tags: ['Agriculture', 'Supervision', 'Field Ops'], keywords: ['farm supervisor', 'harvest scheduling', 'field crews', 'agriculture', 'supervision'] },
+  { id: 'jo33', ref: 'JO-033', title: 'Construction Laborer', client: 'Apex Construction Builders', category: 'Construction & Engineering', tags: ['Construction', 'Labor', 'On-site'], keywords: ['construction', 'laborer', 'material handling', 'masonry', 'site work', 'safety'] },
+  { id: 'jo34', ref: 'JO-034', title: 'Site Engineer Assistant', client: 'Apex Construction Builders', category: 'Construction & Engineering', tags: ['Construction', 'Engineering', 'AutoCAD'], keywords: ['site engineer', 'autocad', 'civil engineering', 'inspections', 'plans', 'construction'] },
+  { id: 'jo35', ref: 'JO-035', title: 'Safety Officer 2', client: 'Apex Construction Builders', category: 'Construction & Engineering', tags: ['Construction', 'Safety', 'Completed'], keywords: ['safety officer', 'bosh', 'ppe', 'oshs', 'hazard inspection', 'safety'] },
+  { id: 'jo36', ref: 'JO-036', title: 'Tower Crane Operator', client: 'Apex Construction Builders', category: 'Construction & Engineering', tags: ['Construction', 'Heavy Equipment', 'Licensed'], keywords: ['tower crane', 'crane operator', 'heavy equipment', 'tesda', 'rigging', 'construction'] },
+];
+
 export function getAllJobTargets() {
   const map = new Map();
+  const makeKey = (title, client) => `${(title || '').trim().toLowerCase()}|${(client || '').trim().toLowerCase()}`;
 
-  // 1. Read all real client job orders directly from Client Management (CLIENTS)
+  // 1. Seed with canonical 36 database job orders first
+  CANONICAL_JOB_ORDERS.forEach((canonical) => {
+    const key = makeKey(canonical.title, canonical.client);
+    map.set(key, {
+      ...canonical,
+      tags: canonical.tags || [],
+      keywords: canonical.keywords || [],
+      rate: canonical.rate || '₱610/day',
+      location: canonical.location || 'Metro Manila',
+      status: 'open',
+    });
+  });
+
+  // 2. Read all client job orders directly from Client Management (CLIENTS)
   (CLIENTS || []).forEach((client) => {
     (client.jobs || []).forEach((job, idx) => {
-      const title = job.title || '';
-      if (!title) return;
-      const key = `${title.toLowerCase()}|${client.name.toLowerCase()}`;
-      const category = mapCategoryForJob({ title, client: client.name });
-      const keywords = (job.requirements && job.requirements.length > 0)
-        ? job.requirements.map((r) => r.toLowerCase().split(/\s+/)).flat().filter((w) => w.length > 3)
-        : (job.tags || []).map((t) => t.toLowerCase());
+      const title = (job.title || '').trim();
+      const clientName = (client.name || '').trim();
+      if (!title || !clientName) return;
+      const key = makeKey(title, clientName);
+      const category = mapCategoryForJob({ title, client: clientName });
+      const existing = map.get(key);
+
+      const resolvedId = job.ref || (clientName.toLowerCase().includes('abc') ? `jo-abc-${idx + 1}` : `jo-${clientName.slice(0, 3).toLowerCase()}-${idx + 1}`);
 
       map.set(key, {
-        id: job.ref || `jo-${client.name.slice(0, 3).toLowerCase()}-${idx + 1}`,
-        ref: job.ref || `jo-${client.name.slice(0, 3).toLowerCase()}-${idx + 1}`,
+        ...(existing || {}),
+        id: existing?.id || resolvedId,
+        ref: existing?.ref || job.ref || resolvedId,
         title,
-        client: client.name,
-        category,
-        keywords: Array.from(new Set([
+        client: clientName,
+        category: existing?.category || category,
+        tags: existing?.tags?.length ? existing.tags : (job.tags || []),
+        keywords: existing?.keywords?.length ? existing.keywords : (job.keywords || Array.from(new Set([
           ...title.toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2),
           ...(job.tags || []).map((t) => t.toLowerCase()),
-          ...keywords,
-        ])),
-        rate: job.rate || client.rate,
-        location: job.location || client.address,
-        status: job.badge || 'open',
+        ]))),
+        rate: job.rate || client.rate || existing?.rate || '₱610/day',
+        location: job.location || client.address || existing?.location || 'Metro Manila',
+        status: job.badge || existing?.status || 'open',
       });
     });
   });
 
-  // 2. Read live synchronized and submitted job orders (including approved PRFs)
+  // 3. Read live synchronized and submitted job orders (including approved PRFs)
   try {
     const synched = buildSynchronizedJobOrders();
     (synched || []).forEach((j) => {
-      const title = j.title || '';
-      const client = j.client || '';
+      const title = (j.title || '').trim();
+      const client = (j.client || '').trim();
       if (!title || !client) return;
-      const key = `${title.toLowerCase()}|${client.toLowerCase()}`;
+      const key = makeKey(title, client);
       const category = mapCategoryForJob(j);
       const existing = map.get(key);
 
       map.set(key, {
-        id: j.ref || j.id || `jo-sync-${key}`,
-        ref: j.ref || j.id,
+        ...(existing || {}),
+        id: existing?.id || j.ref || j.id || `jo-sync-${key}`,
+        ref: existing?.ref || j.ref || j.id,
         title,
         client,
-        category: j.category || existing?.category || category,
-        keywords: existing?.keywords || Array.from(new Set([
+        category: existing?.category || j.category || category,
+        tags: existing?.tags?.length ? existing.tags : (j.tags || []),
+        keywords: existing?.keywords?.length ? existing.keywords : (j.keywords || Array.from(new Set([
           ...title.toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2),
           ...(j.tags || []).map((t) => t.toLowerCase()),
-        ])),
-        rate: j.rate,
-        location: j.location,
-        status: j.status,
+        ]))),
+        rate: j.rate || existing?.rate || '₱610/day',
+        location: j.location || existing?.location || 'Metro Manila',
+        status: j.status || existing?.status || 'open',
       });
     });
   } catch {}
 
-  // 3. Inspect localStorage for freshly created/approved job orders
+  // 4. Inspect localStorage for freshly created/approved job orders
   if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem('ismers_client_job_orders');
@@ -233,25 +290,27 @@ export function getAllJobTargets() {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
           parsed.forEach((j) => {
-            const title = j.title || j.position || '';
-            const client = j.client || j.company || '';
+            const title = (j.title || j.position || '').trim();
+            const client = (j.client || j.company || '').trim();
             if (!title || !client) return;
-            const key = `${title.toLowerCase()}|${client.toLowerCase()}`;
+            const key = makeKey(title, client);
             const category = mapCategoryForJob(j);
             const existing = map.get(key);
             map.set(key, {
-              id: j.ref || j.id || `jo-custom-${key}`,
-              ref: j.ref || j.id,
+              ...(existing || {}),
+              id: existing?.id || j.ref || j.id || `jo-custom-${key}`,
+              ref: existing?.ref || j.ref || j.id,
               title,
               client,
-              category: j.category || existing?.category || category,
-              keywords: existing?.keywords || Array.from(new Set([
+              category: existing?.category || j.category || category,
+              tags: existing?.tags?.length ? existing.tags : (j.tags || []),
+              keywords: existing?.keywords?.length ? existing.keywords : (j.keywords || Array.from(new Set([
                 ...title.toLowerCase().split(/[\s·,-/()]+/).filter((w) => w.length > 2),
                 ...(j.tags || []).map((t) => t.toLowerCase()),
-              ])),
-              rate: j.rate,
-              location: j.location,
-              status: j.status,
+              ]))),
+              rate: j.rate || existing?.rate || '₱610/day',
+              location: j.location || existing?.location || 'Metro Manila',
+              status: j.status || existing?.status || 'open',
             });
           });
         }
@@ -259,7 +318,18 @@ export function getAllJobTargets() {
     } catch {}
   }
 
-  return Array.from(map.values());
+  // Deduplicate strictly by title and client name
+  const deduplicated = [];
+  const seenKeys = new Set();
+  for (const j of map.values()) {
+    const k = makeKey(j.title, j.client);
+    if (!seenKeys.has(k)) {
+      seenKeys.add(k);
+      deduplicated.push(j);
+    }
+  }
+
+  return deduplicated;
 }
 
 export const JOB_TARGETS = getAllJobTargets();
@@ -267,12 +337,24 @@ export const JOB_TARGETS = getAllJobTargets();
 export function computeMatchScore(candidate, job) {
   if (!job || !candidate) return 0;
 
-  const candidateSkills = (candidate.skills || []).map((s) => s.toLowerCase().trim()).filter(Boolean);
+  // Extract candidate skills: support string array and object array { name: string }
+  const candidateSkills = (candidate.skills || []).map((s) => {
+    if (typeof s === 'string') return s.toLowerCase().trim();
+    if (s && typeof s === 'object' && s.name) return String(s.name).toLowerCase().trim();
+    return '';
+  }).filter(Boolean);
+
   const workHistory = candidate.workHistory || [];
   const workHistoryText = workHistory.map((w) => `${w.role || ''} ${w.company || ''}`).join(' ').toLowerCase().trim();
-  const summaryText = (candidate.summary || candidate.headline || '').toLowerCase().trim();
+  const summaryText = (
+    candidate.summary ||
+    candidate.headline ||
+    candidate.experienceSummary ||
+    candidate.experience ||
+    ''
+  ).toLowerCase().trim();
 
-  // 1. Strict zero start: if candidate has no skills, work history, or summary text -> 0%
+  // Strict zero start: if candidate has no skills, work history, or summary text -> 0%
   if (candidateSkills.length === 0 && !workHistoryText && !summaryText) {
     return 0;
   }
@@ -281,10 +363,11 @@ export function computeMatchScore(candidate, job) {
   const jobCat = (job.category || '').toLowerCase().trim();
   const jobTitle = (job.title || '').toLowerCase().trim();
 
-  // Extract core keywords from job title & tags
+  // Extract core keywords from job title, tags, and keywords
   const rawKeywords = [
     ...jobTitle.split(/[\s·,-/()]+/).filter((w) => w.length > 2 && !['and', 'for', 'the', 'with', 'associate', 'officer', 'staff', 'operator', 'attendant', 'crew'].includes(w)),
-    ...(job.tags || []).map((t) => t.toLowerCase()),
+    ...(job.tags || []).map((t) => (typeof t === 'string' ? t.toLowerCase().trim() : '')),
+    ...(job.keywords || []).map((k) => (typeof k === 'string' ? k.toLowerCase().trim() : '')),
   ];
 
   const filler = new Set(['high', 'school', 'graduate', 'least', 'year', 'years', 'month', 'months', 'willing', 'work', 'able', 'plus', 'preferred', 'good', 'with', 'must', 'have', 'experience', 'relocate', 'provided', 'housing']);
@@ -296,7 +379,7 @@ export function computeMatchScore(candidate, job) {
 
   const allCandidateText = [...candidateSkills, workHistoryText, summaryText].join(' ');
 
-  // 2. Count matching skills against job title, tags, and category keywords
+  // 1. Count matching skills against job title, tags, category, and core keywords
   let matchingSkillCount = 0;
   candidateSkills.forEach((skill) => {
     const directHit = coreKeywords.some((kw) => skill.includes(kw) || kw.includes(skill));
@@ -308,7 +391,7 @@ export function computeMatchScore(candidate, job) {
     }
   });
 
-  // 3. Keyword hit count from all text
+  // 2. Keyword hit count from all candidate text
   let keywordHits = 0;
   coreKeywords.forEach((kw) => {
     if (allCandidateText.includes(kw)) {
@@ -321,11 +404,11 @@ export function computeMatchScore(candidate, job) {
     return 0;
   }
 
-  // 4. Progressive scoring starting from 0%
-  // Each matching skill adds ~18% points
+  // 3. Progressive scoring
+  // Skills component: each matching skill adds ~18 points (up to 70)
   const skillsScore = Math.min(matchingSkillCount * 18, 70);
 
-  // Keyword coverage (up to 15 pts)
+  // Keyword coverage: up to 15 points
   const keywordScore = coreKeywords.length > 0
     ? (keywordHits / coreKeywords.length) * 15
     : 0;
@@ -350,10 +433,18 @@ export function computeMatchScore(candidate, job) {
       (jobCat.includes('logistics') || jobCat.includes('warehousing'))
     ) {
       categoryBonus = 8;
+    } else if (
+      candCat.includes('manufacturing') && jobCat.includes('manufacturing')
+    ) {
+      categoryBonus = 8;
+    } else if (
+      candCat.includes('retail') && jobCat.includes('retail')
+    ) {
+      categoryBonus = 8;
     }
   }
 
-  // Work history bonus
+  // Work history relevance bonus
   let historyBonus = 0;
   if (workHistoryText && coreKeywords.some((kw) => workHistoryText.includes(kw))) {
     historyBonus = 8;
@@ -410,6 +501,10 @@ export function jobMatchesForCandidate(candidate) {
       return false;
     })
     .map((j) => ({ job: j, score: computeMatchScore(candidate, j) }))
+    .filter((item, index, self) => {
+      const key = `${(item.job.title || '').trim().toLowerCase()}|${(item.job.client || '').trim().toLowerCase()}`;
+      return index === self.findIndex((other) => `${(other.job.title || '').trim().toLowerCase()}|${(other.job.client || '').trim().toLowerCase()}` === key);
+    })
     .sort((a, b) => b.score - a.score || (a.job.title || '').localeCompare(b.job.title || ''));
 }
 
@@ -431,10 +526,17 @@ export const CATEGORIES = [
 
 export function targetById(id) {
   if (!id) return null;
-  const targets = getAllJobTargets();
   const idStr = String(id).trim().toLowerCase();
 
-  // 1. Direct match on id, ref, depRef
+  // 1. Direct explicit ABC Logistics matches
+  if (idStr === 'jo-abc-1') return CANONICAL_JOB_ORDERS[0];
+  if (idStr === 'jo-abc-2') return CANONICAL_JOB_ORDERS[1];
+  if (idStr === 'jo-abc-3') return CANONICAL_JOB_ORDERS[2];
+  if (idStr === 'jo-abc-4') return CANONICAL_JOB_ORDERS[3];
+
+  const targets = getAllJobTargets();
+
+  // 2. Direct match on id, ref, depRef
   let found = targets.find(
     (j) =>
       (j.id && j.id.toLowerCase() === idStr) ||
@@ -443,14 +545,28 @@ export function targetById(id) {
   );
   if (found) return found;
 
-  // 2. Direct match on job title
+  // 3. Direct match on canonical collection
+  found = CANONICAL_JOB_ORDERS.find(
+    (j) =>
+      (j.id && j.id.toLowerCase() === idStr) ||
+      (j.ref && j.ref.toLowerCase() === idStr)
+  );
+  if (found) return found;
+
+  // 4. Direct match on job title
   found = targets.find((j) => j.title && j.title.toLowerCase() === idStr);
   if (found) return found;
 
-  // 3. Numeric extraction: e.g. 'jo22' -> 22, 'JO-022' -> 22, 'PRF-2026-0022' -> 22
+  // 5. Numeric extraction: e.g. 'jo22' -> 22, 'JO-022' -> 22, 'jo-abc-3' -> 3
   const numMatch = idStr.match(/(?:jo|prf|dep|prf-2026-)?-?0*(\d+)/i);
   if (numMatch && numMatch[1]) {
     const num = parseInt(numMatch[1], 10);
+    found = CANONICAL_JOB_ORDERS.find((j) => {
+      const jNumMatch = (j.ref || j.id || '').toLowerCase().match(/(?:jo|prf|dep|prf-2026-)?-?0*(\d+)/i);
+      return jNumMatch && parseInt(jNumMatch[1], 10) === num;
+    });
+    if (found) return found;
+
     found = targets.find((j) => {
       const jNumMatch = (j.ref || j.id || j.depRef || '').toLowerCase().match(/(?:jo|prf|dep|prf-2026-)?-?0*(\d+)/i);
       return jNumMatch && parseInt(jNumMatch[1], 10) === num;
@@ -458,7 +574,7 @@ export function targetById(id) {
     if (found) return found;
   }
 
-  // 4. Substring title match
+  // 6. Substring title match
   found = targets.find(
     (j) =>
       j.title &&

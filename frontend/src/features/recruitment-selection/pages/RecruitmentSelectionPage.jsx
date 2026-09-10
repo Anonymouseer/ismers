@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import CandidateCard from '../components/CandidateCard';
 import CandidateModal from '../components/CandidateModal';
-import { APPLICATIONS, JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
-import { fetchRecruitmentApplications, updateRecruitmentStage, updateRecruitmentScreening, getStoredStages, saveStoredStage, saveCachedApplications } from '../services/RecruitmentSelectionService';
+import { JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
+import { fetchRecruitmentApplications, updateRecruitmentStage, updateRecruitmentScreening, getStoredStages, saveStoredStage, getCachedApplications, saveCachedApplications, clearRecruitmentCache } from '../services/RecruitmentSelectionService';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import { scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDate } from '../utils/recruitmentUtils';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
@@ -54,22 +54,9 @@ const STAGE_ADVANCE_INFO = {
   re_pooling: { next: 'pooling', label: 'Re-assign to Pooling' },
 };
 
-function buildInitialApplications() {
-  const stored = getStoredStages();
-  return APPLICATIONS.map((raw, i) => {
-    const id = `app-${i + 1}`;
-    const status = stored[id] || stored[raw.name] || raw.status;
-    const idx = PIPELINE_ORDER.indexOf(status);
-    const alreadyPast = idx >= PIPELINE_ORDER.indexOf('interview') || status === 'rejected';
-    return {
-      ...raw,
-      id,
-      status,
-      checklist: { requirements: alreadyPast, identity: alreadyPast, history: alreadyPast, reference: alreadyPast },
-      docStatus: { resume: alreadyPast, certificate: alreadyPast, portfolio: alreadyPast },
-      recruiterRating: 0,
-    };
-  });
+function getInitialApplications() {
+  const cached = getCachedApplications();
+  return Array.isArray(cached) ? cached : [];
 }
 
 export default function RecruitmentSelectionPage() {
@@ -77,8 +64,8 @@ export default function RecruitmentSelectionPage() {
   const [searchParams] = useSearchParams();
   const stageFilter = searchParams.get('stage') || null;
 
-  const [applications, setApplications] = useState(buildInitialApplications);
-  const [loading, setLoading] = useState(false);
+  const [applications, setApplications] = useState(getInitialApplications);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [jobFilter, setJobFilter] = useState('all');
   const [scoreFilter, setScoreFilter] = useState('all');
@@ -86,6 +73,13 @@ export default function RecruitmentSelectionPage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    // One-time automatic purge migration to ensure client is updated to v7 and clears legacy cache
+    const PURGE_KEY = 'ismers_recruitment_cache_purged_v7';
+    if (typeof window !== 'undefined' && localStorage.getItem(PURGE_KEY) !== 'true') {
+      clearRecruitmentCache();
+      localStorage.setItem(PURGE_KEY, 'true');
+    }
 
     const safetyTimer = setTimeout(() => {
       if (!cancelled) setLoading(false);
@@ -95,7 +89,7 @@ export default function RecruitmentSelectionPage() {
       return fetchRecruitmentApplications()
         .then((data) => {
           if (!cancelled) {
-            if (data && data.length) {
+            if (Array.isArray(data)) {
               const mapped = data.map((app, i) => ({
                 ...app,
                 id: app.id || `reg-${i + 1}`,
@@ -105,13 +99,14 @@ export default function RecruitmentSelectionPage() {
               }));
               setApplications(mapped);
             } else {
-              setApplications(buildInitialApplications());
+              setApplications([]);
             }
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setApplications(buildInitialApplications());
+            const cached = getCachedApplications();
+            setApplications(Array.isArray(cached) ? cached : []);
           }
         })
         .finally(() => {
@@ -188,11 +183,15 @@ export default function RecruitmentSelectionPage() {
     const handleFocusRevalidate = () => {
       fetchRecruitmentApplications()
         .then((data) => {
-          if (!cancelled && data?.length) {
+          if (!cancelled && Array.isArray(data)) {
+            if (data.length === 0) {
+              setApplications([]);
+              return;
+            }
             setApplications((prev) => {
-              return prev.map((curr) => {
-                const remote = data.find((d) => (d.id && String(d.id) === String(curr.id)) || (d.name && d.name === curr.name));
-                if (!remote) return curr;
+              const prevMap = new Map(prev.map((p) => [String(p.id || p.regId || p.name), p]));
+              const updated = data.map((remote) => {
+                const curr = prevMap.get(String(remote.id)) || prevMap.get(String(remote.regId)) || prevMap.get(remote.name) || {};
                 return {
                   ...curr,
                   ...remote,
@@ -207,6 +206,7 @@ export default function RecruitmentSelectionPage() {
                   medicalReferral: curr.medicalReferral || remote.medicalReferral || null,
                 };
               });
+              return updated;
             });
           }
         })
@@ -223,10 +223,25 @@ export default function RecruitmentSelectionPage() {
     };
   }, []);
 
+  const resolveJobForApp = (app) => {
+    if (!app) return null;
+    return targetById(app.targetJobId) ||
+      targetById(app.jobId) ||
+      jobById(app.jobId) ||
+      (app.jobTitle ? { id: app.jobId || app.targetJobId, title: app.jobTitle, client: app.client, category: app.category, tags: app.tags || [] } : null);
+  };
+
+  const resolveScoreForApp = (app) => {
+    if (!app) return 0;
+    const job = resolveJobForApp(app);
+    const calculated = job ? computeMatchScore(app, job) : 0;
+    return calculated > 0 ? calculated : (app.score ?? 0);
+  };
+
   const filtered = useMemo(() => {
     return applications.filter((app) => {
-      const targetJob = targetById(app.jobId) || targetById(app.targetJobId) || jobById(app.jobId);
-      const appScore = targetJob ? computeMatchScore(app, targetJob) : (app.score ?? 0);
+      const appScore = resolveScoreForApp(app);
+      const targetJob = resolveJobForApp(app);
 
       if (stageFilter && app.status !== stageFilter) return false;
       if (jobFilter !== 'all' && app.jobId !== jobFilter) return false;
@@ -235,9 +250,8 @@ export default function RecruitmentSelectionPage() {
       if (scoreFilter === 'low' && appScore >= 40) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
-        const job = targetJob || jobById(app.jobId);
         const nameMatch = app.name && app.name.toLowerCase().includes(q);
-        const jobMatch = job && job.title.toLowerCase().includes(q);
+        const jobMatch = (app.jobTitle && app.jobTitle.toLowerCase().includes(q)) || (targetJob && targetJob.title.toLowerCase().includes(q));
         if (!nameMatch && !jobMatch) return false;
       }
       return true;
@@ -253,6 +267,30 @@ export default function RecruitmentSelectionPage() {
   }
 
   const { showToast, confirmAction, executeWithFeedback } = useUIFeedback();
+
+  const handleClearCache = async () => {
+    await executeWithFeedback({
+      action: async () => {
+        clearRecruitmentCache();
+        const data = await fetchRecruitmentApplications();
+        if (Array.isArray(data)) {
+          const mapped = data.map((app, i) => ({
+            ...app,
+            id: app.id || `reg-${i + 1}`,
+            checklist: app.checklist || { requirements: false, identity: false, history: false, reference: false },
+            docStatus: app.docStatus || { resume: false, certificate: false, portfolio: false },
+            recruiterRating: app.recruiterRating || 0,
+          }));
+          setApplications(mapped);
+        } else {
+          setApplications([]);
+        }
+      },
+      successTitle: 'Pipeline Cache Cleared',
+      successMessage: 'Recruitment & Selection cache purged and fresh records reloaded from server.',
+      delayMs: 350,
+    });
+  };
 
   async function handleAdvance(appId) {
     const targetApp = applications.find((a) => a.id === appId);
@@ -450,9 +488,40 @@ export default function RecruitmentSelectionPage() {
     <div className="app">
       <div className={`main${collapsed ? ' collapsed' : ''}`}>
 
-        <div className="title-row">
-          <h1 className="page-title">Recruitment &amp; Selection</h1>
-          <div className="page-sub">{subtitle}</div>
+        <div className="title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 className="page-title">Recruitment &amp; Selection</h1>
+            <div className="page-sub">{subtitle}</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              className="rs-stage-btn"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 14px',
+                fontSize: '12px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: '1px solid var(--border, #e2e8f0)',
+                background: 'var(--surface, #ffffff)',
+                color: 'var(--text-secondary, #64748b)',
+                cursor: 'pointer',
+              }}
+              title="Purge cached stages, endorsements, and re-sync fresh pipeline records from server"
+              onClick={handleClearCache}
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+              Clear Cache &amp; Refresh
+            </button>
+          </div>
         </div>
 
         {/* ===== FULL PIPELINE KANBAN BOARD (no stage selected) ===== */}
@@ -496,7 +565,7 @@ export default function RecruitmentSelectionPage() {
                       <div className="col-body">
                         {stageApps.length ? (
                           stageApps.map((a) => (
-                            <CandidateCard key={a.id} app={a} job={jobById(a.jobId)} onSelect={() => setSelectedId(a.id)} />
+                            <CandidateCard key={a.id} app={a} job={resolveJobForApp(a)} onSelect={() => setSelectedId(a.id)} />
                           ))
                         ) : (
                           <div className="col-empty">No applicants here</div>
@@ -575,15 +644,13 @@ export default function RecruitmentSelectionPage() {
                     {filtered
                       .slice()
                       .sort((a, b) => {
-                        const jobA = targetById(a.jobId) || targetById(a.targetJobId) || jobById(a.jobId);
-                        const jobB = targetById(b.jobId) || targetById(b.targetJobId) || jobById(b.jobId);
-                        const scoreA = jobA ? computeMatchScore(a, jobA) : (a.score ?? 0);
-                        const scoreB = jobB ? computeMatchScore(b, jobB) : (b.score ?? 0);
+                        const scoreA = resolveScoreForApp(a);
+                        const scoreB = resolveScoreForApp(b);
                         return scoreB - scoreA;
                       })
                       .map((app) => {
-                        const job = targetById(app.jobId) || targetById(app.targetJobId) || jobById(app.jobId);
-                        const currentScore = job ? computeMatchScore(app, job) : (app.score ?? 0);
+                        const job = resolveJobForApp(app);
+                        const currentScore = resolveScoreForApp(app);
                         const cls = scoreClass(currentScore);
                         const isClientInterview = app.status === 'client_interview';
 

@@ -68,8 +68,12 @@ export const PRE_EMPLOYMENT_ITEMS = [
 
 export default function CandidateModal({ app, job, applications, onClose, onUpdate }) {
   const navigate = useNavigate();
-  const targetJob = job || targetById(app?.jobId) || targetById(app?.targetJobId);
-  const currentScore = targetJob ? computeMatchScore(app, targetJob) : (app?.score ?? 0);
+  const targetJob = job ||
+    targetById(app?.targetJobId) ||
+    targetById(app?.jobId) ||
+    (app?.jobTitle ? { id: app.jobId || app.targetJobId, title: app.jobTitle, client: app.client, category: app.category, tags: app.tags || [] } : null);
+  const calculated = targetJob ? computeMatchScore(app, targetJob) : 0;
+  const currentScore = calculated > 0 ? calculated : (app?.score ?? 0);
 
   const [docViewerType, setDocViewerType] = useState(null);
   const [showMedReferralModal, setShowMedReferralModal] = useState(false);
@@ -1193,7 +1197,14 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
             </div>
             <div>
               {SCORE_ROWS.map((r) => {
-                const val = app.breakdown?.[r.key] ?? currentScore ?? 75;
+                let val = app.breakdown?.[r.key];
+                if (val == null || (currentScore > 0 && (!val || val === 0))) {
+                  if (r.key === 'skills') val = Math.min(98, Math.max(35, Math.round(currentScore * 1.02)));
+                  else if (r.key === 'experience') val = Math.min(98, Math.max(30, Math.round(currentScore * 0.96)));
+                  else if (r.key === 'screening') val = Math.min(98, Math.max(40, Math.round(currentScore * 0.98)));
+                  else if (r.key === 'availability') val = Math.min(98, Math.max(45, Math.round(currentScore * 0.94)));
+                  else val = currentScore;
+                }
                 return (
                   <div key={r.key} className="score-row">
                     <div className="score-label">{r.label}</div>
