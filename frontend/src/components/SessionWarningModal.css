@@ -1,0 +1,200 @@
+/* ── Session Warning Modal ─────────────────────────────────────────────────── */
+/* Corporate countdown overlay shown before hard token expiry.                */
+
+.session-warning-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  background: rgba(10, 27, 46, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: swmFadeIn 0.25s ease-out;
+}
+
+.session-warning-modal {
+  position: fixed;
+  z-index: 99999;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface, #ffffff);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 125, 204, 0.10);
+  overflow: hidden;
+  animation: swmSlideIn 0.3s ease-out;
+}
+
+.session-warning-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(0, 125, 204, 0.08);
+}
+
+.session-warning-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(234, 88, 12, 0.10);
+  color: #ea580c;
+  flex-shrink: 0;
+}
+
+.session-warning-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text, #0a1b2e);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.session-warning-subtitle {
+  font-size: 11.5px;
+  color: var(--muted, #486f91);
+  margin: 2px 0 0;
+  font-weight: 500;
+}
+
+.session-warning-body {
+  padding: 20px 24px 24px;
+  text-align: center;
+}
+
+.session-warning-message {
+  font-size: 13px;
+  color: var(--text-secondary, #334155);
+  line-height: 1.55;
+  margin: 0 0 20px;
+}
+
+.session-warning-countdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.session-warning-countdown-value {
+  font-size: 36px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: #ea580c;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.session-warning-countdown-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted, #486f91);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.session-warning-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 125, 204, 0.08);
+  border-radius: 2px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.session-warning-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #ea580c, #dc2626);
+  border-radius: 2px;
+  transition: width 1s linear;
+}
+
+.session-warning-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.session-warning-btn {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.12s;
+}
+
+.session-warning-btn:active {
+  transform: scale(0.97);
+}
+
+.session-warning-btn--primary {
+  background: linear-gradient(135deg, #007dcc, #0069b4);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 125, 204, 0.25);
+}
+
+.session-warning-btn--primary:hover {
+  background: linear-gradient(135deg, #0069b4, #005a9e);
+  box-shadow: 0 4px 14px rgba(0, 125, 204, 0.35);
+}
+
+.session-warning-btn--secondary {
+  background: transparent;
+  border: 1px solid rgba(0, 125, 204, 0.18);
+  color: var(--text, #0a1b2e);
+}
+
+.session-warning-btn--secondary:hover {
+  background: rgba(0, 125, 204, 0.04);
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes swmFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes swmSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ── Dark Theme ───────────────────────────────────────────────────────────── */
+[data-theme="dark"] .session-warning-modal {
+  background: #1a2332;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(100, 180, 255, 0.10);
+}
+
+[data-theme="dark"] .session-warning-title {
+  color: #e8f0fe;
+}
+
+[data-theme="dark"] .session-warning-subtitle {
+  color: #8ba4be;
+}
+
+[data-theme="dark"] .session-warning-message {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .session-warning-btn--secondary {
+  color: #e8f0fe;
+  border-color: rgba(100, 180, 255, 0.18);
+}
+
+[data-theme="dark"] .session-warning-btn--secondary:hover {
+  background: rgba(100, 180, 255, 0.06);
+}

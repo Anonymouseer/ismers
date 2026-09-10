@@ -82,6 +82,9 @@ export default function ClientPortalLoginPage() {
         if (sessionUser?.token) {
           localStorage.setItem('cp_token', sessionUser.token);
         }
+        if (sessionUser?.expires_at) {
+          localStorage.setItem('cp_token_expiry', sessionUser.expires_at);
+        }
         localStorage.setItem('cp_session', JSON.stringify({ ...sessionUser, loggedIn: true }));
         navigate(from, { replace: true });
       })

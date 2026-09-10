@@ -127,6 +127,9 @@ export default function ClientPortalRegisterPage() {
         if (newUser?.token) {
           localStorage.setItem('cp_token', newUser.token);
         }
+        if (newUser?.expires_at) {
+          localStorage.setItem('cp_token_expiry', newUser.expires_at);
+        }
         localStorage.setItem('cp_session', JSON.stringify({ ...newUser, loggedIn: true }));
         navigate('/client-portal', { replace: true });
       })

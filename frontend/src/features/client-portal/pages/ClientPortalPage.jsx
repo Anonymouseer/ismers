@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/apiClient';
 import { clientPortalService } from '../services/ClientPortalService';
@@ -1224,10 +1224,82 @@ export default function ClientPortalPage() {
     };
   }, [navigate]);
 
-  const handleLogout = () => {
+  // ── CLIENT PORTAL IDLE + HARD EXPIRY TIMERS ──────────────────────────────
+  const cpIdleTimerRef = useRef(null);
+  const cpExpiryTimerRef = useRef(null);
+  const CP_IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes idle
+
+  const cpLogout = useCallback(() => {
+    clearTimeout(cpIdleTimerRef.current);
+    clearTimeout(cpExpiryTimerRef.current);
     try {
       localStorage.removeItem('cp_session');
       localStorage.removeItem('cp_token');
+      localStorage.removeItem('cp_token_expiry');
+      localStorage.removeItem('cp_last_active');
+    } catch {
+      /* ignore */
+    }
+    navigate('/client-portal/login?reason=session_expired', { replace: true });
+  }, [navigate]);
+
+  const resetCpIdleTimer = useCallback(() => {
+    clearTimeout(cpIdleTimerRef.current);
+    try { localStorage.setItem('cp_last_active', String(Date.now())); } catch { /* ignore */ }
+    cpIdleTimerRef.current = setTimeout(() => {
+      // Cross-tab check before logout
+      try {
+        const lastActive = localStorage.getItem('cp_last_active');
+        if (lastActive) {
+          const elapsed = Date.now() - parseInt(lastActive, 10);
+          if (elapsed < CP_IDLE_TIMEOUT_MS) {
+            cpIdleTimerRef.current = setTimeout(() => cpLogout(), CP_IDLE_TIMEOUT_MS - elapsed);
+            return;
+          }
+        }
+      } catch { /* ignore */ }
+      cpLogout();
+    }, CP_IDLE_TIMEOUT_MS);
+  }, [cpLogout, CP_IDLE_TIMEOUT_MS]);
+
+  // Idle detection for client portal
+  useEffect(() => {
+    if (!session) return;
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll', 'mousemove'];
+    const handler = () => resetCpIdleTimer();
+    events.forEach((e) => window.addEventListener(e, handler, { passive: true }));
+    resetCpIdleTimer();
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, handler));
+      clearTimeout(cpIdleTimerRef.current);
+    };
+  }, [session, resetCpIdleTimer]);
+
+  // Hard token expiry timer for client portal
+  useEffect(() => {
+    if (!session) return;
+    try {
+      const expiry = localStorage.getItem('cp_token_expiry');
+      if (expiry) {
+        const msUntilExpiry = new Date(expiry).getTime() - Date.now();
+        if (msUntilExpiry <= 0) {
+          cpLogout();
+          return;
+        }
+        cpExpiryTimerRef.current = setTimeout(() => cpLogout(), msUntilExpiry);
+      }
+    } catch { /* ignore */ }
+    return () => clearTimeout(cpExpiryTimerRef.current);
+  }, [session, cpLogout]);
+
+  const handleLogout = () => {
+    clearTimeout(cpIdleTimerRef.current);
+    clearTimeout(cpExpiryTimerRef.current);
+    try {
+      localStorage.removeItem('cp_session');
+      localStorage.removeItem('cp_token');
+      localStorage.removeItem('cp_token_expiry');
+      localStorage.removeItem('cp_last_active');
     } catch {
       /* ignore */
     }

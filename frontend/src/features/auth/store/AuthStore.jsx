@@ -4,10 +4,11 @@ import AuthService from '../services/AuthService';
 const AuthContext = createContext(null);
 
 // ── CONSTANTS ────────────────────────────────────────────────────────────────
-const TOKEN_KEY    = 'primepower_admin_token';
-const USER_KEY     = 'primepower_admin_user';
-const EXPIRY_KEY   = 'primepower_admin_token_expiry';
-const SETTINGS_KEY = 'ismers.settings';
+const TOKEN_KEY       = 'primepower_admin_token';
+const USER_KEY        = 'primepower_admin_user';
+const EXPIRY_KEY      = 'primepower_admin_token_expiry';
+const SETTINGS_KEY    = 'ismers.settings';
+const LAST_ACTIVE_KEY = 'ismers_last_active';
 
 /**
  * Reads the configured Session Idle Timeout from the Settings page.
@@ -56,14 +57,26 @@ function isTokenExpired() {
   return Date.now() > new Date(expiry).getTime();
 }
 
+/**
+ * Returns true if the user has been idle longer than the configured timeout.
+ * Compares the shared ismers_last_active timestamp against the current time.
+ */
+function isIdleExpired() {
+  const lastActive = readStorage(LAST_ACTIVE_KEY);
+  if (!lastActive) return false; // No record — assume fresh session
+  const elapsed = Date.now() - parseInt(lastActive, 10);
+  return elapsed > getIdleTimeoutMs();
+}
+
 // ── PROVIDER ─────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    if (isTokenExpired()) {
-      // Token is already past its expiry — clear everything immediately
+    if (isTokenExpired() || isIdleExpired()) {
+      // Token is already past its expiry or user was idle too long — clear everything
       removeStorage(TOKEN_KEY);
       removeStorage(USER_KEY);
       removeStorage(EXPIRY_KEY);
+      removeStorage(LAST_ACTIVE_KEY);
       return null;
     }
     try {
@@ -75,7 +88,7 @@ export function AuthProvider({ children }) {
   });
 
   const [token, setToken] = useState(() => {
-    if (isTokenExpired()) return null;
+    if (isTokenExpired() || isIdleExpired()) return null;
     return readStorage(TOKEN_KEY) || null;
   });
 
@@ -101,6 +114,7 @@ export function AuthProvider({ children }) {
     removeStorage(TOKEN_KEY);
     removeStorage(USER_KEY);
     removeStorage(EXPIRY_KEY);
+    removeStorage(LAST_ACTIVE_KEY);
 
     if (reason === 'expired' || reason === 'idle') {
       setSessionExpired(true);
@@ -109,13 +123,33 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // ── IDLE DETECTION ────────────────────────────────────────────────────────
+  // ── IDLE DETECTION (Cross-Tab Synchronized) ───────────────────────────────
   const resetIdleTimer = useCallback(() => {
     if (!token) return;
     clearTimeout(idleTimerRef.current);
+
+    // Persist activity timestamp to localStorage so all tabs share the
+    // same "last active" reference. This prevents a background tab from
+    // logging out while the user is actively working in another tab.
+    writeStorage(LAST_ACTIVE_KEY, String(Date.now()));
+
     // Read current configured timeout dynamically so Settings changes take
     // effect immediately on the next user activity event.
-    idleTimerRef.current = setTimeout(() => logout('idle'), getIdleTimeoutMs());
+    const timeoutMs = getIdleTimeoutMs();
+    idleTimerRef.current = setTimeout(() => {
+      // Before firing, re-check the shared timestamp in case another tab
+      // recorded more recent activity that this tab missed.
+      const lastActive = readStorage(LAST_ACTIVE_KEY);
+      if (lastActive) {
+        const elapsed = Date.now() - parseInt(lastActive, 10);
+        if (elapsed < timeoutMs) {
+          // Another tab was active — reschedule instead of logging out
+          idleTimerRef.current = setTimeout(() => logout('idle'), timeoutMs - elapsed);
+          return;
+        }
+      }
+      logout('idle');
+    }, timeoutMs);
   }, [token, logout]);
 
   useEffect(() => {
@@ -133,6 +167,24 @@ export function AuthProvider({ children }) {
     };
   }, [token, resetIdleTimer]);
 
+  // ── CROSS-TAB IDLE SYNC via storage event ─────────────────────────────────
+  // When another tab updates ismers_last_active, reset this tab's idle timer
+  // so it stays synchronized with the most recent user activity.
+  useEffect(() => {
+    if (!token) return;
+    const handleActivitySync = (e) => {
+      if (e.key === LAST_ACTIVE_KEY && e.newValue) {
+        clearTimeout(idleTimerRef.current);
+        const timeoutMs = getIdleTimeoutMs();
+        const elapsed = Date.now() - parseInt(e.newValue, 10);
+        const remaining = Math.max(0, timeoutMs - elapsed);
+        idleTimerRef.current = setTimeout(() => logout('idle'), remaining);
+      }
+    };
+    window.addEventListener('storage', handleActivitySync);
+    return () => window.removeEventListener('storage', handleActivitySync);
+  }, [token, logout]);
+
   // ── TOKEN EXPIRY TIMER ────────────────────────────────────────────────────
   const scheduleExpiryTimers = useCallback(() => {
     clearTimeout(expiryTimerRef.current);
@@ -147,7 +199,7 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    // Warn 2 minutes before expiry
+    // Warn 1 minute before expiry
     const msUntilWarn = msUntilExpiry - EXPIRY_WARN_BEFORE_MS;
     if (msUntilWarn > 0) {
       warnTimerRef.current = setTimeout(() => {
@@ -202,6 +254,7 @@ export function AuthProvider({ children }) {
         setUser(res.user);
         writeStorage(TOKEN_KEY, res.token);
         writeStorage(USER_KEY, JSON.stringify(res.user));
+        writeStorage(LAST_ACTIVE_KEY, String(Date.now()));
         // Reset sidebar submenu state so menus start collapsed on fresh login
         try { localStorage.removeItem('primepower_open_menus'); } catch { /* ignore */ }
         if (res.expires_at) {
@@ -268,3 +321,4 @@ export function useAuth() {
 }
 
 export default AuthContext;
+
