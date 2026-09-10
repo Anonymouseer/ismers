@@ -13,6 +13,7 @@ import {
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
 import { useUIFeedback } from '../../../components/common/UIFeedback';
 import PersonAvatar from '../../../components/common/PersonAvatar';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 import './ApplicantRegistrationBoard.css';
 
 const STAGE_PAGE_META = {
@@ -43,7 +44,7 @@ const STAGE_PAGE_META = {
 };
 
 export default function ApplicantProfilingBoard() {
-  const { candidates, role, setRole, startProfiling, completeProfile, sendToRecruitment, bulkReturnToProfiling, updateStage } = useApplicantRegistration();
+  const { candidates, loading, role, setRole, startProfiling, completeProfile, sendToRecruitment, bulkReturnToProfiling, updateStage } = useApplicantRegistration();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = searchParams.get('view') || 'all';
 
@@ -158,6 +159,28 @@ export default function ApplicantProfilingBoard() {
       delayMs: 500,
     });
   };
+
+  if (loading) {
+    return (
+      <div className="arp-page">
+        <div className="title-row">
+          <div>
+            <div className="eyebrow">Core 1 · Applicant Registration &amp; Profiling</div>
+            <h1 className="page-title">
+              {viewMode === 'all' && 'Applicant Intake & Profiling Board'}
+              {viewMode === 'register' && 'Register New Applicant'}
+              {viewMode !== 'all' && viewMode !== 'register' && STAGE_PAGE_META[viewMode]?.title}
+            </h1>
+            <div className="page-sub">Loading applicant profiling records...</div>
+          </div>
+        </div>
+        <SkeletonLoader
+          variant={viewMode === 'register' ? 'form' : (viewMode === 'all' ? 'board' : 'table')}
+          columns={viewMode === 'all' ? 4 : 5}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="arp-page">

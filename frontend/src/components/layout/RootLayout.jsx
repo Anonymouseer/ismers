@@ -1,13 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import SkeletonLoader from '../common/SkeletonLoader';
 import './Sidebar.css';
 
 export default function RootLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+
+  // Route & Submodule transition shimmer loading state
+  const [navTransition, setNavTransition] = useState(false);
+  const prevRouteRef = useRef(location.pathname + location.search);
+
+  // Trigger brief transition on route or submodule change
+  useEffect(() => {
+    const currentRoute = location.pathname + location.search;
+    if (prevRouteRef.current !== currentRoute) {
+      prevRouteRef.current = currentRoute;
+      setNavTransition(true);
+    }
+  }, [location.pathname, location.search]);
+
+  // Guaranteed dismissal: navTransition ALWAYS auto-expires within 280ms
+  useEffect(() => {
+    if (!navTransition) return;
+    const timer = setTimeout(() => {
+      setNavTransition(false);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [navTransition]);
 
   // Auto-close mobile drawer on route navigation
   useEffect(() => {
@@ -90,7 +113,11 @@ export default function RootLayout() {
       >
         <Header onToggleMobileMenu={() => setMobileOpen((m) => !m)} />
         <div className="main-content-slot" style={{ flex: '1 0 auto', minWidth: 0, padding: '18px 26px 26px 26px' }}>
-          <Outlet context={{ collapsed, setCollapsed }} />
+          {navTransition ? (
+            <SkeletonLoader variant="auto" />
+          ) : (
+            <Outlet context={{ collapsed, setCollapsed }} />
+          )}
         </div>
       </div>
     </div>

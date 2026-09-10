@@ -8,6 +8,7 @@ import NewDeploymentModal from '../components/NewDeploymentModal';
 import { useDeploymentAssignmentStore } from '../store/DeploymentAssignmentStore';
 import { getJobOrderOptions } from '../services/DeploymentAssignmentService';
 import { CLIENTS as CLIENT_MANAGEMENT_CLIENTS } from '../../client-management/data/mockClients';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 import '../pages/DeploymentAssignmentPage.css';
 import '../../client-management/pages/ClientManagementPage.css';
 
@@ -31,6 +32,7 @@ export default function DeploymentAssignmentPage() {
     setModalOpen,
     setStage,
     addDeployment,
+    loading,
   } = useDeploymentAssignmentStore();
 
   useEffect(() => {
@@ -167,6 +169,25 @@ export default function DeploymentAssignmentPage() {
 
   function handleCloseModal() {
     setActiveModal(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div className={`main${collapsed ? ' collapsed' : ''}`}>
+          <div className="title-row">
+            <div>
+              <div className="crumb" style={{ marginBottom: 4 }}>
+                Talent &amp; Deployment &nbsp;·&nbsp; <b>Deployment &amp; Assignment</b>
+              </div>
+              <h1 className="page-title">Deployment &amp; Assignment</h1>
+              <div className="page-sub">Loading deployment records...</div>
+            </div>
+          </div>
+          <SkeletonLoader variant="table" columns={6} rows={6} />
+        </div>
+      </div>
+    );
   }
 
   return (

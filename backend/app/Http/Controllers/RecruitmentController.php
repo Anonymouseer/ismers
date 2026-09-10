@@ -53,6 +53,16 @@ class RecruitmentController extends Controller
 
     // ── Private helpers ──────────────────────────────────────────────────────
 
+    private static ?\Illuminate\Support\Collection $cachedJobs = null;
+
+    private function getCachedJobOrders(): \Illuminate\Support\Collection
+    {
+        if (self::$cachedJobs === null) {
+            self::$cachedJobs = JobOrder::all();
+        }
+        return self::$cachedJobs;
+    }
+
     /**
      * Resolve a JobOrder from a flexible identifier (ref, numeric id, or title).
      */
@@ -62,37 +72,38 @@ class RecruitmentController extends Controller
             return null;
         }
 
-        $job = JobOrder::whereRaw('LOWER(ref) = ?', [strtolower($targetId)])->first();
+        $cleanTarget = strtolower(trim($targetId));
+        $all = $this->getCachedJobOrders();
+
+        $job = $all->first(fn ($j) => strtolower($j->ref ?? '') === $cleanTarget);
         if ($job) {
             return $job;
         }
 
         if (preg_match('/(?:jo|jo-)?(\d+)/i', $targetId, $m)) {
             $num       = (int) $m[1];
-            $paddedRef = 'JO-' . str_pad((string) $num, 3, '0', STR_PAD_LEFT);
-            $job       = JobOrder::whereRaw('LOWER(ref) = ?', [strtolower($paddedRef)])
-                ->orWhere('id', $num)
-                ->first();
+            $paddedRef = 'jo-' . str_pad((string) $num, 3, '0', STR_PAD_LEFT);
+            $job       = $all->first(fn ($j) => strtolower($j->ref ?? '') === $paddedRef || (int) $j->id === $num);
             if ($job) {
                 return $job;
             }
         }
 
         if (is_numeric($targetId)) {
-            $job = JobOrder::find((int) $targetId);
+            $job = $all->first(fn ($j) => (int) $j->id === (int) $targetId);
             if ($job) {
                 return $job;
             }
         }
 
-        return JobOrder::whereRaw('LOWER(title) = ?', [strtolower(trim($targetId))])->first();
+        return $all->first(fn ($j) => strtolower(trim($j->title ?? '')) === $cleanTarget);
     }
 
     /**
      * Compute AI match score from Job Order keyword matching against applicant
      * skills and work history.
      */
-    public function computeAiScore(Applicant $applicant): int
+    public function computeAiScore(Applicant $applicant, ?JobOrder $job = null): int
     {
         $targetId = $applicant->target_job_id;
         if (! $targetId) {
@@ -102,7 +113,9 @@ class RecruitmentController extends Controller
         $keywords = [];
 
         // Dynamic keyword extraction from the matched Job Order record.
-        $job = $this->resolveJobOrder($targetId);
+        if (! $job) {
+            $job = $this->resolveJobOrder($targetId);
+        }
         if ($job) {
             $words    = preg_split('/[\s·,\-\/()]+/', strtolower($job->title), -1, PREG_SPLIT_NO_EMPTY);
             $keywords = array_values(array_filter($words, fn ($w) => strlen($w) > 2));
@@ -206,7 +219,7 @@ class RecruitmentController extends Controller
             ->map(function ($applicant) {
                 $fullName = trim("{$applicant->first_name} {$applicant->last_name}");
                 $job      = $this->resolveJobOrder($applicant->target_job_id);
-                $score    = $this->computeAiScore($applicant);
+                $score    = $this->computeAiScore($applicant, $job);
 
                 $skillsSub  = $score > 0 ? min(98, max(40, (int) round($score * 1.02))) : min(95, max(30, $applicant->skills->count() * 20));
                 $expSub     = $score > 0 ? min(98, max(35, (int) round($score * 0.96))) : min(95, max(30, $applicant->workHistory->count() * 25));

@@ -9,6 +9,7 @@ import { scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDa
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import { useUIFeedback } from '../../../components/common/UIFeedback';
 import PersonAvatar from '../../../components/common/PersonAvatar';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 import auditLogService from '../../../services/auditLogService';
 import './RecruitmentSelectionPage.css';
 
@@ -76,8 +77,8 @@ export default function RecruitmentSelectionPage() {
   const [searchParams] = useSearchParams();
   const stageFilter = searchParams.get('stage') || null;
 
-  const [applications, setApplications] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState(buildInitialApplications);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [jobFilter, setJobFilter] = useState('all');
   const [scoreFilter, setScoreFilter] = useState('all');
@@ -85,20 +86,27 @@ export default function RecruitmentSelectionPage() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 5000);
 
     const loadData = () => {
       return fetchRecruitmentApplications()
         .then((data) => {
-          if (!cancelled && data?.length) {
-            const mapped = data.map((app, i) => ({
-              ...app,
-              id: app.id || `reg-${i + 1}`,
-              checklist: app.checklist || { requirements: false, identity: false, history: false, reference: false },
-              docStatus: app.docStatus || { resume: false, certificate: false, portfolio: false },
-              recruiterRating: app.recruiterRating || 0,
-            }));
-            setApplications(mapped);
+          if (!cancelled) {
+            if (data && data.length) {
+              const mapped = data.map((app, i) => ({
+                ...app,
+                id: app.id || `reg-${i + 1}`,
+                checklist: app.checklist || { requirements: false, identity: false, history: false, reference: false },
+                docStatus: app.docStatus || { resume: false, certificate: false, portfolio: false },
+                recruiterRating: app.recruiterRating || 0,
+              }));
+              setApplications(mapped);
+            } else {
+              setApplications(buildInitialApplications());
+            }
           }
         })
         .catch(() => {
@@ -107,6 +115,7 @@ export default function RecruitmentSelectionPage() {
           }
         })
         .finally(() => {
+          clearTimeout(safetyTimer);
           if (!cancelled) setLoading(false);
         });
     };
@@ -208,6 +217,7 @@ export default function RecruitmentSelectionPage() {
 
     return () => {
       cancelled = true;
+      clearTimeout(safetyTimer);
       unsubscribe();
       window.removeEventListener('focus', handleFocusRevalidate);
     };
@@ -421,6 +431,20 @@ export default function RecruitmentSelectionPage() {
   const subtitle = activeStage
     ? `${filtered.length} applicant${filtered.length !== 1 ? 's' : ''} in ${activeStage.label}`
     : `${filtered.length} applications in the pipeline`;
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div className={`main${collapsed ? ' collapsed' : ''}`}>
+          <div className="title-row">
+            <h1 className="page-title">Recruitment &amp; Selection</h1>
+            <div className="page-sub">Loading pipeline and candidate records...</div>
+          </div>
+          <SkeletonLoader variant={stageFilter ? 'table' : 'board'} columns={stageFilter ? 4 : 5} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">

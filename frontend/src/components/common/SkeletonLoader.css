@@ -1,0 +1,210 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRIMEPOWER Unified Shimmer Skeleton Loader
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes shimmerWave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer-block {
+  background: linear-gradient(
+    90deg,
+    var(--card) 25%,
+    var(--secondary) 50%,
+    var(--card) 75%
+  );
+  background-size: 300% 100%;
+  animation: shimmerWave 1.4s ease-in-out infinite;
+  border-radius: var(--radius);
+}
+
+.skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  animation: skelFadeIn 0.22s var(--ease) both;
+}
+
+@keyframes skelFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Common Header Skeleton ── */
+.skel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.skel-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skel-title {
+  height: 24px;
+  width: 240px;
+}
+
+.skel-subtitle {
+  height: 14px;
+  width: 360px;
+}
+
+.skel-header-right {
+  height: 34px;
+  width: 140px;
+}
+
+/* ── Filter Bar Skeleton ── */
+.skel-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.skel-search-input {
+  height: 38px;
+  flex: 1;
+  max-width: 320px;
+  border-radius: 20px;
+}
+
+.skel-chip {
+  height: 38px;
+  width: 120px;
+  border-radius: 20px;
+}
+
+/* ── Variant: Dashboard ── */
+.skel-dash-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 16px;
+}
+
+.skel-dash-card {
+  height: 124px;
+}
+
+.skel-dash-bar {
+  height: 140px;
+}
+
+.skel-dash-charts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.skel-dash-chart {
+  height: 260px;
+}
+
+/* ── Variant: Table (Client Management, JO Table, Deployments) ── */
+.skel-table-container {
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skel-table-head {
+  height: 40px;
+  border-radius: 8px;
+  opacity: 0.8;
+}
+
+.skel-table-row {
+  height: 48px;
+  border-radius: 8px;
+}
+
+/* ── Variant: Board / Kanban (Recruitment, Applicant Registration, JO Board) ── */
+.skel-stages-strip {
+  height: 42px;
+  border-radius: 10px;
+}
+
+.skel-board-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.skel-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 450px;
+}
+
+.skel-col-header {
+  height: 28px;
+  border-radius: 6px;
+}
+
+.skel-col-card {
+  height: 100px;
+  border-radius: 10px;
+  opacity: 0.85;
+}
+
+/* ── Variant: Analytics ── */
+.skel-analytics-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.skel-analytics-card {
+  height: 110px;
+}
+
+.skel-analytics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.skel-analytics-chart {
+  height: 340px;
+}
+
+/* ── Variant: Form (Settings, Profile, Register Applicant) ── */
+.skel-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skel-form-card {
+  height: 200px;
+  border-radius: var(--radius);
+}
+
+@media (max-width: 1024px) {
+  .skel-dash-charts,
+  .skel-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}

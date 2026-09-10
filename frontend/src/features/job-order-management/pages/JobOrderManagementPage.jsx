@@ -8,6 +8,7 @@ import JobOrderTableView from '../components/JobOrderTableView';
 import JobOrderBoard from '../components/JobOrderBoard';
 import JobOrderDrawer from '../components/JobOrderDrawer';
 import JobOrderModal from '../components/JobOrderModal';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 import './JobOrderManagement.css';
 
 export default function JobOrderManagementPage() {
@@ -36,11 +37,7 @@ export default function JobOrderManagementPage() {
 
   if (store.loading) {
     return (
-      <div className="app">
-        <div className={`main${collapsed ? ' collapsed' : ''}`}>
-          <div className="page-sub">Loading job orders…</div>
-        </div>
-      </div>
+      <SkeletonLoader variant={displayMode === 'board' ? 'board' : 'table'} />
     );
   }
 

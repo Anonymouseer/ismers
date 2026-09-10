@@ -178,6 +178,10 @@ export function useDeploymentAssignmentStore() {
   // Fetch live from Laravel Backend on mount
   useEffect(() => {
     let isMounted = true;
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 5000);
+
     async function loadData() {
       setLoading(true);
       try {
@@ -197,11 +201,15 @@ export function useDeploymentAssignmentStore() {
       } catch (e) {
         console.warn('Using local cached deployments:', e);
       } finally {
+        clearTimeout(safetyTimer);
         if (isMounted) setLoading(false);
       }
     }
     loadData();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   useEffect(() => {

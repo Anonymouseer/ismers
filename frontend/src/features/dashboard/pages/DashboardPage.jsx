@@ -6,6 +6,7 @@ import StatCard from '../components/StatCard';
 import PipelineBar from '../components/PipelineBar';
 import DonutChart from '../components/DonutChart';
 import ActivityFeed from '../components/ActivityFeed';
+import SkeletonLoader from '../../../components/common/SkeletonLoader';
 import './DashboardPage.css';
 
 export default function DashboardPage() {
@@ -20,6 +21,11 @@ export default function DashboardPage() {
     if (isInitial) setLoading(true);
     else setRefreshing(true);
 
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+      setRefreshing(false);
+    }, 5000);
+
     try {
       const data = await dashboardService.getStats();
       setStats(data);
@@ -27,6 +33,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Failed to load dashboard metrics:', err);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
       setRefreshing(false);
     }
@@ -100,19 +107,7 @@ export default function DashboardPage() {
             <div className="dash-subtitle">Loading system intelligence and live metrics...</div>
           </div>
         </div>
-        <div className="dash-skeleton-row">
-          <div className="dash-skeleton-card" />
-          <div className="dash-skeleton-card" />
-          <div className="dash-skeleton-card" />
-          <div className="dash-skeleton-card" />
-          <div className="dash-skeleton-card" />
-        </div>
-        <div className="dash-skeleton-bar" />
-        <div className="dash-skeleton-grid">
-          <div className="dash-skeleton-donut" />
-          <div className="dash-skeleton-donut" />
-          <div className="dash-skeleton-donut" />
-        </div>
+        <SkeletonLoader variant="dashboard" showHeader={false} />
       </div>
     );
   }

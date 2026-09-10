@@ -49,14 +49,20 @@ export function ApplicantRegistrationProvider({ children }) {
   const [role, setRole] = useState(loadInitialRole);
 
   const loadCandidates = async () => {
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
     try {
       const data = await fetchApplicantsApi();
-      setCandidates(data);
+      if (Array.isArray(data)) {
+        setCandidates(data);
+      }
       setError(null);
     } catch (err) {
       console.error('Failed to load applicants from backend:', err);
       setError('Could not connect to the recruitment backend server.');
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
   };

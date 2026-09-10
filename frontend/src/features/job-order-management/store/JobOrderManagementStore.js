@@ -65,6 +65,9 @@ export default function useJobOrderManagementStore() {
   const [modalMode, setModalMode] = useState('create');
 
   const fetchLiveJobOrders = useCallback(async () => {
+    const safetyTimer = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
     try {
       setLoading(true);
       const res = await JobOrderManagementService.getAll();
@@ -86,6 +89,7 @@ export default function useJobOrderManagementStore() {
     } catch (err) {
       console.warn('API fetch fell back to local synchronized job orders:', err);
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
   }, []);
