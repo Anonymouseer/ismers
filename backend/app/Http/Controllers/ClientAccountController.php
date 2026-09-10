@@ -336,39 +336,27 @@ class ClientAccountController extends Controller
         $email = trim(strtolower($request->email));
         $client = ClientAccount::whereRaw('LOWER(email) = ?', [$email])->first();
 
-        $directoryMatch = collect(\Database\Seeders\ClientAccountSeeder::CLIENT_DIRECTORY)
-            ->first(fn ($c) => strtolower($c['email']) === $email);
+        if (! $client || ! Hash::check($request->password, $client->password)) {
+            ActivityLog::record(
+                action: "Failed client portal authentication attempt for: {$request->email}",
+                module: 'Client Portal',
+                details: ['attempted_email' => $request->email],
+                request: $request,
+                status: 'Warning'
+            );
 
-        $isValid = false;
-
-        if ($client && Hash::check($request->password, $client->password)) {
-            $isValid = true;
-        } elseif ($directoryMatch && $request->password === $directoryMatch['password']) {
-            $isValid = true;
-            if ($client) {
-                $client->update(['password' => Hash::make($directoryMatch['password'])]);
-            } else {
-                $client = ClientAccount::create([
-                    'company_id' => $directoryMatch['company_id'] ?? null,
-                    'company' => $directoryMatch['company'],
-                    'industry' => $directoryMatch['industry'],
-                    'status' => $directoryMatch['status'] ?? 'active',
-                    'am' => $directoryMatch['am'] ?? 'Karla Reyes',
-                    'contact_person' => $directoryMatch['contact_person'],
-                    'designation' => $directoryMatch['designation'],
-                    'email' => $directoryMatch['email'],
-                    'mobile' => $directoryMatch['mobile'],
-                    'password' => Hash::make($directoryMatch['password']),
-                    'agreed' => true,
-                ]);
-            }
-        }
-
-        if (! $isValid || ! $client) {
             throw ValidationException::withMessages([
                 'email' => ['Incorrect email or password. Please try again.'],
             ]);
         }
+
+        ActivityLog::record(
+            action: "Client company logged into Client Portal: {$client->company} ({$client->email})",
+            module: 'Client Portal',
+            details: ['client_id' => $client->id, 'company' => $client->company],
+            request: $request,
+            status: 'Success'
+        );
 
         $companyId = $client->company_id ?? ('CLT-2026-' . str_pad((string)$client->id, 4, '0', STR_PAD_LEFT));
 
