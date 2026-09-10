@@ -365,10 +365,14 @@ class RecruitmentController extends Controller
                         'years'  => trim(($e->start_year ?? '') . ' – ' . ($e->end_year ?? '')),
                     ])->toArray(),
                     'documents'             => $applicant->documents->map(fn ($d) => [
-                        'name'       => $d->type ?: 'Document',
-                        'fileName'   => $d->name ?: 'verified_doc.pdf',
-                        'uploadedAt' => $d->created_at ? $d->created_at->format('M d, Y') : 'Aug 14, 2026',
-                        'verified'   => true,
+                        'id'          => (string) $d->id,
+                        'name'        => $d->name ?: ($d->type ?: 'Document.pdf'),
+                        'fileName'    => $d->name ?: 'verified_doc.pdf',
+                        'type'        => $d->type ?: 'Resume / CV',
+                        'downloadUrl' => $d->file_path ? url("/api/v1/applicants/{$applicant->reg_id}/documents/{$d->id}/download") : null,
+                        'previewUrl'  => $d->file_path ? url("/api/v1/applicants/{$applicant->reg_id}/documents/{$d->id}/preview") : null,
+                        'uploadedAt'  => $d->created_at ? $d->created_at->format('M d, Y') : 'Aug 14, 2026',
+                        'verified'    => true,
                     ])->toArray(),
                     'breakdown'             => [
                         'skills'       => $skillsSub,

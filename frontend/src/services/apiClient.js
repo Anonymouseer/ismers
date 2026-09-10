@@ -24,6 +24,9 @@ const api = axios.create({
 // ── REQUEST INTERCEPTOR: Attach bearer token ────────────────────────────────
 // Priority: HR/Admin token → Client Portal token → none (public endpoints only)
 api.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   try {
     const token =
       localStorage.getItem('primepower_admin_token') ||

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CATEGORIES, EDUCATION_LEVELS } from '../services/ApplicantRegistrationService';
+import { CATEGORIES, EDUCATION_LEVELS, addDocumentApi } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
 import primepowerLogo from '../../../assets/primepower-logo.svg';
 import './ApplicantRegistrationBoard.css';
@@ -157,10 +157,6 @@ export default function PublicApplyPage() {
             .filter((r) => r.name.trim())
             .map((r) => ({ name: r.name.trim(), occupation: r.occupation.trim(), contact: r.contact.trim() }));
 
-      const documents = resumeFile
-        ? [{ name: resumeFile.name, type: 'Resume / CV' }]
-        : [];
-
       const result = await addApplicant({
         ...form,
         name: fullName,
@@ -168,7 +164,7 @@ export default function PublicApplyPage() {
         education,
         workHistory,
         references,
-        documents,
+        documents: [],
         submissionSource: 'self-service',
       });
 
@@ -178,6 +174,18 @@ export default function PublicApplyPage() {
       }
 
       setSubmittedRegId(result.regId);
+
+      if (resumeFile && result.regId) {
+        const formData = new FormData();
+        formData.append('file', resumeFile);
+        formData.append('name', resumeFile.name);
+        formData.append('type', 'Resume / CV');
+        try {
+          await addDocumentApi(result.regId, formData);
+        } catch (e) {
+          console.warn('Could not upload attached resume file:', e);
+        }
+      }
     } catch (err) {
       console.error('Error submitting application:', err);
       setError('An error occurred while submitting your application. Please try again.');

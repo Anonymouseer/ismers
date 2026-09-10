@@ -328,3 +328,13 @@ export async function updateRecruitmentScreening(applicantId, fields, appName = 
     return { ok: false };
   }
 }
+
+export async function deleteRecruitmentCandidateApi(idOrRegId) {
+  try {
+    const res = await api.delete(`/applicants/${encodeURIComponent(idOrRegId)}`);
+    return res.data;
+  } catch (err) {
+    console.error('Failed to delete applicant from recruitment pipeline:', err);
+    return { ok: false, message: err.message };
+  }
+}

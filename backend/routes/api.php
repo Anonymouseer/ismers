@@ -79,6 +79,7 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/applicants/{regId}/documents',                     [ApplicantController::class, 'addDocument']);
     Route::get('/applicants/{regId}/documents/{id}/download',        [ApplicantController::class, 'downloadDocument']);
+    Route::get('/applicants/{regId}/documents/{id}/preview',         [ApplicantController::class, 'previewDocument']);
     Route::delete('/applicants/{regId}/documents/{id}',              [ApplicantController::class, 'removeDocument']);
 
     Route::post('/applicants/{regId}/references',                    [ApplicantController::class, 'addReference']);

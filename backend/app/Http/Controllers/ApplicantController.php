@@ -93,6 +93,7 @@ class ApplicantController extends Controller
                 'type' => $d->type,
                 'uploadedDate' => $d->created_at->format('M d, Y'),
                 'downloadUrl' => $d->file_path ? url("/api/v1/applicants/{$applicant->reg_id}/documents/{$d->id}/download") : null,
+                'previewUrl' => $d->file_path ? url("/api/v1/applicants/{$applicant->reg_id}/documents/{$d->id}/preview") : null,
             ])->toArray(),
 
             'references' => $applicant->references->map(fn ($r) => [
@@ -458,6 +459,7 @@ class ApplicantController extends Controller
             'education' => 'nullable|array',
             'workHistory' => 'nullable|array',
             'references' => 'nullable|array',
+            'documents' => 'nullable|array',
         ]);
 
         // Duplicate Check on email or phone
@@ -560,6 +562,21 @@ class ApplicantController extends Controller
                             'name' => trim($r['name']),
                             'occupation' => trim($r['occupation'] ?? ''),
                             'contact' => trim($r['contact'] ?? ''),
+                        ]);
+                    }
+                }
+            }
+
+            // Save Documents
+            if (! empty($validated['documents'])) {
+                foreach ($validated['documents'] as $doc) {
+                    $dName = trim($doc['name'] ?? $doc['fileName'] ?? '');
+                    if ($dName) {
+                        $applicant->documents()->create([
+                            'name' => $dName,
+                            'type' => trim($doc['type'] ?? 'Resume / CV'),
+                            'file_path' => null,
+                            'disk' => 'public',
                         ]);
                     }
                 }
@@ -711,10 +728,31 @@ class ApplicantController extends Controller
      */
     public function destroy(string $regId): JsonResponse
     {
-        $applicant = $this->findApplicant($regId);
+        $applicant = Applicant::where('reg_id', $regId)
+            ->orWhere('id', is_numeric($regId) ? (int) $regId : 0)
+            ->firstOrFail();
+
+        $name = "{$applicant->first_name} {$applicant->last_name}";
+        $applicantRegId = $applicant->reg_id;
+
+        // Clean up any uploaded document files from disk (RA 10173 data privacy)
+        if (Storage::disk('public')->exists("applicant-documents/{$applicantRegId}")) {
+            Storage::disk('public')->deleteDirectory("applicant-documents/{$applicantRegId}");
+        }
+
         $applicant->delete();
 
-        return response()->json(['ok' => true, 'message' => 'Applicant deleted successfully']);
+        ActivityLog::record(
+            action: "Permanently deleted applicant profile: {$name} ({$applicantRegId})",
+            module: 'Applicant Registration',
+            details: ['reg_id' => $applicantRegId, 'name' => $name],
+            request: request()
+        );
+
+        return response()->json([
+            'ok' => true,
+            'message' => "Applicant {$name} ({$applicantRegId}) has been permanently deleted.",
+        ]);
     }
 
     // ── SUB-RESOURCE CONTROLLERS ──
@@ -852,16 +890,36 @@ class ApplicantController extends Controller
             'type' => $doc->type,
             'uploadedDate' => $doc->created_at->format('M d, Y'),
             'downloadUrl' => $doc->file_path ? url("/api/v1/applicants/{$applicant->reg_id}/documents/{$doc->id}/download") : null,
+            'previewUrl' => $doc->file_path ? url("/api/v1/applicants/{$applicant->reg_id}/documents/{$doc->id}/preview") : null,
         ]]);
     }
 
-    public function downloadDocument(string $regId, int $id)
+    public function downloadDocument(Request $request, string $regId, int $id)
     {
         $applicant = $this->findApplicant($regId);
         $doc = $applicant->documents()->where('id', $id)->firstOrFail();
 
         if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
+            if ($request->boolean('preview') || $request->boolean('inline')) {
+                return Storage::disk('public')->response($doc->file_path, $doc->name, [
+                    'Content-Disposition' => 'inline; filename="' . $doc->name . '"',
+                ]);
+            }
             return Storage::disk('public')->download($doc->file_path, $doc->name);
+        }
+
+        return response()->json(['message' => 'File not found on storage'], 404);
+    }
+
+    public function previewDocument(string $regId, int $id)
+    {
+        $applicant = $this->findApplicant($regId);
+        $doc = $applicant->documents()->where('id', $id)->firstOrFail();
+
+        if ($doc->file_path && Storage::disk('public')->exists($doc->file_path)) {
+            return Storage::disk('public')->response($doc->file_path, $doc->name, [
+                'Content-Disposition' => 'inline; filename="' . $doc->name . '"',
+            ]);
         }
 
         return response()->json(['message' => 'File not found on storage'], 404);

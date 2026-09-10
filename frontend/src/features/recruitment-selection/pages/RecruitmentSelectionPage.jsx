@@ -3,7 +3,7 @@ import { useOutletContext, useSearchParams } from 'react-router-dom';
 import CandidateCard from '../components/CandidateCard';
 import CandidateModal from '../components/CandidateModal';
 import { JOB_ORDERS, STAGES, PIPELINE_ORDER, jobById } from '../data/mockApplications';
-import { fetchRecruitmentApplications, updateRecruitmentStage, updateRecruitmentScreening, getStoredStages, saveStoredStage, getCachedApplications, saveCachedApplications, clearRecruitmentCache } from '../services/RecruitmentSelectionService';
+import { fetchRecruitmentApplications, updateRecruitmentStage, updateRecruitmentScreening, getStoredStages, saveStoredStage, getCachedApplications, saveCachedApplications, clearRecruitmentCache, deleteRecruitmentCandidateApi } from '../services/RecruitmentSelectionService';
 import { targetById, computeMatchScore } from '../../applicant-registration/services/ApplicantRegistrationService';
 import { scoreClass, assignedRecruiter, findNextAvailableSlot, addDays, formatDate } from '../utils/recruitmentUtils';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
@@ -265,6 +265,19 @@ export default function RecruitmentSelectionPage() {
       return next;
     });
   }
+
+  const handleDeleteApplication = async (id, regId, name) => {
+    setApplications((prev) => {
+      const next = prev.filter((a) => String(a.id) !== String(id) && (!regId || a.regId !== regId) && (!name || a.name !== name));
+      saveCachedApplications(next);
+      return next;
+    });
+    setSelectedId(null);
+    const targetKey = regId || id;
+    if (targetKey) {
+      await deleteRecruitmentCandidateApi(targetKey);
+    }
+  };
 
   const { showToast, confirmAction, executeWithFeedback } = useUIFeedback();
 
@@ -909,6 +922,7 @@ export default function RecruitmentSelectionPage() {
           applications={applications}
           onClose={() => setSelectedId(null)}
           onUpdate={updateApplication}
+          onDelete={handleDeleteApplication}
         />
       )}
     </div>

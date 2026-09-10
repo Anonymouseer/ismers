@@ -636,9 +636,11 @@ export const PERMISSIONS = {
   editEducation: { admin: true, registration_staff: true, recruiter: true },
   uploadDocuments: { admin: true, registration_staff: true, recruiter: true },
   changeStage: { admin: true, registration_staff: true, recruiter: true },
+  change_stage: { admin: true, registration_staff: true, recruiter: true },
   changeStatus: { admin: true, registration_staff: true, recruiter: true },
   sendToRecruitment: { admin: true, registration_staff: true, recruiter: true },
-  deleteApplicant: { admin: true, registration_staff: false, recruiter: false },
+  deleteApplicant: { admin: true, registration_staff: true, recruiter: true },
+  delete_candidate: { admin: true, registration_staff: true, recruiter: true },
 };
 
 export function hasPermission(role, action) {

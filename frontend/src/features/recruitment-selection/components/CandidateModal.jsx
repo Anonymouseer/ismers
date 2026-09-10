@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  STAGES, PIPELINE_ORDER, CHECKLIST_ITEMS, INTERVIEW_STAGES, DOC_DEFS,
+  STAGES, PIPELINE_ORDER, INTERVIEW_STAGES, DOC_DEFS,
   CURRENT_ADMIN, TODAY,
 } from '../data/mockApplications';
 import { scoreColor, formatDate, addDays, assignedRecruiter, findNextAvailableSlot } from '../utils/recruitmentUtils';
@@ -19,6 +19,7 @@ import EmployeeIdModal from './EmployeeIdModal';
 import PpeIssuanceModal from './PpeIssuanceModal';
 import { broadcastRealtimeEvent } from '../../../utils/realtimeSync';
 import auditLogService from '../../../services/auditLogService';
+import { useUIFeedback } from '../../../components/common/UIFeedback';
 
 const SCORE_ROWS = [
   { key: 'skills', label: 'Skills Match' },
@@ -66,8 +67,9 @@ export const PRE_EMPLOYMENT_ITEMS = [
   },
 ];
 
-export default function CandidateModal({ app, job, applications, onClose, onUpdate }) {
+export default function CandidateModal({ app, job, applications, onClose, onUpdate, onDelete }) {
   const navigate = useNavigate();
+  const { executeWithFeedback } = useUIFeedback();
   const targetJob = job ||
     targetById(app?.targetJobId) ||
     targetById(app?.jobId) ||
@@ -76,6 +78,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   const currentScore = calculated > 0 ? calculated : (app?.score ?? 0);
 
   const [docViewerType, setDocViewerType] = useState(null);
+  const [selectedDoc, setSelectedDoc] = useState(null);
   const [showMedReferralModal, setShowMedReferralModal] = useState(false);
   const [showContractModal, setShowContractModal] = useState(false);
   const [showOrientationModal, setShowOrientationModal] = useState(false);
@@ -88,6 +91,32 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   const [warning, setWarning] = useState('');
   const [assignedManager, setAssignedManager] = useState(app?.assignedManager || 'Area Manager 1 (North NCR)');
   const [interviewPlatform, setInterviewPlatform] = useState(app?.interviewPlatform || 'Zoom Meeting');
+
+  const handleDeleteCandidate = async () => {
+    if (!onDelete) return;
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Candidate Deletion',
+        message: `Permanently delete candidate file for ${app.name} (${app.regId || app.id})?`,
+        description: 'This high-risk action cannot be undone. All submitted documents, interview records, and pipeline data will be permanently erased.',
+        confirmLabel: 'Permanently Delete Record',
+        variant: 'danger',
+        details: [
+          { label: 'Candidate Name', value: app.name },
+          { label: 'Registration ID', value: app.regId || app.id },
+          { label: 'Job Order', value: job?.title || app.jobTitle || 'Unassigned' },
+        ],
+      },
+      busyMessage: `Deleting record for ${app.name}...`,
+      actionFn: async () => {
+        await onDelete(app.id, app.regId, app.name);
+        onClose();
+      },
+      successTitle: 'Candidate Deleted',
+      successMessage: `${app.name}'s file has been permanently removed from the system.`,
+      delayMs: 400,
+    });
+  };
 
   if (!app) return null;
 
@@ -144,12 +173,6 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
 
   function update(updater) {
     onUpdate(app.id, updater);
-  }
-
-  function toggleChecklistItem(key) {
-    const nextChecklist = { ...app.checklist, [key]: !app.checklist[key] };
-    update((a) => ({ ...a, checklist: nextChecklist }));
-    updateRecruitmentScreening(persistId, { checklist: nextChecklist }, app.name).catch(() => { });
   }
 
   function togglePreEmploymentItem(key) {
@@ -476,14 +499,63 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
     setNoteText('');
   }
 
-  function toggleDocVerified(type) {
-    const currentDocStatus = app.docStatus || { resume: false, certificate: false, portfolio: false };
-    const nextStatus = { ...currentDocStatus, [type]: !currentDocStatus[type] };
+  // Derive authentic application documents submitted by candidate or fallback to placeholder for mock applicants
+  const activeDocs = useMemo(() => {
+    if (Array.isArray(app?.documents) && app.documents.length > 0) {
+      return app.documents.map((d, i) => {
+        const docKey = String(d.id || d.name || d.fileName || `doc-${i}`);
+        const docTypeLower = (d.type || '').toLowerCase();
+        const typeKey = docTypeLower.includes('resume') || docTypeLower.includes('cv')
+          ? 'resume'
+          : (docTypeLower.includes('cert') || docTypeLower.includes('tesda') || docTypeLower.includes('med'))
+            ? 'certificate'
+            : 'portfolio';
+
+        const isVerified = Boolean(
+          app?.docStatus?.[docKey] ??
+          app?.docStatus?.[d.name] ??
+          app?.docStatus?.[d.fileName] ??
+          app?.docStatus?.[typeKey] ??
+          d.verified
+        );
+
+        return {
+          id: docKey,
+          typeKey,
+          name: d.name || d.fileName || `${d.type || 'Document'}.pdf`,
+          fileName: d.fileName || d.name,
+          type: d.type || 'Submitted Document',
+          downloadUrl: d.downloadUrl || null,
+          previewUrl: d.previewUrl || (d.downloadUrl ? `${d.downloadUrl}?inline=1` : null),
+          uploadedAt: d.uploadedAt || d.uploadedDate || 'Verified File',
+          isVerified,
+          isPlaceholder: false,
+        };
+      });
+    }
+
+    // Placeholder fallback for mock applicants who have no submitted files
+    const status = app?.docStatus || { resume: false, certificate: false, portfolio: false };
+    return DOC_DEFS.map((d) => ({
+      id: d.type,
+      typeKey: d.type,
+      name: d.name,
+      fileName: d.name,
+      type: d.type === 'resume' ? 'Resume / CV' : (d.type === 'certificate' ? 'Medical / Certificate' : 'Clearance / ID'),
+      downloadUrl: null,
+      uploadedAt: null,
+      isVerified: Boolean(status[d.type]),
+      isPlaceholder: true,
+    }));
+  }, [app?.documents, app?.docStatus]);
+
+  function toggleDocVerified(key, docTitle = null) {
+    const currentDocStatus = app.docStatus || {};
+    const nextStatus = { ...currentDocStatus, [key]: !currentDocStatus[key] };
     update((a) => {
       let notes = a.notes || [];
-      if (nextStatus[type]) {
-        const docDef = DOC_DEFS.find((d) => d.type === type);
-        const docName = docDef ? docDef.name : 'Document';
+      if (nextStatus[key]) {
+        const docName = docTitle || 'Document';
         notes = [...notes, { text: `${docName} verified.`, meta: `${assignedRecruiter(job)} · ${formatDate(TODAY)}` }];
         if (Object.values(nextStatus).every(Boolean)) {
           notes = notes.filter((n) => !/awaiting document verification/i.test(n.text));
@@ -491,7 +563,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
       }
       return { ...a, docStatus: nextStatus, notes };
     });
-    updateRecruitmentScreening(persistId, { docStatus: nextStatus }).catch(() => { });
+    updateRecruitmentScreening(persistId, { docStatus: nextStatus }, app.name).catch(() => { });
   }
 
   function handleManagerChange(val) {
@@ -507,12 +579,7 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
   }
 
   function allDocsVerified() {
-    const status = app.docStatus || { resume: false, certificate: false, portfolio: false };
-    return Object.values(status).every(Boolean);
-  }
-  function allChecklistDone() {
-    const checklist = app.checklist || { requirements: false, identity: false, history: false, reference: false };
-    return Object.values(checklist).every(Boolean);
+    return activeDocs.every((d) => d.isVerified);
   }
 
   function flashWarning(msg) {
@@ -526,7 +593,6 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
 
     if (app.status === 'shortlisted') {
       if (!allDocsVerified()) { flashWarning('Verify all documents before scheduling the interview.'); return; }
-      if (!allChecklistDone()) { flashWarning('Complete the screening checklist before scheduling the interview.'); return; }
     }
 
     if (app.status === 'hr_requirements') {
@@ -718,6 +784,25 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
             <div className="modal-jo-title">{app.name}</div>
             <div className="modal-jo-sub">{job?.title || app.jobTitle || app.jobId || 'Unassigned'} &middot; {job?.client || app.client || '\u2014'}</div>
           </div>
+          {onDelete && (
+            <button
+              className="modal-close"
+              onClick={handleDeleteCandidate}
+              type="button"
+              title="Permanently Delete Candidate"
+              style={{
+                marginRight: '8px',
+                color: 'var(--red, #ef4444)',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <svg className="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            </button>
+          )}
           <button className="modal-close" onClick={onClose}>
             <svg className="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
@@ -1141,48 +1226,34 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
             <div className="modal-section">
               <div className="modal-section-label">Application Documents</div>
               <div className="doc-list">
-                {DOC_DEFS.map((d) => {
-                  const docStatus = app.docStatus || { resume: false, certificate: false, portfolio: false };
-                  const isVerified = Boolean(docStatus[d.type]);
-                  return (
-                    <button key={d.type} className="doc-chip" onClick={() => setDocViewerType(d.type)}>
-                      <svg className="icon" viewBox="0 0 24 24">{DOC_ICONS[d.type]}</svg>
+                {activeDocs.map((d) => (
+                  <button
+                    key={d.id}
+                    className="doc-chip"
+                    onClick={() => {
+                      setSelectedDoc(d);
+                      setDocViewerType(d.typeKey);
+                    }}
+                    title={`${d.name} (${d.type}) — Click to review`}
+                  >
+                    <svg className="icon" viewBox="0 0 24 24">
+                      {DOC_ICONS[d.typeKey] || DOC_ICONS.portfolio}
+                    </svg>
+                    <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {d.name}
-                      <span className={`doc-badge ${isVerified ? 'verified' : 'pending'}`} title={isVerified ? 'Verified' : 'Pending verification'}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          {isVerified ? <path d="M20 6 9 17l-5-5" /> : <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>}
-                        </svg>
-                      </span>
-                    </button>
-                  );
-                })}
+                    </span>
+                    <span className={`doc-badge ${d.isVerified ? 'verified' : 'pending'}`} title={d.isVerified ? 'Verified' : 'Pending verification'}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        {d.isVerified ? <path d="M20 6 9 17l-5-5" /> : <><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></>}
+                      </svg>
+                    </span>
+                  </button>
+                ))}
               </div>
               <div className={`doc-verify-summary ${allDocsVerified() ? 'all-verified' : ''}`}>
                 {allDocsVerified()
                   ? 'All documents verified'
-                  : `${Object.values(app.docStatus || {}).filter(Boolean).length} of ${DOC_DEFS.length} documents verified — click a document to review and verify`}
-              </div>
-            </div>
-          )}
-
-          {/* SCREENING CHECKLIST (INITIAL STAGES) */}
-          {!isPreEmploymentStage && !isHired && !isRejected && (
-            <div className="modal-section">
-              <div className="modal-section-label">Screening Checklist</div>
-              <div className="checklist">
-                {CHECKLIST_ITEMS.map((item) => (
-                  <div key={item.key} className={`checklist-item ${app.checklist[item.key] ? 'checked' : ''}`} onClick={() => toggleChecklistItem(item.key)}>
-                    <div className="checklist-box">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                    </div>
-                    <div className="checklist-text">{item.label}</div>
-                  </div>
-                ))}
-              </div>
-              <div className={`checklist-progress ${allChecklistDone() ? 'all-done' : ''}`}>
-                {allChecklistDone()
-                  ? 'All screening steps completed'
-                  : `${Object.values(app.checklist).filter(Boolean).length} of ${CHECKLIST_ITEMS.length} screening steps completed`}
+                  : `${activeDocs.filter((d) => d.isVerified).length} of ${activeDocs.length} documents verified — click a document to review and verify`}
               </div>
             </div>
           )}
@@ -1303,6 +1374,17 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
               <button className="btn" style={{ color: 'var(--red)' }} onClick={handleReject}>
                 Failed (Re-Pool for Line Up)
               </button>
+              {onDelete && (
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ color: 'var(--red, #ef4444)', borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)' }}
+                  onClick={handleDeleteCandidate}
+                  title="Permanently Delete Candidate"
+                >
+                  Delete Record
+                </button>
+              )}
               <button
                 className={`btn primary ${app.status === 'hr_requirements' && !allPreDone ? 'btn-needs-clearance' : ''}`}
                 style={
@@ -1330,9 +1412,19 @@ export default function CandidateModal({ app, job, applications, onClose, onUpda
           app={app}
           job={job}
           type={docViewerType}
-          isVerified={Boolean(app?.docStatus?.[docViewerType])}
-          onClose={() => setDocViewerType(null)}
-          onToggleVerified={() => toggleDocVerified(docViewerType)}
+          doc={selectedDoc}
+          isVerified={Boolean(selectedDoc?.isVerified ?? app?.docStatus?.[docViewerType])}
+          onClose={() => {
+            setDocViewerType(null);
+            setSelectedDoc(null);
+          }}
+          onToggleVerified={() => {
+            if (selectedDoc) {
+              toggleDocVerified(selectedDoc.id, selectedDoc.name);
+            } else {
+              toggleDocVerified(docViewerType);
+            }
+          }}
         />
       )}
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Sidebar from '../../../components/layout/Sidebar';
-import { EDUCATION_LEVELS } from '../services/ApplicantRegistrationService';
+import { EDUCATION_LEVELS, addDocumentApi } from '../services/ApplicantRegistrationService';
 import { useApplicantRegistration } from '../store/ApplicantRegistrationStore';
 import { useUIFeedback } from '../../../components/common/UIFeedback';
 import './ApplicantRegistrationBoard.css';
@@ -26,6 +26,7 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [error, setError] = useState('');
+  const [resumeFile, setResumeFile] = useState(null);
 
   const [form, setForm] = useState({
     firstName: '', middleName: '', lastName: '', suffix: '',
@@ -122,6 +123,18 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
         if (!result || !result.ok) {
           setError(result?.message || 'Error registering applicant.');
           throw new Error(result?.message || 'Error registering applicant.');
+        }
+
+        if (resumeFile && result.regId) {
+          const formData = new FormData();
+          formData.append('file', resumeFile);
+          formData.append('name', resumeFile.name);
+          formData.append('type', 'Resume / CV');
+          try {
+            await addDocumentApi(result.regId, formData);
+          } catch (e) {
+            console.warn('Could not upload attached resume file:', e);
+          }
         }
 
         if (onDone) {
@@ -404,6 +417,26 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="intake-section">
+            <div className="intake-section-title">Resume &amp; Attached Documents</div>
+            <div style={{ padding: '14px', background: 'var(--panel, #EDF5FB)', border: '1px dashed var(--border)', borderRadius: '10px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>
+                Upload Candidate Resume (PDF / DOCX)
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                style={{ fontSize: '13px' }}
+              />
+              {resumeFile && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--green, #149e6e)', fontWeight: 600 }}>
+                  Selected: {resumeFile.name} ({(resumeFile.size / 1024).toFixed(1)} KB)
+                </div>
+              )}
+            </div>
           </div>
 
           {error && <div className="actions-warning" style={{ textAlign: 'left', marginBottom: 12 }}>{error}</div>}

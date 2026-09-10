@@ -24,7 +24,11 @@ export default function DocumentsSection({ candidate, role, onAdd, onRemove }) {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    onAdd(candidate.regId, { name: file.name, type: docType });
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('name', file.name);
+    formData.append('type', docType);
+    onAdd(candidate.regId, formData);
     e.target.value = '';
   };
 
@@ -44,14 +48,28 @@ export default function DocumentsSection({ candidate, role, onAdd, onRemove }) {
           <div className="empty-note">No documents uploaded yet.</div>
         ) : (
           documents.map((d) => (
-            <div className="wh-item" key={d.id}>
+            <div className="wh-item" key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div className="role">{d.name}</div>
-                <div className="co">{d.type} · uploaded {d.uploadedDate}</div>
+                <div className="co">{d.type} · uploaded {d.uploadedDate || d.uploadedAt || 'Recently'}</div>
               </div>
-              {canUpload && (
-                <button type="button" onClick={() => onRemove(candidate.regId, d.id)}>✕</button>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {d.downloadUrl && (
+                  <a
+                    href={d.downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="stage-btn"
+                    style={{ fontSize: '11px', padding: '4px 8px', textDecoration: 'none', color: 'var(--primary)', border: '1px solid var(--border)', borderRadius: '6px' }}
+                    title="Download document file"
+                  >
+                    Download
+                  </a>
+                )}
+                {canUpload && (
+                  <button type="button" onClick={() => onRemove(candidate.regId, d.id)}>✕</button>
+                )}
+              </div>
             </div>
           ))
         )}

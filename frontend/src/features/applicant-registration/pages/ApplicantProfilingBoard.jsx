@@ -44,7 +44,7 @@ const STAGE_PAGE_META = {
 };
 
 export default function ApplicantProfilingBoard() {
-  const { candidates, loading, role, setRole, startProfiling, completeProfile, sendToRecruitment, bulkReturnToProfiling, updateStage } = useApplicantRegistration();
+  const { candidates, loading, role, setRole, startProfiling, completeProfile, sendToRecruitment, bulkReturnToProfiling, updateStage, deleteCandidate } = useApplicantRegistration();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialView = searchParams.get('view') || 'all';
 
@@ -135,9 +135,33 @@ export default function ApplicantProfilingBoard() {
         }
         return result;
       },
-      successTitle: 'Candidate Stage Updated',
-      successMessage: `${candidateName} has been successfully advanced to the next stage.`,
-      delayMs: 420,
+      successTitle: 'Stage Updated',
+      successMessage: `${candidateName} has successfully moved to the next stage.`,
+      delayMs: 300,
+    });
+  };
+
+  const handleDeleteApplicant = async (cand) => {
+    await executeWithFeedback({
+      confirmConfig: {
+        title: 'Confirm Applicant Deletion',
+        message: `Permanently delete applicant file for ${cand.name} (${cand.regId})?`,
+        description: 'This high-risk action cannot be undone. All submitted documents, work history, and profiling records will be permanently erased.',
+        confirmLabel: 'Permanently Delete Record',
+        variant: 'danger',
+        details: [
+          { label: 'Applicant Name', value: cand.name },
+          { label: 'Registration ID', value: cand.regId },
+          { label: 'Registered Date', value: cand.registeredDate || 'N/A' },
+        ],
+      },
+      busyMessage: `Deleting file for ${cand.name}...`,
+      actionFn: async () => {
+        await deleteCandidate(cand.regId);
+      },
+      successTitle: 'Applicant Deleted',
+      successMessage: `${cand.name}'s record has been permanently removed from the system.`,
+      delayMs: 400,
     });
   };
 
@@ -409,6 +433,22 @@ export default function ApplicantProfilingBoard() {
                                   {STAGE_PAGE_META[viewMode]?.btnLabel} →
                                 </button>
                               )
+                            )}
+
+                            {(hasPermission(role, 'deleteApplicant') || hasPermission(role, 'delete_candidate')) && (
+                              <button
+                                type="button"
+                                className="stage-btn danger"
+                                style={{
+                                  color: 'var(--red, #ef4444)',
+                                  borderColor: 'rgba(239, 68, 68, 0.3)',
+                                  background: 'rgba(239, 68, 68, 0.05)',
+                                }}
+                                onClick={() => handleDeleteApplicant(cand)}
+                                title={`Permanently delete applicant ${cand.name}`}
+                              >
+                                Delete
+                              </button>
                             )}
                           </div>
                         </td>

@@ -64,8 +64,8 @@ export default function ProfileDrawer({ regId, onClose }) {
   }
 
   const col = boardColumn(candidate);
-  const canChangeStage = hasPermission(role, 'change_stage');
-  const canDelete = hasPermission(role, 'delete_candidate');
+  const canChangeStage = hasPermission(role, 'changeStage') || hasPermission(role, 'change_stage');
+  const canDelete = hasPermission(role, 'deleteApplicant') || hasPermission(role, 'delete_candidate');
   const canEditSkills = hasPermission(role, 'editSkills');
   const canEditWorkHistory = hasPermission(role, 'editWorkHistory');
   const locked = Boolean(candidate.locked);
@@ -216,7 +216,7 @@ export default function ProfileDrawer({ regId, onClose }) {
       },
       busyMessage: `Deleting record for ${candidate.name}...`,
       actionFn: async () => {
-        deleteCandidate(candidate.regId);
+        await deleteCandidate(candidate.regId);
         onClose();
       },
       successTitle: 'Candidate Deleted',
@@ -231,6 +231,23 @@ export default function ProfileDrawer({ regId, onClose }) {
       <div className="drawer open">
         {/* PREMIUM DRAWER HEADER */}
         <div className="sheet-head">
+          {canDelete && (
+            <button
+              className="sheet-close"
+              onClick={handleDelete}
+              type="button"
+              aria-label="Delete Applicant"
+              title="Permanently Delete Applicant Record"
+              style={{
+                right: '50px',
+                color: 'var(--red, #ef4444)',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+              }}
+            >
+              <svg className="icon" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            </button>
+          )}
           <button className="sheet-close" onClick={onClose} type="button" aria-label="Close">
             <svg className="icon" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
