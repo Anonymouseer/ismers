@@ -21,29 +21,35 @@ Route::get('/ping', function () {
     return response()->json(['message' => 'Laravel is connected!']);
 });
 
-// ── Top-level alias routes for legacy compatibility ──
-Route::get('/clients',        [ClientAccountController::class, 'index']);
-Route::post('/clients',       [ClientAccountController::class, 'store']);
-Route::get('/clients/{id}',   [ClientAccountController::class, 'show']);
-Route::put('/clients/{id}',   [ClientAccountController::class, 'update']);
-Route::delete('/clients/{id}',[ClientAccountController::class, 'destroy']);
+// ── Top-level alias routes for legacy compatibility (Protected) ──
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/clients',        [ClientAccountController::class, 'index']);
+    Route::post('/clients',       [ClientAccountController::class, 'store']);
+    Route::get('/clients/{id}',   [ClientAccountController::class, 'show']);
+    Route::put('/clients/{id}',   [ClientAccountController::class, 'update']);
+    Route::delete('/clients/{id}',[ClientAccountController::class, 'destroy']);
+});
 
 // ── Application API (v1) ──
 Route::prefix('v1')->group(function () {
 
-    // ── Public Endpoints (Authentication & Portal Access) ──
-    Route::post('/auth/login', [AuthController::class, 'login']);
+    // ── Public Endpoints (Authentication & Self-Service Portal Access) ──
+    Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
 
     Route::prefix('client-portal')->group(function () {
         Route::post('/login',    [ClientAccountController::class, 'login']);
         Route::post('/register', [ClientAccountController::class, 'register']);
     });
 
-    // ── Dashboard (public for initial load) ──
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    // Public self-service applicant intake (/apply)
+    Route::post('/applicants',                   [ApplicantController::class, 'store']);
+    Route::post('/applicants/{regId}/documents', [ApplicantController::class, 'addDocument']);
 
-    // ── Protected Endpoints (require valid Sanctum token) ──
+    // ── Protected Endpoints (require valid Sanctum session token) ──
     Route::middleware('auth:sanctum')->group(function () {
+
+        // ── Dashboard Metrics ──
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
 
         // ── Authentication (Admin / HR) ──
         Route::prefix('auth')->group(function () {
@@ -66,11 +72,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/auto-shortlist', [AnalyticsController::class, 'autoShortlist']);
         });
 
-        // ── Applicant Management & Profiling ──
-        Route::get('/applicants',         [ApplicantController::class, 'index']);
-        Route::post('/applicants',        [ApplicantController::class, 'store']);
-        Route::get('/applicants/{regId}', [ApplicantController::class, 'show']);
-        Route::put('/applicants/{regId}', [ApplicantController::class, 'update']);
+        // ── Applicant Management & Confidential Profiling ──
+        Route::get('/applicants',            [ApplicantController::class, 'index']);
+        Route::get('/applicants/{regId}',    [ApplicantController::class, 'show']);
+        Route::put('/applicants/{regId}',    [ApplicantController::class, 'update']);
         Route::delete('/applicants/{regId}', [ApplicantController::class, 'destroy']);
 
         // Sub-resources

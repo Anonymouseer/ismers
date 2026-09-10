@@ -385,9 +385,19 @@ export default function DocViewerModal({ app, job, type, doc, isVerified, onClos
   const isImage = /\.(png|jpe?g|webp|gif)$/i.test(docName);
   const isPdf = /\.pdf$/i.test(docName);
 
-  // Derive preview URL
-  const previewUrl = doc?.previewUrl || (doc?.downloadUrl ? `${doc.downloadUrl}?inline=1` : null);
-  const downloadUrl = doc?.downloadUrl || null;
+  const authToken = typeof window !== 'undefined'
+    ? (localStorage.getItem('primepower_admin_token') || localStorage.getItem('cp_token') || '')
+    : '';
+
+  const appendToken = (url) => {
+    if (!url || !authToken) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}token=${encodeURIComponent(authToken)}`;
+  };
+
+  const rawPreview = doc?.previewUrl || (doc?.downloadUrl ? `${doc.downloadUrl}?inline=1` : null);
+  const previewUrl = appendToken(rawPreview);
+  const downloadUrl = appendToken(doc?.downloadUrl || null);
 
   const handleOpenFull = () => {
     if (previewUrl) {
