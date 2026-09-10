@@ -135,9 +135,13 @@ class PythonScoringService
                 }
             }
 
-            $process = new Process([$pythonBin, '-m', 'ai_engine.cli'], $workingDir);
+            $process = new Process(
+                [$pythonBin, '-m', 'ai_engine.cli'],
+                $workingDir,
+                ['PYTHONIOENCODING' => 'utf-8', 'PYTHONUTF8' => '1']
+            );
             $process->setInput(json_encode($payload));
-            $process->setTimeout(5.0);
+            $process->setTimeout(10.0);
             $process->run();
 
             if ($process->isSuccessful()) {

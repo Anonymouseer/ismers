@@ -7,6 +7,19 @@ import sys
 import json
 import argparse
 from typing import Dict, Any, List
+
+# Ensure standard streams use UTF-8 across all operating systems
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+if hasattr(sys.stdin, "reconfigure"):
+    try:
+        sys.stdin.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from .models import ApplicantData, JobOrderData, ScoringWeights
 from .ranker import CandidateRanker
 from .scorer import CandidateScorer
