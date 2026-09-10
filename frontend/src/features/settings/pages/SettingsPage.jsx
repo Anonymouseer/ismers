@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { useAuth } from '../../auth/store/AuthStore';
 import auditLogService from '../../../services/auditLogService';
 import './SettingsPage.css';
 
@@ -117,6 +118,7 @@ const INITIAL_USERS = [
 
 export default function SettingsPage() {
   const { collapsed, setCollapsed } = useOutletContext() || { collapsed: false, setCollapsed: () => { } };
+  const { user: currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('appearance');
 
   // Theme & Accent State
@@ -170,7 +172,7 @@ export default function SettingsPage() {
 
   // Security Switches
   const [twoFa, setTwoFa] = useState(savedSettings.twoFa ?? true);
-  const [sessionTimeout, setSessionTimeout] = useState(savedSettings.sessionTimeout || '5');
+  const [sessionTimeout, setSessionTimeout] = useState(savedSettings.sessionTimeout || '15');
   const [autoBackup, setAutoBackup] = useState(savedSettings.autoBackup ?? true);
   const [passwordMinLength, setPasswordMinLength] = useState(savedSettings.passwordMinLength || '12');
   const [enforcePasswordExpiry, setEnforcePasswordExpiry] = useState(savedSettings.enforcePasswordExpiry ?? true);
@@ -898,14 +900,65 @@ export default function SettingsPage() {
                           const displayIp = log.ip_address || log.ip || '127.0.0.1';
                           const displayStatus = log.status || 'Success';
 
+                          const isCurrentUser = Boolean(
+                            currentUser && (
+                              (log.user_email && currentUser.email && log.user_email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                              (log.email && currentUser.email && log.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                              (displayName && currentUser.name && displayName.toLowerCase() === currentUser.name.toLowerCase()) ||
+                              (displayName.toLowerCase().includes('maria santos') && currentUser.email === 'admin@primepower.ph')
+                            )
+                          );
+
+                          const isSystem = displayName.toLowerCase().includes('system');
+                          const userPhoto = (isCurrentUser && currentUser?.photo) || log.photo || log.avatar || null;
+                          const userInitial = (displayName || 'U').charAt(0).toUpperCase();
+
+                          const getRoleBadgeBg = (role) => {
+                            const r = (role || '').toLowerCase();
+                            if (r.includes('admin')) return 'var(--primary, #007dcc)';
+                            if (r.includes('recruit')) return '#149e6e';
+                            if (r.includes('deploy') || r.includes('ops')) return '#8b6fd1';
+                            if (r.includes('job') || r.includes('coordinator')) return '#d98a2b';
+                            return 'var(--primary, #007dcc)';
+                          };
+
                           return (
                             <tr key={log.id || displayId}>
                               <td className="log-id">{displayId}</td>
                               <td className="log-time" style={{ whiteSpace: 'nowrap' }}>{displayTime}</td>
                               <td>
-                                <div className="user-cell">
-                                  <span className="user-name">{displayName}</span>
-                                  {displayRole && <span style={{ fontSize: 10.5, color: 'var(--muted-fg)' }}>{displayRole}</span>}
+                                <div className="audit-user-cell">
+                                  <div
+                                    className={`audit-avatar-box ${isSystem ? 'system-avatar' : ''}`}
+                                    style={{
+                                      background: userPhoto ? 'transparent' : (isSystem ? 'var(--secondary)' : getRoleBadgeBg(displayRole)),
+                                    }}
+                                    title={displayName}
+                                  >
+                                    {userPhoto ? (
+                                      <img
+                                        src={userPhoto}
+                                        alt={displayName}
+                                        className="audit-avatar-img"
+                                      />
+                                    ) : isSystem ? (
+                                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+                                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                                        <line x1="6" y1="6" x2="6.01" y2="6" />
+                                        <line x1="6" y1="18" x2="6.01" y2="18" />
+                                      </svg>
+                                    ) : (
+                                      userInitial
+                                    )}
+                                  </div>
+                                  <div className="audit-user-details">
+                                    <div className="audit-user-name-line">
+                                      <span className="user-name">{displayName}</span>
+                                      {isCurrentUser && <span className="audit-you-tag">You</span>}
+                                    </div>
+                                    {displayRole && <span className="audit-user-role">{displayRole}</span>}
+                                  </div>
                                 </div>
                               </td>
                               <td className="log-action" style={{ maxWidth: 360, lineHeight: 1.4 }}>{log.action}</td>
@@ -1793,9 +1846,15 @@ export default function SettingsPage() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
+                                    overflow: 'hidden',
+                                    flexShrink: 0,
                                   }}
                                 >
-                                  {u.name.charAt(0)}
+                                  {u.email === currentUser?.email && currentUser?.photo ? (
+                                    <img src={currentUser.photo} alt={u.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  ) : (
+                                    u.name.charAt(0)
+                                  )}
                                 </div>
                                 <span style={{ fontWeight: 700, color: 'var(--text)' }}>{u.name}</span>
                               </div>
@@ -1988,15 +2047,17 @@ export default function SettingsPage() {
 
                   <div className="form-grid-2col">
                     <div className="form-group-compact">
-                      <label>Session Idle Timeout (5–10 Min)</label>
+                      <label>Session Idle Timeout</label>
                       <select
                         className="input-compact"
                         value={sessionTimeout}
                         onChange={(e) => setSessionTimeout(e.target.value)}
                       >
-                        <option value="5">5 Minutes (Recommended / Strict)</option>
-                        <option value="7">7 Minutes</option>
-                        <option value="10">10 Minutes (Maximum Allowed)</option>
+                        <option value="5">5 Minutes (Strict Inactivity Policy)</option>
+                        <option value="10">10 Minutes</option>
+                        <option value="15">15 Minutes (Corporate Standard)</option>
+                        <option value="30">30 Minutes (Extended Operations)</option>
+                        <option value="60">60 Minutes (Full Work Hour)</option>
                       </select>
                     </div>
 

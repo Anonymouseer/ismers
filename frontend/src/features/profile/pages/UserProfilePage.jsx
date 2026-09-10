@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useAuth } from '../../auth/store/AuthStore';
+import api from '../../../services/apiClient';
 import auditLogService from '../../../services/auditLogService';
+import ProfilePhotoModal from '../components/ProfilePhotoModal';
 import './UserProfilePage.css';
 
 const PROFILE_STORAGE_KEY = 'ismers.user_preferences';
@@ -12,6 +14,7 @@ export default function UserProfilePage() {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [toastMessage, setToastMessage] = useState(null);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -58,11 +61,11 @@ export default function UserProfilePage() {
   }, [density]);
 
   // Handle Save Profile
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
     const oldName = user?.name || 'Administrator';
     if (updateUser) {
-      updateUser({ name: fullName });
+      updateUser({ name: fullName, defaultRoute });
     }
     try {
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({
@@ -76,6 +79,17 @@ export default function UserProfilePage() {
       }));
     } catch {
       // ignore
+    }
+
+    // Persist permanently in MySQL database
+    try {
+      await api.put('/auth/profile', {
+        name: fullName,
+        contact_phone: contactPhone,
+        default_route: defaultRoute,
+      });
+    } catch (err) {
+      console.warn('Could not persist profile updates to backend server:', err);
     }
 
     const isNameChanged = oldName !== fullName;
@@ -151,7 +165,7 @@ export default function UserProfilePage() {
   };
 
   // Handle Save Workspace
-  const handleSaveWorkspace = () => {
+  const handleSaveWorkspace = async () => {
     try {
       if (updateUser) {
         updateUser({ defaultRoute });
@@ -161,6 +175,12 @@ export default function UserProfilePage() {
       localStorage.setItem('primepower_admin_user', JSON.stringify(updatedUser));
     } catch {}
 
+    try {
+      await api.put('/auth/profile', { default_route: defaultRoute });
+    } catch (err) {
+      console.warn('Could not persist default route to backend server:', err);
+    }
+
     auditLogService.recordLog(
       `Updated personal workspace display preferences (Theme: ${theme}, Density: ${density}, Route: ${defaultRoute})`,
       'System Administration',
@@ -169,6 +189,48 @@ export default function UserProfilePage() {
     );
 
     showToast('Workspace display and startup route saved!');
+  };
+
+  // Handle Save Profile Photo
+  const handleSavePhoto = async (newPhotoDataUrl) => {
+    if (updateUser) {
+      updateUser({ photo: newPhotoDataUrl });
+    }
+
+    try {
+      await api.put('/auth/profile', { photo: newPhotoDataUrl });
+    } catch (err) {
+      console.warn('Could not persist photo to backend server:', err);
+    }
+
+    auditLogService.recordLog(
+      `Updated personal administrative profile photo`,
+      'System Administration',
+      { staff_name: fullName, staff_email: user?.email },
+      'Success'
+    );
+    showToast('Profile photo updated successfully!');
+  };
+
+  // Handle Remove Profile Photo
+  const handleRemovePhoto = async () => {
+    if (updateUser) {
+      updateUser({ photo: null });
+    }
+
+    try {
+      await api.put('/auth/profile', { photo: null });
+    } catch (err) {
+      console.warn('Could not remove photo from backend server:', err);
+    }
+
+    auditLogService.recordLog(
+      `Removed personal administrative profile photo`,
+      'System Administration',
+      { staff_name: fullName, staff_email: user?.email },
+      'Success'
+    );
+    showToast('Profile photo removed. Restored initial lettering.');
   };
 
   return (
@@ -195,8 +257,32 @@ export default function UserProfilePage() {
           {/* Identity Card Banner */}
           <div className="profile-identity-card">
             <div className="identity-left">
-              <div className="identity-avatar-slot">
-                {(fullName || 'U').charAt(0).toUpperCase()}
+              <div className="identity-avatar-wrapper">
+                <div
+                  className="identity-avatar-slot"
+                  onClick={() => setPhotoModalOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                  title="Click to change profile photo"
+                >
+                  {user?.photo ? (
+                    <img src={user.photo} alt={fullName} className="identity-avatar-img" />
+                  ) : (
+                    (fullName || 'U').charAt(0).toUpperCase()
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="identity-avatar-cam-badge"
+                  onClick={() => setPhotoModalOpen(true)}
+                  title="Update profile photo (Device or Camera)"
+                  aria-label="Update profile photo"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                </button>
               </div>
               <div className="identity-info">
                 <div className="identity-name">{fullName}</div>
@@ -646,6 +732,15 @@ export default function UserProfilePage() {
               </button>
             </div>
           )}
+
+          {/* Profile Photo Modal */}
+          <ProfilePhotoModal
+            isOpen={photoModalOpen}
+            onClose={() => setPhotoModalOpen(false)}
+            currentPhoto={user?.photo}
+            onSavePhoto={handleSavePhoto}
+            onRemovePhoto={handleRemovePhoto}
+          />
         </div>
       </main>
     </div>

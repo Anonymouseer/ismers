@@ -37,6 +37,15 @@ export const AuthService = {
     const res = await api.get('/auth/me');
     return res.data;
   },
+
+  /**
+   * Refresh current Sanctum token for another 8-hour window.
+   * @returns {Promise<{ token: string, expires_at: string, message?: string }>}
+   */
+  async refresh() {
+    const res = await api.post('/auth/refresh');
+    return res.data;
+  },
 };
 
 export default AuthService;

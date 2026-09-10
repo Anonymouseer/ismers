@@ -376,7 +376,7 @@ class ClientAccountController extends Controller
         // token accumulation and enforce single active session per client.
         $client->tokens()->where('name', 'client-portal')->delete();
 
-        $expiresAt = now()->addMinutes(10);
+        $expiresAt = now()->addHours(8);
         $token = $client->createToken('client-portal', ['client-portal'], $expiresAt)->plainTextToken;
 
         return response()->json([
@@ -425,7 +425,7 @@ class ClientAccountController extends Controller
             'agreed' => $request->boolean('agreed'),
         ]);
 
-        $expiresAt = now()->addMinutes(10);
+        $expiresAt = now()->addHours(8);
         $token = $client->createToken('client-portal', ['client-portal'], $expiresAt)->plainTextToken;
 
         return response()->json([

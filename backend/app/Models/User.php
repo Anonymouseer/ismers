@@ -22,6 +22,7 @@ class User extends Authenticatable
         'department',
         'allowed_modules',
         'default_route',
+        'photo',
     ];
 
     protected $hidden = [

@@ -450,7 +450,13 @@ export default function Sidebar({
           className={`sidebar-foot${location.pathname === '/profile' ? ' active' : ''}`}
           title="Profile Settings & Preferences"
         >
-          <div className="avatar">{adminName.charAt(0)}</div>
+          <div className="avatar">
+            {user?.photo ? (
+              <img src={user.photo} alt={adminName} className="sidebar-avatar-img" />
+            ) : (
+              adminName.charAt(0)
+            )}
+          </div>
           <div className="foot-text">
             <div className="foot-name">{adminName}</div>
             <div className="foot-role">Profile Settings</div>

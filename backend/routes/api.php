@@ -46,8 +46,10 @@ Route::prefix('v1')->group(function () {
 
         // ── Authentication (Admin / HR) ──
         Route::prefix('auth')->group(function () {
-            Route::post('/logout', [AuthController::class, 'logout']);
-            Route::get('/me',      [AuthController::class, 'me']);
+            Route::post('/logout',  [AuthController::class, 'logout']);
+            Route::post('/refresh', [AuthController::class, 'refresh']);
+            Route::get('/me',       [AuthController::class, 'me']);
+            Route::put('/profile',  [AuthController::class, 'updateProfile']);
         });
 
         // ── AI Analytics & Intelligence ──

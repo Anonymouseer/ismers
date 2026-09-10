@@ -1124,7 +1124,24 @@ export default function ClientPortalSettingsPage({ session, onUpdateSession }) {
                         <td className="log-id">{log.id}</td>
                         <td className="log-time">{formatAuditTimestamp(log.timestamp)}</td>
                         <td>
-                          <div className="user-cell">
+                          <div className="user-cell" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div
+                              style={{
+                                width: 26,
+                                height: 26,
+                                borderRadius: '50%',
+                                background: 'var(--primary, #007dcc)',
+                                color: '#ffffff',
+                                fontWeight: 700,
+                                fontSize: 11,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {(log.user || 'U').charAt(0).toUpperCase()}
+                            </div>
                             <span className="user-name">{log.user}</span>
                           </div>
                         </td>

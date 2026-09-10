@@ -59,10 +59,10 @@ class AuthController extends Controller
             status: 'Success'
         );
 
-        // Absolute maximum session window: 10 minutes from login
-        $expiresAt = now()->addMinutes(10);
+        // Workday shift session window: 8 hours from login
+        $expiresAt = now()->addHours(8);
 
-        // Generate Sanctum plain text token with 10-minute maximum expiry
+        // Generate Sanctum plain text token with 8-hour expiry
         $token = $user->createToken(
             'primepower-session',
             ['*'],
@@ -89,6 +89,7 @@ class AuthController extends Controller
                     'settings',
                 ],
                 'defaultRoute'   => $user->default_route ?? '/dashboard',
+                'photo'          => $user->photo,
             ],
             'message' => 'Authentication successful.',
         ]);
@@ -118,6 +119,33 @@ class AuthController extends Controller
     }
 
     /**
+     * POST /api/v1/auth/refresh
+     * Extend Sanctum token for another 8-hour workday window.
+     */
+    public function refresh(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $request->user()->currentAccessToken()->delete();
+
+        $expiresAt = now()->addHours(8);
+        $token = $user->createToken(
+            'primepower-session',
+            ['*'],
+            $expiresAt
+        )->plainTextToken;
+
+        return response()->json([
+            'token'      => $token,
+            'expires_at' => $expiresAt->toIso8601String(),
+            'message'    => 'Session extended successfully.',
+        ]);
+    }
+
+    /**
      * GET /api/v1/auth/me
      */
     public function me(Request $request): JsonResponse
@@ -129,14 +157,70 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->role ?? 'hr_administrator',
-            'roleLabel' => $user->role_label ?? 'HR Administrator',
-            'department' => $user->department ?? 'HR Management',
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'email'          => $user->email,
+            'role'           => $user->role ?? 'hr_administrator',
+            'roleLabel'      => $user->role_label ?? 'HR Administrator',
+            'department'     => $user->department ?? 'HR Management',
             'allowedModules' => $user->allowed_modules ?? [],
-            'defaultRoute' => $user->default_route ?? '/dashboard',
+            'defaultRoute'   => $user->default_route ?? '/dashboard',
+            'photo'          => $user->photo,
+        ]);
+    }
+
+    /**
+     * PUT /api/v1/auth/profile
+     * Persist staff profile changes (name, photo, preferences) permanently in MySQL.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $validated = $request->validate([
+            'name'          => 'nullable|string|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+            'photo'         => 'nullable|string',
+            'default_route' => 'nullable|string|max:100',
+        ]);
+
+        if (array_key_exists('name', $validated) && $validated['name']) {
+            $user->name = $validated['name'];
+        }
+        if (array_key_exists('photo', $validated)) {
+            $user->photo = $validated['photo'];
+        }
+        if (array_key_exists('default_route', $validated) && $validated['default_route']) {
+            $user->default_route = $validated['default_route'];
+        }
+        $user->save();
+
+        ActivityLog::record(
+            action: "Updated staff profile: {$user->name}",
+            module: 'Authentication',
+            details: ['name' => $user->name, 'has_photo' => !empty($user->photo)],
+            request: $request,
+            user: $user,
+            status: 'Success'
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully.',
+            'user'    => [
+                'id'             => $user->id,
+                'name'           => $user->name,
+                'email'          => $user->email,
+                'role'           => $user->role ?? 'hr_administrator',
+                'roleLabel'      => $user->role_label ?? 'HR Administrator',
+                'department'     => $user->department ?? 'HR Management',
+                'allowedModules' => $user->allowed_modules ?? [],
+                'defaultRoute'   => $user->default_route ?? '/dashboard',
+                'photo'          => $user->photo,
+            ],
         ]);
     }
 }

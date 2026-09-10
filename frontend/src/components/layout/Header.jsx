@@ -140,11 +140,11 @@ export default function Header({ onToggleMobileMenu }) {
     );
   };
 
-  const formattedToday = `Today, ${new Date().toLocaleDateString('en-US', {
+  const formattedDate = new Date().toLocaleDateString('en-US', {
     month: 'short',
-    day: '2-digit',
+    day: 'numeric',
     year: 'numeric',
-  }).toUpperCase()}`;
+  });
 
   const filteredNotifs = (notifications || []).filter((n) => {
     if (notifFilter === 'unread') return !n.read;
@@ -304,10 +304,19 @@ export default function Header({ onToggleMobileMenu }) {
             onClick={() => setOpenUserMenu((v) => !v)}
             aria-label="User Account Menu"
           >
-            <div className="global-avatar">{userInitial}</div>
+            <div className="global-avatar">
+              {user?.photo ? (
+                <img src={user.photo} alt={userName} className="global-avatar-img" />
+              ) : (
+                userInitial
+              )}
+            </div>
             <div className="global-who-info">
               <div className="global-who-name">{userName}</div>
-              <div className="global-who-date">{formattedToday}</div>
+              <div className="global-who-date">
+                <span className="who-date-prefix">Today,</span>
+                <span className="who-date-val">{formattedDate}</span>
+              </div>
             </div>
           </button>
 

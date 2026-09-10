@@ -6,13 +6,15 @@ import './SessionWarningModal.css';
  * SessionWarningModal
  *
  * Listens for the 'primepower:session-warning' custom event dispatched by
- * AuthStore 1 minute before hard token expiry. Displays a corporate countdown
+ * AuthStore 1 minute before idle or token expiry. Displays a corporate countdown
  * modal allowing the user to extend their session or sign out immediately.
+ * Dismisses automatically if user activity is detected.
  */
 export default function SessionWarningModal() {
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, extendSession } = useAuth();
   const [visible, setVisible] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(60);
+  const [warningReason, setWarningReason] = useState('idle');
   const intervalRef = useRef(null);
 
   const dismiss = useCallback(() => {
@@ -24,13 +26,13 @@ export default function SessionWarningModal() {
     }
   }, []);
 
-  // Handle "Continue Session" — triggers a DOM event to reset the idle timer
-  const handleContinue = useCallback(() => {
+  // Handle "Continue Session" — explicitly refreshes the session token & idle timers
+  const handleContinue = useCallback(async () => {
     dismiss();
-    // Dispatch a synthetic user activity event to reset the idle timer
-    // in AuthStore across all tabs.
-    window.dispatchEvent(new MouseEvent('mousedown'));
-  }, [dismiss]);
+    if (extendSession) {
+      await extendSession();
+    }
+  }, [dismiss, extendSession]);
 
   // Handle "Sign Out Now"
   const handleSignOut = useCallback(() => {
@@ -38,12 +40,13 @@ export default function SessionWarningModal() {
     logout('manual');
   }, [dismiss, logout]);
 
-  // Listen for the session warning event
+  // Listen for session warning and session resumed events
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const handleWarning = (e) => {
-      const totalSeconds = (e.detail?.minutesLeft || 1) * 60;
+      const totalSeconds = e.detail?.secondsLeft || (e.detail?.minutesLeft || 1) * 60;
+      setWarningReason(e.detail?.reason || 'idle');
       setSecondsLeft(totalSeconds);
       setVisible(true);
 
@@ -61,20 +64,27 @@ export default function SessionWarningModal() {
       }, 1000);
     };
 
+    const handleResumed = () => {
+      dismiss();
+    };
+
     window.addEventListener('primepower:session-warning', handleWarning);
+    window.addEventListener('primepower:session-resumed', handleResumed);
+
     return () => {
       window.removeEventListener('primepower:session-warning', handleWarning);
+      window.removeEventListener('primepower:session-resumed', handleResumed);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, dismiss]);
 
   // Auto-logout when countdown hits zero
   useEffect(() => {
     if (visible && secondsLeft <= 0) {
       dismiss();
-      logout('expired');
+      logout(warningReason === 'token' ? 'expired' : 'idle');
     }
-  }, [visible, secondsLeft, dismiss, logout]);
+  }, [visible, secondsLeft, warningReason, dismiss, logout]);
 
   if (!visible || !isAuthenticated) return null;
 
@@ -82,12 +92,12 @@ export default function SessionWarningModal() {
 
   return (
     <>
-      <div className="session-warning-backdrop" />
+      <div className="session-warning-backdrop" onClick={handleContinue} />
       <div
         className="session-warning-modal"
         role="alertdialog"
         aria-modal="true"
-        aria-label="Session Expiry Warning"
+        aria-label="Session Inactivity Warning"
       >
         <div className="session-warning-header">
           <div className="session-warning-icon-badge">
@@ -106,16 +116,18 @@ export default function SessionWarningModal() {
             </svg>
           </div>
           <div>
-            <h3 className="session-warning-title">Session Expiring</h3>
-            <div className="session-warning-subtitle">Security Timeout Notice</div>
+            <h3 className="session-warning-title">Session Expiring Soon</h3>
+            <div className="session-warning-subtitle">
+              {warningReason === 'token' ? 'Workday Shift Policy Notice' : 'Inactivity Security Notice'}
+            </div>
           </div>
         </div>
 
         <div className="session-warning-body">
           <p className="session-warning-message">
-            Your session will expire due to the security timeout policy.
-            Select &quot;Continue Session&quot; to remain signed in, or your session
-            will be terminated automatically.
+            {warningReason === 'token'
+              ? 'Your workday authentication token is about to expire. Click "Continue Session" to extend your workday session for another 8 hours.'
+              : 'You have been inactive. For your security, your session will automatically terminate unless you continue your active work.'}
           </p>
 
           <div className="session-warning-countdown">

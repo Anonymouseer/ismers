@@ -76,9 +76,16 @@
   gap: 16px;
 }
 
+.identity-avatar-wrapper {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+}
+
 .identity-avatar-slot {
-  width: 54px;
-  height: 54px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   background: var(--primary);
   color: #ffffff;
@@ -89,6 +96,52 @@
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 125, 204, 0.25);
   flex-shrink: 0;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  transition: all 0.2s ease;
+}
+
+.identity-avatar-slot:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 16px rgba(0, 125, 204, 0.35);
+}
+
+.identity-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.identity-avatar-cam-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary, #007dcc);
+  color: #ffffff;
+  border: 2px solid var(--panel, #ffffff);
+  box-shadow: 0 2px 6px rgba(10, 27, 46, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  z-index: 2;
+  padding: 0;
+}
+
+.identity-avatar-cam-badge:hover {
+  transform: scale(1.15);
+  background: #006ab0;
+}
+
+.identity-avatar-cam-badge svg {
+  width: 13px;
+  height: 13px;
 }
 
 .identity-info {
