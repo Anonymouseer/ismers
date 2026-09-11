@@ -1,4 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import LandingPage from '../features/landing/pages/LandingPage';
+import OfficesPage from '../features/landing/pages/OfficesPage';
 import RootLayout from '../components/layout/RootLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import ModuleRoute from '../components/auth/ModuleRoute';
@@ -23,19 +25,25 @@ import DashboardPage from '../features/dashboard/pages/DashboardPage';
 import RoleDefaultRedirect from '../components/auth/RoleDefaultRedirect';
 
 const router = createBrowserRouter([
+  // PUBLIC: Corporate Landing Page
+  { path: '/', element: <LandingPage /> },
+
+  // PUBLIC: Our Offices (National Headquarters & Regional Branches)
+  { path: '/offices', element: <OfficesPage /> },
+
   // PUBLIC: Login
   { path: '/login', element: <LoginPage /> },
 
-  // PROTECTED: Internal HR System
+  // PROTECTED: Internal HR System (mounted at /app so the '/' root is free for the landing page)
   {
-    path: '/',
+    path: '/app',
     element: (
       <ProtectedRoute>
         <RootLayout />
       </ProtectedRoute>
     ),
     children: [
-      // Root → redirect to role's own default module
+      // /app root → redirect to role's own default module
       { index: true, element: <RoleDefaultRedirect /> },
 
       // Dashboard — Executive Overview for all authenticated roles

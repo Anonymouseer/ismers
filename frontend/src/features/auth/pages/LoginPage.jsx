@@ -39,7 +39,7 @@ export default function LoginPage() {
   }, []);
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app/dashboard" replace />;
   }
 
   const handleSubmit = async (e) => {
@@ -57,7 +57,7 @@ export default function LoginPage() {
 
     const res = await login(email.trim(), password);
     if (res.success) {
-      navigate('/dashboard', { replace: true });
+      navigate('/app/dashboard', { replace: true });
     } else {
       setError(res.message || 'Invalid email address or password.');
     }

@@ -1,0 +1,154 @@
+/* HowItWorksSection.css */
+
+.lp-how {
+  background: var(--lp-white);
+}
+
+.lp-how__header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.lp-how__header .lp-section-body {
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* ---- Process Cards Grid ---- */
+.lp-how__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  position: relative;
+}
+
+/* ---- Individual Process Card Box ---- */
+.lp-how-card {
+  background: var(--lp-bg-card);
+  border: 1px solid var(--lp-border-card);
+  border-radius: var(--lp-radius);
+  padding: 28px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 16px rgba(10, 27, 46, 0.04);
+  transition: transform 0.25s var(--lp-ease), box-shadow 0.25s var(--lp-ease), border-color 0.25s var(--lp-ease);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+.lp-how-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--lp-red) 0%, var(--lp-red-bright) 50%, var(--lp-gold) 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.30s var(--lp-ease);
+}
+
+.lp-how-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(10, 27, 46, 0.09);
+  border-color: rgba(192, 57, 43, 0.22);
+}
+
+.lp-how-card:hover::before {
+  transform: scaleX(1);
+}
+
+/* Card Header */
+.lp-how-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lp-how-card__badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--lp-red) 0%, var(--lp-red-bright) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--lp-font-display);
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 6px 16px rgba(192, 57, 43, 0.26);
+  flex-shrink: 0;
+  transition: transform 0.22s var(--lp-ease);
+}
+
+.lp-how-card:hover .lp-how-card__badge {
+  transform: scale(1.08);
+}
+
+
+/* Card Text */
+.lp-how-card__title {
+  font-family: var(--lp-font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--lp-text-dark);
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.lp-how-card__desc {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--lp-text-body);
+  margin: 0;
+}
+
+/* Checkpoints */
+.lp-how-card__checkpoints {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lp-how-card__checkpoint-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.45;
+}
+
+.lp-how-card__checkpoint-dash {
+  width: 8px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--lp-red);
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+
+/* ---- Responsive ---- */
+@media (max-width: 1100px) {
+  .lp-how__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 560px) {
+  .lp-how__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

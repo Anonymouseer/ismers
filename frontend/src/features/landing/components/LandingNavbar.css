@@ -1,0 +1,292 @@
+/* LandingNavbar.css */
+
+.lp-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  transition: background 0.32s var(--lp-ease), box-shadow 0.32s var(--lp-ease), border-color 0.32s var(--lp-ease);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+}
+
+.lp-navbar.scrolled {
+  background: rgba(10, 27, 46, 0.97);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+}
+
+.lp-navbar__inner {
+  max-width: 1160px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+/* ---- Logo ---- */
+.lp-navbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+  flex-shrink: 0;
+  margin-right: auto;
+}
+
+.lp-navbar__logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.lp-navbar__logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.lp-navbar__logo-name {
+  font-family: var(--lp-font-display);
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #db3c3c;
+  line-height: 1.25;
+}
+
+.lp-navbar__logo-sub {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(180, 210, 235, 0.45);
+  margin-top: 2px;
+}
+
+/* ---- Nav links ---- */
+.lp-navbar__links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-right: 24px;
+}
+
+.lp-navbar__links a,
+.lp-navbar__link {
+  display: block;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(220, 235, 248, 0.75);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: color 0.16s var(--lp-ease), background 0.16s var(--lp-ease);
+  letter-spacing: 0.1px;
+  font-family: inherit;
+}
+
+.lp-navbar__links a:hover,
+.lp-navbar__link:hover,
+.lp-navbar__link.active {
+  color: #f0f6fc;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---- CTA buttons ---- */
+.lp-navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-navbar__btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--lp-font-display);
+  color: rgba(220, 235, 248, 0.75);
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9px;
+  text-decoration: none;
+  transition: color 0.16s var(--lp-ease), border-color 0.16s var(--lp-ease), background 0.16s var(--lp-ease);
+  cursor: pointer;
+}
+
+.lp-navbar__btn-ghost:hover {
+  color: #f0f6fc;
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.lp-navbar__btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--lp-font-display);
+  color: #fff;
+  background: linear-gradient(135deg, #C0392B 0%, #E74C3C 100%);
+  border: none;
+  border-radius: 9px;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(192, 57, 43, 0.30);
+  transition: transform 0.16s var(--lp-ease), box-shadow 0.16s var(--lp-ease);
+  cursor: pointer;
+}
+
+.lp-navbar__btn-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(192, 57, 43, 0.42);
+}
+
+/* ---- Hamburger (mobile) ---- */
+.lp-navbar__hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.16s;
+  margin-left: 8px;
+}
+
+.lp-navbar__hamburger:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lp-navbar__hamburger span {
+  display: block;
+  height: 2px;
+  background: rgba(220, 235, 248, 0.80);
+  border-radius: 2px;
+  transition: transform 0.25s var(--lp-ease), opacity 0.25s var(--lp-ease), width 0.25s var(--lp-ease);
+  width: 100%;
+}
+
+.lp-navbar__hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.lp-navbar__hamburger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.lp-navbar__hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ---- Mobile menu drawer ---- */
+.lp-navbar__mobile-menu {
+  display: none;
+  position: fixed;
+  top: 68px;
+  left: 0;
+  right: 0;
+  background: rgba(10, 27, 46, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 20px 24px 28px;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 899;
+  animation: lp-menu-slide 0.22s var(--lp-ease) both;
+}
+
+@keyframes lp-menu-slide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.lp-navbar__mobile-menu.open {
+  display: flex;
+}
+
+.lp-navbar__mobile-menu a,
+.lp-navbar__mobile-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(220, 235, 248, 0.75);
+  text-decoration: none;
+  border-radius: 10px;
+  transition: color 0.14s, background 0.14s;
+  font-family: inherit;
+}
+
+.lp-navbar__mobile-menu a:hover,
+.lp-navbar__mobile-link:hover,
+.lp-navbar__mobile-link.active {
+  color: #f0f6fc;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lp-navbar__mobile-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+  margin: 10px 0;
+}
+
+.lp-navbar__mobile-menu .lp-navbar__btn-cta {
+  justify-content: center;
+  padding: 12px 20px;
+  font-size: 13.5px;
+  margin-top: 4px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+  .lp-navbar__links {
+    display: none;
+  }
+
+  .lp-navbar__actions {
+    display: none;
+  }
+
+  .lp-navbar__hamburger {
+    display: flex;
+  }
+}
+
+@media (max-width: 520px) {
+  .lp-navbar {
+    padding: 0 20px;
+  }
+}

@@ -77,7 +77,7 @@ export default function Sidebar({
           {/* DASHBOARD */}
           <div className="nav-group">
             <Link
-              to="/dashboard"
+              to="/app/dashboard"
               className={`nav-item${activeItem === 'dashboard' ? ' active' : ''}`}
             >
               <span className="icon-slot">

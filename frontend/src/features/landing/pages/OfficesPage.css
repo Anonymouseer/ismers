@@ -1,0 +1,1429 @@
+/* OfficesPage.css */
+
+.lp-offices-page {
+  background: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp-offices-main {
+  flex: 1;
+}
+
+/* ---- Hero Section ---- */
+.lp-offices-hero {
+  position: relative;
+  background: linear-gradient(155deg, #030f1a 0%, #062340 40%, #0a2e52 68%, #0d1e30 100%);
+  padding: 130px 24px 60px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.lp-offices-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 80% 20%, rgba(192, 57, 43, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(0, 125, 204, 0.10) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.lp-offices-hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.lp-offices-hero__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  background: rgba(212, 168, 67, 0.12);
+  border: 1px solid rgba(212, 168, 67, 0.28);
+  border-radius: 20px;
+  font-family: var(--lp-font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--lp-gold);
+  margin-bottom: 16px;
+}
+
+.lp-offices-hero__title {
+  font-family: var(--lp-font-display);
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1.15;
+  color: #f0f6fc;
+  margin: 0 0 16px;
+}
+
+.lp-offices-hero__sub {
+  font-size: clamp(14.5px, 1.6vw, 17px);
+  line-height: 1.7;
+  color: rgba(180, 210, 235, 0.72);
+  margin: 0 auto 36px;
+  max-width: 720px;
+}
+
+.lp-offices-hero__stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+}
+
+.lp-offices-hero__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.lp-offices-hero__stat-num {
+  font-family: var(--lp-font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.lp-offices-hero__stat-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: rgba(180, 210, 235, 0.60);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.lp-offices-hero__stat-divider {
+  width: 1px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Section label bar */
+.lp-section-label-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--lp-font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--lp-red);
+  margin-bottom: 8px;
+}
+
+.lp-section-label-bar__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lp-red);
+}
+
+/* ---- Section 1: Main Office ---- */
+.lp-main-office-section {
+  padding: 60px 0 50px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(10, 27, 46, 0.08);
+}
+
+.lp-main-office-heading {
+  font-family: var(--lp-font-display);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--lp-navy);
+  margin: 0 0 28px;
+}
+
+.lp-main-office-card {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 36px;
+  background: #ffffff;
+  border: 1px solid rgba(10, 27, 46, 0.10);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(10, 27, 46, 0.06);
+  padding: 36px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-main-office-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--lp-red) 0%, var(--lp-red-bright) 45%, var(--lp-gold) 100%);
+}
+
+.lp-main-office-card__badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.lp-main-office-card__emblem {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(10, 27, 46, 0.03);
+  border: 1px solid rgba(10, 27, 46, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  flex-shrink: 0;
+}
+
+.lp-main-office-card__logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lp-main-office-card__type {
+  font-family: var(--lp-font-display);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--lp-red);
+  background: var(--lp-red-soft);
+  border: 1px solid rgba(192, 57, 43, 0.15);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.lp-main-office-card__title {
+  font-family: var(--lp-font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--lp-navy);
+  letter-spacing: -0.3px;
+  margin: 0 0 4px;
+  line-height: 1.25;
+}
+
+.lp-main-office-card__company {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0 0 24px;
+}
+
+.lp-main-office-card__info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.lp-main-office-card__icon {
+  width: 18px;
+  height: 18px;
+  color: var(--lp-red);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.lp-main-office-card__info-row strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--lp-navy);
+  margin-bottom: 2px;
+}
+
+.lp-main-office-card__info-row p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #334155;
+  margin: 0;
+}
+
+.lp-main-office-card__info-row a {
+  color: var(--lp-red);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.lp-main-office-card__info-row a:hover {
+  text-decoration: underline;
+}
+
+.lp-main-office-card__right {
+  display: flex;
+  flex-direction: column;
+  padding-left: 20px;
+  border-left: 1px solid rgba(10, 27, 46, 0.08);
+}
+
+.lp-main-office-card__subheading {
+  font-family: var(--lp-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--lp-navy);
+  margin-bottom: 10px;
+}
+
+.lp-main-office-recruiters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.lp-main-office-recruiter-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid rgba(10, 27, 46, 0.06);
+  border-radius: 8px;
+}
+
+.lp-main-office-recruiter-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lp-red);
+  flex-shrink: 0;
+}
+
+.lp-main-office-recruiter-meta strong {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.lp-main-office-recruiter-meta a {
+  font-size: 11.5px;
+  color: #475569;
+  text-decoration: none;
+}
+
+.lp-main-office-recruiter-meta a:hover {
+  color: var(--lp-red);
+}
+
+.lp-main-office-emails-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lp-main-office-email-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.lp-main-office-email-label {
+  font-weight: 700;
+  color: #475569;
+  min-width: 110px;
+}
+
+.lp-main-office-email-link {
+  color: var(--lp-red);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.lp-main-office-email-link:hover {
+  text-decoration: underline;
+}
+
+.lp-main-office-card__cta-row {
+  margin-top: 24px;
+}
+
+/* ---- Section 2: Regional Offices (Visual Social Cards) ---- */
+.lp-regional-section {
+  padding: 60px 0 90px;
+  background: #f8fafc;
+}
+
+.lp-regional-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.lp-regional-heading {
+  font-family: var(--lp-font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  color: var(--lp-navy);
+  margin: 0 0 6px;
+}
+
+.lp-regional-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0;
+  max-width: 620px;
+}
+
+/* Search Bar */
+.lp-regional-search {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.lp-regional-search__icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.lp-regional-search__input {
+  width: 100%;
+  padding: 10px 32px 10px 36px;
+  font-size: 13px;
+  border: 1px solid rgba(10, 27, 46, 0.15);
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lp-regional-search__input:focus {
+  border-color: var(--lp-red);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+.lp-regional-search__clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Tabs */
+.lp-regional-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(10, 27, 46, 0.10);
+  padding-bottom: 12px;
+  overflow-x: auto;
+}
+
+.lp-regional-tab {
+  background: none;
+  border: 1px solid transparent;
+  padding: 8px 18px;
+  font-family: var(--lp-font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #64748b;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.lp-regional-tab:hover {
+  color: var(--lp-navy);
+  background: rgba(10, 27, 46, 0.04);
+}
+
+.lp-regional-tab.active {
+  color: #ffffff;
+  background: var(--lp-navy);
+  box-shadow: 0 4px 12px rgba(10, 27, 46, 0.20);
+}
+
+/* Regional Grid */
+.lp-regional-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+}
+
+.lp-regional-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* Left Brand Emblem */
+.lp-regional-emblem-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+  flex-shrink: 0;
+}
+
+.lp-regional-emblem-circle {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid rgba(10, 27, 46, 0.10);
+  box-shadow: 0 8px 20px rgba(10, 27, 46, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  transition: transform 0.22s var(--lp-ease), box-shadow 0.22s var(--lp-ease);
+}
+
+.lp-regional-item:hover .lp-regional-emblem-circle {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 28px rgba(192, 57, 43, 0.15);
+  border-color: rgba(192, 57, 43, 0.25);
+}
+
+.lp-regional-emblem-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lp-regional-emblem-code {
+  font-family: var(--lp-font-display);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: #0a1b2e;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.2;
+}
+
+/* Right: Authentic Social Media Card */
+.lp-social-card {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid rgba(10, 27, 46, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(10, 27, 46, 0.05);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s var(--lp-ease), box-shadow 0.22s var(--lp-ease);
+}
+
+.lp-social-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px rgba(10, 27, 46, 0.10);
+}
+
+/* 1. Header */
+.lp-social-card__header {
+  padding: 10px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid rgba(10, 27, 46, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-social-card__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1px solid rgba(10, 27, 46, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  flex-shrink: 0;
+}
+
+.lp-social-card__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.lp-social-card__header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.lp-social-card__name {
+  font-family: var(--lp-font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lp-social-card__followers {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.lp-social-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.lp-social-card__btn-follow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #1877f2;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.lp-social-card__btn-follow.followed {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.lp-social-card__btn-share {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid rgba(10, 27, 46, 0.10);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.lp-social-card__btn-share:hover {
+  background: #e2e8f0;
+}
+
+/* 2. Tabs Bar (Profile / Messages) */
+.lp-social-card__tabs {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid rgba(10, 27, 46, 0.08);
+  background: #fcfcfc;
+  padding: 0 14px;
+}
+
+.lp-social-card__tab {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: default;
+  position: relative;
+}
+
+.lp-social-card__tab.active {
+  color: #1877f2;
+}
+
+.lp-social-card__tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 14px;
+  right: 14px;
+  height: 2.5px;
+  background: #1877f2;
+  border-radius: 2px 2px 0 0;
+}
+
+/* 3. Graphical Recruitment Flyer Components */
+.lp-flyer {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.05);
+}
+
+.lp-flyer__content {
+  padding: 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Hazard Stripe (Bacolod style) */
+.lp-flyer__stripe {
+  height: 12px;
+  width: 100%;
+}
+
+/* Specific Flyer Themes */
+.lp-flyer--hazard-yellow {
+  background: #ffde00;
+  color: #111827;
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__stripe {
+  background: repeating-linear-gradient(45deg, #111827, #111827 12px, #ffde00 12px, #ffde00 24px);
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__tag {
+  background: #111827;
+  color: #ffde00;
+  font-weight: 900;
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__location-chip {
+  background: rgba(0, 0, 0, 0.12);
+  color: #111827;
+  border: 1px solid rgba(0, 0, 0, 0.20);
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: #111827;
+  letter-spacing: -0.5px;
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__role-sub {
+  font-family: var(--lp-font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__role-badge {
+  background: rgba(0, 0, 0, 0.08);
+  color: #111827;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  font-weight: 700;
+}
+
+.lp-flyer--hazard-yellow .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.10);
+  color: #111827;
+}
+
+/* Hotel Navy Theme (Baguio, Puerto Princesa) */
+.lp-flyer--hotel-navy {
+  background: linear-gradient(145deg, #091a2e 0%, #102d4f 60%, #163e6d 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--hotel-navy .lp-flyer__stripe {
+  background: linear-gradient(90deg, #c0392b 0%, #d4a843 50%, #c0392b 100%);
+}
+
+.lp-flyer--hotel-navy .lp-flyer__tag {
+  background: rgba(212, 168, 67, 0.20);
+  border: 1px solid rgba(212, 168, 67, 0.40);
+  color: #fcd34d;
+}
+
+.lp-flyer--hotel-navy .lp-flyer__location-chip {
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+}
+
+.lp-flyer--hotel-navy .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+.lp-flyer--hotel-navy .lp-flyer__role-sub {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #93c5fd;
+}
+
+.lp-flyer--hotel-navy .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e2e8f0;
+}
+
+.lp-flyer--hotel-navy .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.25);
+  color: #cbd5e1;
+}
+
+/* Industrial Blue Theme (Bataan, Pampanga) */
+.lp-flyer--industrial-blue {
+  background: linear-gradient(145deg, #022044 0%, #034b8c 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--industrial-blue .lp-flyer__stripe {
+  background: linear-gradient(90deg, #e11d48 0%, #38bdf8 100%);
+}
+
+.lp-flyer--industrial-blue .lp-flyer__tag {
+  background: rgba(56, 189, 248, 0.20);
+  color: #38bdf8;
+}
+
+.lp-flyer--industrial-blue .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--industrial-blue .lp-flyer__role-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #bae6fd;
+}
+
+.lp-flyer--industrial-blue .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.10);
+  color: #f1f5f9;
+}
+
+.lp-flyer--industrial-blue .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.25);
+  color: #93c5fd;
+}
+
+/* Corporate Slate Theme (Bicol, Iloilo) */
+.lp-flyer--corporate-slate {
+  background: linear-gradient(145deg, #1e293b 0%, #334155 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--corporate-slate .lp-flyer__stripe {
+  background: linear-gradient(90deg, #ea580c 0%, #f97316 100%);
+}
+
+.lp-flyer--corporate-slate .lp-flyer__tag {
+  background: rgba(249, 115, 22, 0.20);
+  color: #fdba74;
+}
+
+.lp-flyer--corporate-slate .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--corporate-slate .lp-flyer__role-sub {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.lp-flyer--corporate-slate .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+.lp-flyer--corporate-slate .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.20);
+  color: #e2e8f0;
+}
+
+/* Rider Amber Theme (Bohol) */
+.lp-flyer--rider-amber {
+  background: #fffbeb;
+  color: #78350f;
+  border: 1px solid rgba(217, 119, 6, 0.20);
+}
+
+.lp-flyer--rider-amber .lp-flyer__stripe {
+  background: linear-gradient(90deg, #dc2626 0%, #f59e0b 100%);
+}
+
+.lp-flyer--rider-amber .lp-flyer__tag {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.lp-flyer--rider-amber .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 20px;
+  font-weight: 900;
+  color: #b91c1c;
+}
+
+.lp-flyer--rider-amber .lp-flyer__role-sub {
+  font-size: 14px;
+  font-weight: 800;
+  color: #78350f;
+}
+
+.lp-flyer--rider-amber .lp-flyer__role-badge {
+  background: rgba(217, 119, 6, 0.12);
+  color: #92400e;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  font-weight: 700;
+}
+
+.lp-flyer--rider-amber .lp-flyer__highlight-bar {
+  background: rgba(217, 119, 6, 0.10);
+  color: #78350f;
+}
+
+/* Resort Teal Theme (Boracay) */
+.lp-flyer--resort-teal {
+  background: linear-gradient(145deg, #044343 0%, #086b6b 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--resort-teal .lp-flyer__stripe {
+  background: linear-gradient(90deg, #14b8a6 0%, #38bdf8 100%);
+}
+
+.lp-flyer--resort-teal .lp-flyer__tag {
+  background: rgba(20, 184, 166, 0.25);
+  color: #5eead4;
+}
+
+.lp-flyer--resort-teal .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--resort-teal .lp-flyer__role-sub {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ccfbf1;
+}
+
+.lp-flyer--resort-teal .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f0fdfa;
+}
+
+.lp-flyer--resort-teal .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.20);
+  color: #99f6e4;
+}
+
+/* Distribution Blue Theme (CDO) */
+.lp-flyer--distribution-blue {
+  background: linear-gradient(145deg, #033465 0%, #075985 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--distribution-blue .lp-flyer__stripe {
+  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+}
+
+.lp-flyer--distribution-blue .lp-flyer__tag {
+  background: rgba(56, 189, 248, 0.20);
+  color: #7dd3fc;
+}
+
+.lp-flyer--distribution-blue .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--distribution-blue .lp-flyer__role-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e0f2fe;
+}
+
+.lp-flyer--distribution-blue .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.10);
+  color: #f0f9ff;
+}
+
+.lp-flyer--distribution-blue .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.20);
+  color: #bae6fd;
+}
+
+/* Cebu Royal Theme */
+.lp-flyer--cebu-royal {
+  background: linear-gradient(145deg, #172554 0%, #1e40af 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--cebu-royal .lp-flyer__stripe {
+  background: linear-gradient(90deg, #e11d48 0%, #fbbf24 100%);
+}
+
+.lp-flyer--cebu-royal .lp-flyer__tag {
+  background: rgba(251, 191, 36, 0.20);
+  color: #fde68a;
+}
+
+.lp-flyer--cebu-royal .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--cebu-royal .lp-flyer__role-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #bfdbfe;
+}
+
+.lp-flyer--cebu-royal .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.10);
+  color: #eff6ff;
+}
+
+.lp-flyer--cebu-royal .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.25);
+  color: #dbeafe;
+}
+
+/* Davao Cyan Theme */
+.lp-flyer--davao-cyan {
+  background: linear-gradient(145deg, #083344 0%, #0e7490 50%, #1d4ed8 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--davao-cyan .lp-flyer__stripe {
+  background: linear-gradient(90deg, #06b6d4 0%, #f43f5e 100%);
+}
+
+.lp-flyer--davao-cyan .lp-flyer__tag {
+  background: #f43f5e;
+  color: #ffffff;
+}
+
+.lp-flyer--davao-cyan .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--davao-cyan .lp-flyer__role-sub {
+  font-size: 13px;
+  font-weight: 700;
+  color: #a5f3fc;
+}
+
+.lp-flyer--davao-cyan .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.lp-flyer--davao-cyan .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.30);
+  color: #cffafe;
+}
+
+/* El Nido Theme */
+.lp-flyer--elnido-blue {
+  background: linear-gradient(145deg, #1e1b4b 0%, #2563eb 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--elnido-blue .lp-flyer__stripe {
+  background: linear-gradient(90deg, #facc15 0%, #ef4444 100%);
+}
+
+.lp-flyer--elnido-blue .lp-flyer__tag {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.lp-flyer--elnido-blue .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--elnido-blue .lp-flyer__role-sub {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.lp-flyer--elnido-blue .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.lp-flyer--elnido-blue .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.30);
+  color: #fef08a;
+}
+
+/* Tagaytay Gold Theme */
+.lp-flyer--tagaytay-gold {
+  background: linear-gradient(145deg, #451a03 0%, #9a3412 100%);
+  color: #ffffff;
+}
+
+.lp-flyer--tagaytay-gold .lp-flyer__stripe {
+  background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+}
+
+.lp-flyer--tagaytay-gold .lp-flyer__tag {
+  background: #f59e0b;
+  color: #451a03;
+  font-weight: 900;
+}
+
+.lp-flyer--tagaytay-gold .lp-flyer__role-main {
+  font-family: var(--lp-font-display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lp-flyer--tagaytay-gold .lp-flyer__role-sub {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.lp-flyer--tagaytay-gold .lp-flyer__role-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fef3c7;
+}
+
+.lp-flyer--tagaytay-gold .lp-flyer__highlight-bar {
+  background: rgba(0, 0, 0, 0.25);
+  color: #fde68a;
+}
+
+/* Flyer Typography & Elements */
+.lp-flyer__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lp-flyer__tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: var(--lp-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.lp-flyer__location-chip {
+  font-family: var(--lp-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.lp-flyer__title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lp-flyer__badges-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.lp-flyer__role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lp-flyer__highlight-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.lp-flyer__highlight-bar svg {
+  flex-shrink: 0;
+}
+
+/* 4. Social Post Meta */
+.lp-social-card__post-meta {
+  padding: 10px 14px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lp-social-card__meta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-social-card__post-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #f1f5f9;
+  border: 1px solid rgba(10, 27, 46, 0.08);
+  padding: 2px;
+}
+
+.lp-social-card__meta-left strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.lp-social-card__meta-left span {
+  font-size: 10px;
+  color: #64748b;
+}
+
+.lp-social-card__fb-icon {
+  flex-shrink: 0;
+}
+
+.lp-social-card__caption {
+  padding: 0 14px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #334155;
+  margin: 0;
+}
+
+/* 5. Reactions Bar */
+.lp-social-card__reactions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(10, 27, 46, 0.07);
+  border-bottom: 1px solid rgba(10, 27, 46, 0.07);
+  padding: 6px 12px;
+  background: #fdfdfd;
+}
+
+.lp-social-card__reaction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.16s;
+}
+
+.lp-social-card__reaction-btn:hover {
+  background: rgba(10, 27, 46, 0.04);
+  color: #0f172a;
+}
+
+.lp-social-card__reaction-btn.liked {
+  color: #1877f2;
+}
+
+/* 6. Footer Button */
+.lp-social-card__footer {
+  padding: 10px 14px 12px;
+  background: #ffffff;
+}
+
+.lp-social-card__apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 14px;
+  background: #f8fafc;
+  border: 1px solid rgba(10, 27, 46, 0.14);
+  border-radius: 8px;
+  font-family: var(--lp-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lp-navy);
+  text-decoration: none;
+  transition: all 0.18s;
+}
+
+.lp-social-card__apply-btn:hover {
+  background: var(--lp-red);
+  border-color: var(--lp-red);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(192, 57, 43, 0.25);
+}
+
+.lp-regional-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: #ffffff;
+  border: 1px solid rgba(10, 27, 46, 0.08);
+  border-radius: 14px;
+  color: #64748b;
+}
+
+/* ---- Bottom CTA ---- */
+.lp-offices-cta {
+  background: linear-gradient(155deg, #030f1a 0%, #062340 100%);
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.lp-offices-cta__inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.lp-offices-cta__heading {
+  font-family: var(--lp-font-display);
+  font-size: clamp(24px, 3.2vw, 36px);
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 14px;
+  letter-spacing: -0.6px;
+}
+
+.lp-offices-cta__sub {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: rgba(180, 210, 235, 0.70);
+  margin: 0 0 28px;
+}
+
+.lp-offices-cta__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1100px) {
+  .lp-main-office-card {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 28px 24px;
+  }
+
+  .lp-main-office-card__right {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid rgba(10, 27, 46, 0.08);
+    padding-top: 24px;
+  }
+
+  .lp-regional-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-offices-hero {
+    padding: 100px 16px 48px;
+  }
+
+  .lp-main-office-recruiters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lp-regional-item {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .lp-regional-emblem-wrap {
+    width: 100%;
+    margin-bottom: -6px;
+  }
+
+  .lp-social-card {
+    width: 100%;
+  }
+
+  .lp-regional-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lp-regional-search {
+    max-width: 100%;
+  }
+}

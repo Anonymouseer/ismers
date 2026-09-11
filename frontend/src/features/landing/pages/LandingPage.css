@@ -1,0 +1,216 @@
+/* LandingPage.css
+   Public-facing corporate landing page for PRIMEPOWER MANPOWER.
+   Standalone from the authenticated app shell — no sidebar, no topbar.
+   Uses a richer red/navy/gold brand palette distinct from the system blue. */
+
+/* ---- Override global overflow:hidden so the page can scroll ---- */
+html:has(.landing-page),
+html:has(.landing-page) body {
+  overflow: auto;
+  height: auto;
+}
+
+/* ---- Landing design tokens (scoped, not global) ---- */
+.landing-page {
+  /* Primary palette */
+  --lp-red:         #C0392B;
+  --lp-red-bright:  #E74C3C;
+  --lp-red-soft:    rgba(192, 57, 43, 0.10);
+  --lp-navy:        #0A1B2E;
+  --lp-navy-mid:    #0D2137;
+  --lp-navy-light:  #122840;
+  --lp-gold:        #D4A843;
+  --lp-gold-soft:   rgba(212, 168, 67, 0.12);
+
+  /* Neutral / text */
+  --lp-white:       #FFFFFF;
+  --lp-off-white:   #F0F6FC;
+  --lp-text-muted:  rgba(220, 235, 248, 0.60);
+  --lp-text-dim:    rgba(220, 235, 248, 0.38);
+
+  /* On-light sections */
+  --lp-bg-light:    #F4F8FC;
+  --lp-bg-card:     #FFFFFF;
+  --lp-border-card: rgba(10, 27, 46, 0.08);
+  --lp-text-dark:   #0A1B2E;
+  --lp-text-body:   #3A5068;
+  --lp-text-sub:    #6A8BA8;
+
+  /* Shadows */
+  --lp-shadow-sm:   0 2px 12px rgba(10, 27, 46, 0.07);
+  --lp-shadow-md:   0 8px 32px rgba(10, 27, 46, 0.10);
+  --lp-shadow-lg:   0 24px 64px rgba(10, 27, 46, 0.14);
+  --lp-shadow-red:  0 8px 32px rgba(192, 57, 43, 0.22);
+
+  /* Radii */
+  --lp-radius:      16px;
+  --lp-radius-sm:   10px;
+
+  /* Motion */
+  --lp-ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --lp-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Typography */
+  --lp-font-display: "Manrope", "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  --lp-font-body:    "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+/* ---- Full-page wrapper ---- */
+.landing-page {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--lp-white);
+  color: var(--lp-text-dark);
+  font-family: var(--lp-font-body);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Scroll-reveal utility ---- */
+.lp-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s var(--lp-ease), transform 0.65s var(--lp-ease);
+}
+
+.lp-reveal.lp-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lp-reveal-delay-1 { transition-delay: 0.10s; }
+.lp-reveal-delay-2 { transition-delay: 0.20s; }
+.lp-reveal-delay-3 { transition-delay: 0.30s; }
+.lp-reveal-delay-4 { transition-delay: 0.40s; }
+.lp-reveal-delay-5 { transition-delay: 0.50s; }
+.lp-reveal-delay-6 { transition-delay: 0.60s; }
+
+/* ---- Section layout helpers ---- */
+.lp-section {
+  padding: 96px 24px;
+}
+
+.lp-section--dark {
+  background: var(--lp-navy);
+  color: var(--lp-off-white);
+}
+
+.lp-section--light {
+  background: var(--lp-bg-light);
+}
+
+.lp-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.lp-section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--lp-red);
+  background: var(--lp-red-soft);
+  border: 1px solid rgba(192, 57, 43, 0.18);
+  border-radius: 20px;
+  padding: 5px 14px;
+  margin-bottom: 18px;
+}
+
+.lp-section-tag--light {
+  color: var(--lp-gold);
+  background: var(--lp-gold-soft);
+  border-color: rgba(212, 168, 67, 0.20);
+}
+
+.lp-section-heading {
+  font-family: var(--lp-font-display);
+  font-size: clamp(28px, 3.5vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  line-height: 1.15;
+  color: var(--lp-text-dark);
+  margin-bottom: 16px;
+}
+
+.lp-section-heading--light {
+  color: var(--lp-off-white);
+}
+
+.lp-section-body {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--lp-text-body);
+  max-width: 560px;
+}
+
+.lp-section-body--light {
+  color: var(--lp-text-muted);
+}
+
+/* ---- Button system ---- */
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--lp-font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: var(--lp-radius-sm);
+  padding: 13px 26px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.18s var(--lp-ease), box-shadow 0.18s var(--lp-ease), background 0.18s var(--lp-ease);
+  white-space: nowrap;
+}
+
+.lp-btn:hover {
+  transform: translateY(-2px);
+}
+
+.lp-btn--primary {
+  background: linear-gradient(135deg, var(--lp-red) 0%, var(--lp-red-bright) 100%);
+  color: var(--lp-white);
+  box-shadow: var(--lp-shadow-red);
+}
+
+.lp-btn--primary:hover {
+  box-shadow: 0 12px 40px rgba(192, 57, 43, 0.35);
+}
+
+.lp-btn--outline {
+  background: transparent;
+  color: var(--lp-white);
+  border: 1.5px solid rgba(255, 255, 255, 0.30);
+}
+
+.lp-btn--outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.lp-btn--outline-dark {
+  background: transparent;
+  color: var(--lp-red);
+  border: 1.5px solid var(--lp-red);
+}
+
+.lp-btn--outline-dark:hover {
+  background: var(--lp-red-soft);
+}
+
+.lp-btn--gold {
+  background: linear-gradient(135deg, #B8881E 0%, var(--lp-gold) 100%);
+  color: var(--lp-navy);
+  box-shadow: 0 8px 24px rgba(212, 168, 67, 0.28);
+}
+
+.lp-btn--gold:hover {
+  box-shadow: 0 12px 36px rgba(212, 168, 67, 0.40);
+}

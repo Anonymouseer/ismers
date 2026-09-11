@@ -71,7 +71,7 @@ export default function RootLayout() {
   else if (path.includes('ai-analytics')) activeItem = 'ai-analytics';
   else if (path.includes('settings')) activeItem = 'settings';
   else if (path.includes('profile')) activeItem = 'profile';
-  else if (path.includes('dashboard') || path === '/') activeItem = 'dashboard';
+  else if (path.includes('dashboard') || path === '/app') activeItem = 'dashboard';
 
   // Dynamic Browser Tab Title
   useEffect(() => {

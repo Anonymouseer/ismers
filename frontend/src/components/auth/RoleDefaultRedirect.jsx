@@ -6,5 +6,5 @@ import { useAuth } from '../../features/auth/store/AuthStore';
  * assigned default module so each role lands on the right page automatically.
  */
 export default function RoleDefaultRedirect() {
-  return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/app/dashboard" replace />;
 }
