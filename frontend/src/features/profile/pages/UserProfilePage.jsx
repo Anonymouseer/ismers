@@ -44,7 +44,7 @@ export default function UserProfilePage() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [density, setDensity] = useState(() => localStorage.getItem('density') || 'comfortable');
   const [syncWithSystem, setSyncWithSystem] = useState(false);
-  const [defaultRoute, setDefaultRoute] = useState(user?.defaultRoute || '/app/dashboard');
+  const [defaultRoute, setDefaultRoute] = useState(user?.defaultRoute || '/dashboard');
 
   // Sync theme with DOM
   useEffect(() => {

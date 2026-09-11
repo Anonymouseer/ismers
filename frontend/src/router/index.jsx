@@ -23,38 +23,48 @@ import PublicApplyPage from '../features/applicant-registration/pages/PublicAppl
 import LoginPage from '../features/auth/pages/LoginPage';
 import DashboardPage from '../features/dashboard/pages/DashboardPage';
 import RoleDefaultRedirect from '../components/auth/RoleDefaultRedirect';
+import RouteErrorBoundary from '../components/common/RouteErrorBoundary';
 
 const router = createBrowserRouter([
   // PUBLIC: Corporate Landing Page
-  { path: '/', element: <LandingPage /> },
+  {
+    path: '/',
+    element: <LandingPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
 
   // PUBLIC: Our Offices (National Headquarters & Regional Branches)
-  { path: '/offices', element: <OfficesPage /> },
-
-  // PUBLIC: Login
-  { path: '/login', element: <LoginPage /> },
-
-  // PROTECTED: Internal HR System (mounted at /app so the '/' root is free for the landing page)
   {
-    path: '/app',
+    path: '/offices',
+    element: <OfficesPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+
+  // PUBLIC: Staff Authentication
+  {
+    path: '/login',
+    element: <LoginPage />,
+    errorElement: <RouteErrorBoundary />,
+  },
+
+  // PROTECTED: Internal HR System (Mounted at root paths so all system features and links work seamlessly)
+  {
     element: (
       <ProtectedRoute>
         <RootLayout />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorBoundary />,
     children: [
-      // /app root → redirect to role's own default module
-      { index: true, element: <RoleDefaultRedirect /> },
-
       // Dashboard — Executive Overview for all authenticated roles
       {
-        path: 'dashboard',
+        path: '/dashboard',
         element: <DashboardPage />,
       },
 
       // Client Management — hr_administrator, job_order_coordinator
       {
-        path: 'client-management',
+        path: '/client-management',
         element: (
           <ModuleRoute moduleKey="client-management">
             <ClientManagementPage />
@@ -64,7 +74,7 @@ const router = createBrowserRouter([
 
       // Applicant Registration — hr_administrator, registration_officer
       {
-        path: 'applicant-registration',
+        path: '/applicant-registration',
         element: (
           <ModuleRoute moduleKey="applicant-registration">
             <ApplicantRegistrationProvider>
@@ -74,7 +84,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'applicant-registration/register',
+        path: '/applicant-registration/register',
         element: (
           <ModuleRoute moduleKey="applicant-registration">
             <ApplicantRegistrationProvider>
@@ -86,7 +96,7 @@ const router = createBrowserRouter([
 
       // Recruitment & Selection — hr_administrator, recruitment_officer
       {
-        path: 'recruitment-selection',
+        path: '/recruitment-selection',
         element: (
           <ModuleRoute moduleKey="recruitment-selection">
             <RecruitmentSelectionPage />
@@ -96,7 +106,7 @@ const router = createBrowserRouter([
 
       // Job Order Management — hr_administrator, job_order_coordinator
       {
-        path: 'job-order-management',
+        path: '/job-order-management',
         element: (
           <ModuleRoute moduleKey="job-order-management">
             <JobOrderManagementPage />
@@ -106,7 +116,7 @@ const router = createBrowserRouter([
 
       // Deployment & Assignment — hr_administrator, deployment_officer
       {
-        path: 'deployment-assignment',
+        path: '/deployment-assignment',
         element: (
           <ModuleRoute moduleKey="deployment-assignment">
             <DeploymentAssignmentPage />
@@ -116,7 +126,7 @@ const router = createBrowserRouter([
 
       // AI Analytics — hr_administrator only
       {
-        path: 'ai-analytics',
+        path: '/ai-analytics',
         element: (
           <ModuleRoute moduleKey="ai-analytics">
             <AiAnalyticsPage />
@@ -126,7 +136,7 @@ const router = createBrowserRouter([
 
       // Settings — hr_administrator only
       {
-        path: 'settings',
+        path: '/settings',
         element: (
           <ModuleRoute moduleKey="settings">
             <SettingsPage />
@@ -136,9 +146,26 @@ const router = createBrowserRouter([
 
       // My Profile & Account Preferences — All authenticated staff roles
       {
-        path: 'profile',
+        path: '/profile',
         element: <UserProfilePage />,
       },
+
+      // App Root redirect
+      {
+        path: '/app',
+        element: <RoleDefaultRedirect />,
+      },
+      // App prefixed path aliases for backwards-compatibility
+      { path: '/app/dashboard', element: <Navigate to="/dashboard" replace /> },
+      { path: '/app/client-management', element: <Navigate to="/client-management" replace /> },
+      { path: '/app/applicant-registration', element: <Navigate to="/applicant-registration" replace /> },
+      { path: '/app/applicant-registration/register', element: <Navigate to="/applicant-registration/register" replace /> },
+      { path: '/app/recruitment-selection', element: <Navigate to="/recruitment-selection" replace /> },
+      { path: '/app/job-order-management', element: <Navigate to="/job-order-management" replace /> },
+      { path: '/app/deployment-assignment', element: <Navigate to="/deployment-assignment" replace /> },
+      { path: '/app/ai-analytics', element: <Navigate to="/ai-analytics" replace /> },
+      { path: '/app/settings', element: <Navigate to="/settings" replace /> },
+      { path: '/app/profile', element: <Navigate to="/profile" replace /> },
     ],
   },
 
@@ -150,11 +177,12 @@ const router = createBrowserRouter([
         <ClientPortalPage />
       </ClientPortalProtectedRoute>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   // PUBLIC: Client Portal authentication pages
-  { path: '/client-portal/login', element: <ClientPortalLoginPage /> },
-  { path: '/client-portal/register', element: <ClientPortalRegisterPage /> },
-  { path: '/client-portal/reset-password', element: <ClientPortalResetPasswordPage /> },
+  { path: '/client-portal/login', element: <ClientPortalLoginPage />, errorElement: <RouteErrorBoundary /> },
+  { path: '/client-portal/register', element: <ClientPortalRegisterPage />, errorElement: <RouteErrorBoundary /> },
+  { path: '/client-portal/reset-password', element: <ClientPortalResetPasswordPage />, errorElement: <RouteErrorBoundary /> },
 
   // PUBLIC: Applicant self-registration
   {
@@ -164,6 +192,13 @@ const router = createBrowserRouter([
         <PublicApplyPage />
       </ApplicantRegistrationProvider>
     ),
+    errorElement: <RouteErrorBoundary />,
+  },
+
+  // CATCH-ALL: Render professional error boundary on invalid routes
+  {
+    path: '*',
+    element: <RouteErrorBoundary />,
   },
 ]);
 
