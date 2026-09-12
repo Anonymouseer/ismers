@@ -25,8 +25,15 @@ class CheckModuleAccess
             ], 401);
         }
 
+        // Client accounts and external users do not have staff module access
+        if (! ($user instanceof \App\Models\User)) {
+            return response()->json([
+                'message' => 'Forbidden: Staff user credentials required.',
+            ], 403);
+        }
+
         // Administrators have universal module access
-        if ($user->isAdmin()) {
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
             return $next($request);
         }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ClientAccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeploymentController;
@@ -172,6 +173,16 @@ Route::prefix('v1')->group(function () {
             Route::get('/users',               [UserController::class, 'index']);
             Route::post('/users',              [UserController::class, 'store']);
             Route::patch('/users/{id}/status', [UserController::class, 'updateStatus']);
+        });
+
+        // ── Real-Time Communications & Chat Module ──
+        Route::prefix('chat')->group(function () {
+            Route::get('/threads',                       [ChatController::class, 'index']);
+            Route::post('/threads/by-client/{clientId}', [ChatController::class, 'findOrCreateForClient']);
+            Route::get('/threads/{id}/messages',         [ChatController::class, 'messages']);
+            Route::post('/threads/{id}/messages',        [ChatController::class, 'sendMessage']);
+            Route::patch('/threads/{id}/read',           [ChatController::class, 'markAsRead']);
+            Route::get('/unread-count',                  [ChatController::class, 'unreadCount']);
         });
 
     }); // end auth:sanctum

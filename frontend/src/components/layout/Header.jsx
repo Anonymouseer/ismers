@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { useUIFeedback } from '../common/UIFeedback';
 import { useAuth } from '../../features/auth/store/AuthStore';
+import { chatService } from '../../features/communications/services/ChatService';
+import { subscribeRealtimeEvents } from '../../utils/realtimeSync';
 import './Header.css';
 
 function formatNotifTime(item) {
@@ -39,6 +41,35 @@ export default function Header({ onToggleMobileMenu }) {
   const userMenuRef = useRef(null);
 
   const { notifications, unreadCount, markAllAsRead, markAsRead, clearNotifications } = useUIFeedback();
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  // Synchronize unread client message counts across tabs
+  useEffect(() => {
+    let active = true;
+    const fetchChatUnread = async () => {
+      try {
+        const res = await chatService.getUnreadCount();
+        if (active && typeof res?.unreadCount === 'number') {
+          setUnreadChatCount(res.unreadCount);
+        }
+      } catch {
+        // non-fatal
+      }
+    };
+    const initTimer = setTimeout(fetchChatUnread, 600);
+    const interval = setInterval(fetchChatUnread, 15000);
+    const unsub = subscribeRealtimeEvents((e) => {
+      if (e?.type === 'CHAT_MESSAGE_SENT' || e?.type === 'CHAT_MESSAGE_RECEIVED') {
+        fetchChatUnread();
+      }
+    });
+    return () => {
+      active = false;
+      clearTimeout(initTimer);
+      clearInterval(interval);
+      unsub();
+    };
+  }, []);
 
   // Close dropdown on click outside or escape
   useEffect(() => {
@@ -72,6 +103,13 @@ export default function Header({ onToggleMobileMenu }) {
     const searchParams = new URLSearchParams(location.search);
     const tabParam = searchParams.get('tab');
 
+    if (path.includes('client-communications')) {
+      return (
+        <>
+          <span className="crumb-hide-mobile">PRIMEPOWER MANPOWER &nbsp;›&nbsp; Recruitment Operations &nbsp;›&nbsp; </span><b>Client Communications Hub</b>
+        </>
+      );
+    }
     if (path.includes('client-management')) {
       return (
         <>
@@ -184,6 +222,26 @@ export default function Header({ onToggleMobileMenu }) {
             className="global-search-input"
           />
         </div>
+
+        {/* CLIENT COMMUNICATIONS DIRECT ACCESS */}
+        {canAccess('client-management') && (
+          <button
+            type="button"
+            className={`global-icon-btn ${path.includes('client-communications') ? 'active' : ''}`}
+            title="Client Communications Hub"
+            onClick={() => navigate('/client-communications')}
+            aria-label="Client Communications Hub"
+          >
+            <svg className="icon" viewBox="0 0 24 24" style={{ width: 16, height: 16 }}>
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+            {unreadChatCount > 0 && (
+              <span className="global-bell-badge" style={{ background: '#007dcc' }}>
+                {unreadChatCount > 9 ? '9+' : unreadChatCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {/* NOTIFICATION BELL CONTAINER */}
         <div className="global-bell-wrap" ref={notifRef}>

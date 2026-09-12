@@ -296,3 +296,46 @@
   .collapse-btn:hover{color:var(--primary);box-shadow:var(--shadow-md);}
   .collapse-btn.collapsed{left:calc(var(--sidebar-w-collapsed) - 14px);}
   .collapse-btn.collapsed svg{transform:rotate(180deg);}
+
+/* ── Chat Unread Ping Indicator ─────────────────────────── */
+.sidebar-chat-ping {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid var(--sidebar-bg);
+}
+
+.sidebar-chat-ping::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.45);
+  animation: sidebar-ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes sidebar-ping {
+  0%   { transform: scale(0.8); opacity: 1; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+.sidebar-chat-badge {
+  margin-left: auto;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--sidebar-bg);
+}

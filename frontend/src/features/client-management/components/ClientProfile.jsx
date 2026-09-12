@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import JobOrderCard from './JobOrderCard';
 import JobDetailView from './JobDetailView';
 import {
@@ -7,6 +8,7 @@ import {
 } from '../utils/clientDisplay';
 
 export default function ClientProfile({ client, clientIndex, onBack, onUpdateStatus }) {
+  const navigate = useNavigate();
   const c = client;
   const [openJobIndex, setOpenJobIndex] = useState(null);
   const [status, setStatus] = useState(c.status);
@@ -65,6 +67,17 @@ export default function ClientProfile({ client, clientIndex, onBack, onUpdateSta
                 </div>
               </div>
               <div className="hero-actions">
+                <button
+                  type="button"
+                  className="hero-btn"
+                  onClick={() => navigate(`/client-communications?clientId=${c.id || companyId}`)}
+                  title="Direct Message Client"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 13, height: 13 }}>
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  Message Client
+                </button>
                 <button className="hero-btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M8.5 11h7M8.5 14.5h7" /></svg>New Job Order</button>
                 <div className="status-menu-wrap">
                   <button className="hero-btn" onClick={(e) => { e.stopPropagation(); setStatusMenuOpen((v) => !v); }}>

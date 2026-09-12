@@ -11,6 +11,8 @@ import ClientPortalSettingsPage from './ClientPortalSettingsPage';
 import ClientCandidateModal from '../components/ClientCandidateModal';
 import ClientScheduleInterviewModal from '../components/ClientScheduleInterviewModal';
 import ClientFeedbackPage from '../components/ClientFeedbackPage';
+import ClientPortalChatView from '../components/ClientPortalChatView';
+import { chatService } from '../../communications/services/ChatService';
 import { broadcastRealtimeEvent, subscribeRealtimeEvents } from '../../../utils/realtimeSync';
 import { CLIENTS } from '../../client-management/data/mockClients';
 import { mergeClientsWithDeployments } from '../../client-management/store/ClientManagementStore';
@@ -258,7 +260,8 @@ export default function ClientPortalPage() {
   });
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'settings'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'job-orders' | 'endorsements' | 'deployed-roster' | 'messages' | 'settings'
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [showJobModal, setShowJobModal] = useState(false);
 
   const [jobRequests, setJobRequests] = useState(() => {
@@ -771,6 +774,33 @@ export default function ClientPortalPage() {
     }
   }, []);
 
+  // Synchronize unread chat count with backend and real-time events
+  useEffect(() => {
+    let active = true;
+    const fetchUnread = async () => {
+      try {
+        const res = await chatService.getUnreadCount();
+        if (active && typeof res?.unreadCount === 'number') {
+          setUnreadChatCount(res.unreadCount);
+        }
+      } catch {
+        // non-fatal fallback
+      }
+    };
+    const initTimer = setTimeout(fetchUnread, 600);
+    const interval = setInterval(fetchUnread, 12000);
+    const unsub = subscribeRealtimeEvents((e) => {
+      if (e?.type === 'CHAT_MESSAGE_SENT' || e?.type === 'CHAT_MESSAGE_RECEIVED') {
+        fetchUnread();
+      }
+    });
+    return () => {
+      active = false;
+      clearTimeout(initTimer);
+      clearInterval(interval);
+      unsub();
+    };
+  }, []);
 
   // Auth guard — redirect to login if no active session & load company-specific data
   useEffect(() => {
@@ -1564,6 +1594,7 @@ export default function ClientPortalPage() {
           endorsedCandidates={endorsedCandidates}
           deployedRoster={deployedRoster}
           accountManager={currentAccountManager}
+          unreadMessagesCount={unreadChatCount}
           onLogout={handleLogout}
         />
 
@@ -2102,6 +2133,15 @@ export default function ClientPortalPage() {
             <ClientFeedbackPage
               session={session}
               deployedRoster={deployedRoster}
+            />
+          )}
+
+          {/* ── VIEW: ACCOUNT SUPPORT & MESSAGING ── */}
+          {activeTab === 'messages' && (
+            <ClientPortalChatView
+              session={session}
+              accountManager={currentAccountManager}
+              onUnreadChange={setUnreadChatCount}
             />
           )}
 

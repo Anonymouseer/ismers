@@ -3,11 +3,13 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import SkeletonLoader from '../common/SkeletonLoader';
+import { subscribeRealtimeEvents } from '../../utils/realtimeSync';
 import './Sidebar.css';
 
 export default function RootLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hrChatUnread, setHrChatUnread] = useState(0);
   const location = useLocation();
 
   // Route & Submodule transition shimmer loading state
@@ -31,6 +33,25 @@ export default function RootLayout() {
     }, 280);
     return () => clearTimeout(timer);
   }, [navTransition]);
+  // Listen for incoming client messages via BroadcastChannel — no API poll needed
+  useEffect(() => {
+    const unsub = subscribeRealtimeEvents((event) => {
+      if (
+        event?.type === 'CHAT_MESSAGE_RECEIVED' &&
+        !location.pathname.includes('client-communications')
+      ) {
+        setHrChatUnread((n) => n + 1);
+      }
+    });
+    return unsub;
+  }, [location.pathname]);
+
+  // Reset badge when navigating to the communications page
+  useEffect(() => {
+    if (location.pathname.includes('client-communications')) {
+      setHrChatUnread(0);
+    }
+  }, [location.pathname]);
 
   // Auto-close mobile drawer on route navigation
   useEffect(() => {
@@ -63,7 +84,8 @@ export default function RootLayout() {
   // Determine active item based on current pathname
   const path = location.pathname;
   let activeItem = 'dashboard';
-  if (path.includes('client-management')) activeItem = 'client-management';
+  if (path.includes('client-communications')) activeItem = 'client-communications';
+  else if (path.includes('client-management')) activeItem = 'client-management';
   else if (path.includes('job-order-management')) activeItem = 'job-order-management';
   else if (path.includes('applicant-registration')) activeItem = 'applicant-registration';
   else if (path.includes('recruitment-selection')) activeItem = 'recruitment-selection';
@@ -77,6 +99,7 @@ export default function RootLayout() {
   useEffect(() => {
     const titles = {
       'dashboard': 'Operational Dashboard | PRIMEPOWER MANPOWER',
+      'client-communications': 'Client Communications Hub | PRIMEPOWER MANPOWER',
       'client-management': 'Client Management | PRIMEPOWER MANPOWER',
       'job-order-management': 'Job Orders | PRIMEPOWER MANPOWER',
       'applicant-registration': 'Applicant Registration | PRIMEPOWER MANPOWER',
@@ -98,6 +121,7 @@ export default function RootLayout() {
         onToggleCollapse={() => setCollapsed((c) => !c)}
         mobileOpen={mobileOpen}
         onCloseMobile={() => setMobileOpen(false)}
+        chatUnreadCount={hrChatUnread}
       />
       <div
         className="main-viewport-pane"

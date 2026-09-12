@@ -6,6 +6,7 @@ import ProtectedRoute from '../components/auth/ProtectedRoute';
 import ModuleRoute from '../components/auth/ModuleRoute';
 import ClientPortalProtectedRoute from '../components/auth/ClientPortalProtectedRoute';
 import ClientManagementPage from '../features/client-management/pages/ClientManagementPage';
+import ClientCommunicationsPage from '../features/communications/pages/ClientCommunicationsPage';
 import ApplicantProfilingBoard from '../features/applicant-registration/pages/ApplicantProfilingBoard';
 import RegisterApplicantPage from '../features/applicant-registration/pages/RegisterApplicantPage';
 import { ApplicantRegistrationProvider } from '../features/applicant-registration/store/ApplicantRegistrationStore';
@@ -68,6 +69,16 @@ const router = createBrowserRouter([
         element: (
           <ModuleRoute moduleKey="client-management">
             <ClientManagementPage />
+          </ModuleRoute>
+        ),
+      },
+
+      // Client Communications Hub — hr_administrator, job_order_coordinator
+      {
+        path: '/client-communications',
+        element: (
+          <ModuleRoute moduleKey="client-management">
+            <ClientCommunicationsPage />
           </ModuleRoute>
         ),
       },
@@ -158,6 +169,7 @@ const router = createBrowserRouter([
       // App prefixed path aliases for backwards-compatibility
       { path: '/app/dashboard', element: <Navigate to="/dashboard" replace /> },
       { path: '/app/client-management', element: <Navigate to="/client-management" replace /> },
+      { path: '/app/client-communications', element: <Navigate to="/client-communications" replace /> },
       { path: '/app/applicant-registration', element: <Navigate to="/applicant-registration" replace /> },
       { path: '/app/applicant-registration/register', element: <Navigate to="/applicant-registration/register" replace /> },
       { path: '/app/recruitment-selection', element: <Navigate to="/recruitment-selection" replace /> },

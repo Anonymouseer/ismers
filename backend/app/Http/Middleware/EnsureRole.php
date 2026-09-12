@@ -25,6 +25,12 @@ class EnsureRole
             ], 401);
         }
 
+        if (! ($user instanceof \App\Models\User) || ! method_exists($user, 'hasRole')) {
+            return response()->json([
+                'message' => 'Forbidden: Staff user credentials required.',
+            ], 403);
+        }
+
         // Parse roles if passed as pipe-delimited or comma-delimited strings
         $allowedRoles = [];
         foreach ($roles as $role) {
