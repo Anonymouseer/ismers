@@ -383,6 +383,13 @@ html:has(.public-apply-page) body {
   gap: 14px 14px;
 }
 
+.public-apply-form .edit-form-grid.intake-grid.intake-grid-2col,
+.public-apply-form .edit-form-grid.intake-grid-2col,
+.edit-form-grid.intake-grid.intake-grid-2col,
+.edit-form-grid.intake-grid-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .public-apply-form .edit-form-grid label {
   display: flex;
   flex-direction: column;
@@ -655,10 +662,14 @@ html:has(.public-apply-page) body {
   .public-apply-form .numbered-section {
     padding: 16px 14px;
   }
-  .public-apply-form .edit-form-grid.intake-grid {
+  .public-apply-form .edit-form-grid.intake-grid,
+  .public-apply-form .edit-form-grid.intake-grid.intake-grid-2col,
+  .public-apply-form .edit-form-grid.intake-grid-2col {
     grid-template-columns: 1fr;
   }
-  .public-apply-form .edit-form-grid.intake-grid label.span-2 {
+  .public-apply-form .edit-form-grid.intake-grid label.span-2,
+  .public-apply-form .edit-form-grid.intake-grid.intake-grid-2col label.span-2,
+  .public-apply-form .edit-form-grid.intake-grid-2col label.span-2 {
     grid-column: span 1;
   }
   .public-apply-stepper {

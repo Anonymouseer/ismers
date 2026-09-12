@@ -1192,7 +1192,12 @@ select.chip:hover {
 .intake-grid {
   grid-template-columns: repeat(3, 1fr);
 }
-.intake-grid label.span-2 {
+.intake-grid.intake-grid-2col,
+.intake-grid-2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+.intake-grid label.span-2,
+.intake-grid-2col label.span-2 {
   grid-column: span 2;
 }
 

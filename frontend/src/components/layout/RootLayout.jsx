@@ -12,18 +12,17 @@ export default function RootLayout() {
   const [hrChatUnread, setHrChatUnread] = useState(0);
   const location = useLocation();
 
-  // Route & Submodule transition shimmer loading state
+  // Route transition shimmer loading state (pathname changes only; search params should not unmount the active page)
   const [navTransition, setNavTransition] = useState(false);
-  const prevRouteRef = useRef(location.pathname + location.search);
+  const prevRouteRef = useRef(location.pathname);
 
-  // Trigger brief transition on route or submodule change
+  // Trigger brief transition on primary route change
   useEffect(() => {
-    const currentRoute = location.pathname + location.search;
-    if (prevRouteRef.current !== currentRoute) {
-      prevRouteRef.current = currentRoute;
+    if (prevRouteRef.current !== location.pathname) {
+      prevRouteRef.current = location.pathname;
       setNavTransition(true);
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname]);
 
   // Guaranteed dismissal: navTransition ALWAYS auto-expires within 280ms
   useEffect(() => {

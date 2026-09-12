@@ -159,18 +159,25 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
               <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} /></label>
               <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} /></label>
               <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} /></label>
-              <label>Suffix<input type="text" placeholder="Jr., Sr., III..." value={form.suffix} onChange={set('suffix')} /></label>
+              <label>Suffix<input type="text" value={form.suffix} onChange={set('suffix')} /></label>
               <label>City Address<input type="text" value={form.location} onChange={set('location')} /></label>
               <label>Provincial Address<input type="text" value={form.address} onChange={set('address')} /></label>
               <label>Cel #<input type="text" value={form.phone} onChange={set('phone')} /></label>
               <label>Alternate Contact<input type="text" value={form.alternateContact} onChange={set('alternateContact')} /></label>
               <label>Email<input type="email" value={form.email} onChange={set('email')} /></label>
               <label>Age<input type="text" value={form.age} onChange={set('age')} /></label>
-              <label>Sex<input type="text" value={form.gender} onChange={set('gender')} /></label>
+              <label>
+                Sex
+                <select value={form.gender} onChange={set('gender')}>
+                  <option value="">-- Select Sex --</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </label>
               <label>Date of Birth<input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} /></label>
               <label>Place of Birth<input type="text" value={form.placeOfBirth} onChange={set('placeOfBirth')} /></label>
-              <label>Height<input type="text" placeholder="e.g. 5'6&quot;" value={form.height} onChange={set('height')} /></label>
-              <label>Weight<input type="text" placeholder="e.g. 60kg" value={form.weight} onChange={set('weight')} /></label>
+              <label>Height<input type="text" value={form.height} onChange={set('height')} /></label>
+              <label>Weight<input type="text" value={form.weight} onChange={set('weight')} /></label>
               <label>Religion<input type="text" value={form.religion} onChange={set('religion')} /></label>
               <label>Nationality<input type="text" value={form.nationality} onChange={set('nationality')} /></label>
             </div>
@@ -221,34 +228,53 @@ export default function RegisterApplicantPage({ embedded = false, onDone }) {
               )}
             </div>
 
-            <div className="edit-form-grid intake-grid">
+            <div className="edit-form-grid intake-grid intake-grid-2col">
               <label style={{ opacity: (form.noSpouse || form.spouseName === 'N/A') ? 0.65 : 1 }}>
                 Name of Spouse
                 <input
                   type="text"
                   value={form.spouseName}
                   onChange={set('spouseName')}
-                  placeholder={(form.noSpouse || form.spouseName === 'N/A') ? 'N/A' : ''}
                   disabled={form.noSpouse || form.spouseName === 'N/A'}
                 />
               </label>
               <label style={{ opacity: (form.noSpouse || form.spouseOccupation === 'N/A') ? 0.65 : 1 }}>
-                Occupation
+                Spouse's Occupation
                 <input
                   type="text"
                   value={form.spouseOccupation}
                   onChange={set('spouseOccupation')}
-                  placeholder={(form.noSpouse || form.spouseOccupation === 'N/A') ? 'N/A' : ''}
                   disabled={form.noSpouse || form.spouseOccupation === 'N/A'}
                 />
               </label>
-              <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} /></label>
-              <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} /></label>
-              <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} /></label>
-              <label>Occupation<input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} /></label>
-              <label className="span-2">Family Address<input type="text" value={form.familyAddress} onChange={set('familyAddress')} /></label>
-              <label>Emergency Contact Person<input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} /></label>
-              <label>Address / Contact Number<input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} /></label>
+              <label>
+                Father's Name
+                <input type="text" value={form.fatherName} onChange={set('fatherName')} />
+              </label>
+              <label>
+                Father's Occupation
+                <input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} />
+              </label>
+              <label>
+                Mother's Name
+                <input type="text" value={form.motherName} onChange={set('motherName')} />
+              </label>
+              <label>
+                Mother's Occupation
+                <input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} />
+              </label>
+              <label className="span-2">
+                Family Address
+                <input type="text" value={form.familyAddress} onChange={set('familyAddress')} />
+              </label>
+              <label>
+                Emergency Contact Person
+                <input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} />
+              </label>
+              <label>
+                Address / Contact Number
+                <input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} />
+              </label>
             </div>
           </div>
 

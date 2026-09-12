@@ -171,6 +171,7 @@ export default function ClientCommunicationsPage() {
   const isPollingRef = useRef(false);
   const selectedThreadIdRef = useRef(selectedThreadId);
   const loadedThreadIdsRef = useRef(new Set());
+  const messagesCacheRef = useRef({});
   const errorTimerRef = useRef(null);
 
   useEffect(() => {
@@ -267,12 +268,16 @@ export default function ClientCommunicationsPage() {
   const loadMessages = useCallback(async (threadId, isSilent = false) => {
     if (!threadId) return;
     try {
-      if (!isSilent) setLoadingMessages(true);
+      const hasCached = !!messagesCacheRef.current[threadId];
+      if (!isSilent && !hasCached) setLoadingMessages(true);
       const res = await chatService.getMessages(threadId);
       const incoming = res.messages || [];
 
-      setMessages(() => incoming);
-      setOptimisticId(null);
+      messagesCacheRef.current[threadId] = incoming;
+      if (selectedThreadIdRef.current === threadId) {
+        setMessages(() => incoming);
+        setOptimisticId(null);
+      }
       loadedThreadIdsRef.current.add(threadId);
 
       // Clear unread locally for immediate UI response
@@ -362,8 +367,17 @@ export default function ClientCommunicationsPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedThreadId) {
-      loadMessages(selectedThreadId);
+    if (!selectedThreadId) return;
+
+    const cached = messagesCacheRef.current[selectedThreadId];
+    if (cached) {
+      // Thread messages already cached in memory: revalidate silently in background
+      loadMessages(selectedThreadId, true);
+    } else {
+      // First-time load: display chatbox skeleton strictly within the message viewport
+      setMessages([]);
+      setLoadingMessages(true);
+      loadMessages(selectedThreadId, false);
     }
   }, [selectedThreadId, loadMessages]);
 
@@ -430,8 +444,21 @@ export default function ClientCommunicationsPage() {
   // Actions
   // --------------------------------------------------------------------------
   const handleSelectThread = (threadId) => {
+    if (threadId === selectedThreadId) return;
+
     setSelectedThreadId(threadId);
-    setSearchParams({ threadId: String(threadId) });
+    setSearchParams({ threadId: String(threadId) }, { replace: true });
+
+    // Instantly hydrate the chatbox viewport from cache if available (0ms latency)
+    if (messagesCacheRef.current[threadId]) {
+      setMessages(messagesCacheRef.current[threadId]);
+      setLoadingMessages(false);
+    } else {
+      // Clear viewport and display chatbox-specific skeleton
+      setMessages([]);
+      setLoadingMessages(true);
+    }
+
     resetPollDelay();
   };
 

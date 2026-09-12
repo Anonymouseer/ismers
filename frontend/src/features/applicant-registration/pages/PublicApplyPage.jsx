@@ -242,15 +242,15 @@ export default function PublicApplyPage() {
         Applicant Information
       </div>
       <div className="edit-form-grid intake-grid">
-        <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} placeholder="Enter first name" /></label>
-        <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} placeholder="Enter middle name" /></label>
-        <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} placeholder="Enter last name" /></label>
-        <label>Suffix<input type="text" placeholder="Jr., Sr., III..." value={form.suffix} onChange={set('suffix')} /></label>
-        <label>City Address<input type="text" value={form.location} onChange={set('location')} placeholder="Current city address" /></label>
-        <label>Provincial Address<input type="text" value={form.address} onChange={set('address')} placeholder="Provincial address" /></label>
-        <label>Cel #<input type="text" value={form.phone} onChange={set('phone')} placeholder="09XX XXX XXXX" /></label>
-        <label>Alternate Contact<input type="text" value={form.alternateContact} onChange={set('alternateContact')} placeholder="Alternative number" /></label>
-        <label>Email<input type="email" value={form.email} onChange={set('email')} placeholder="email@example.com" /></label>
+        <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} /></label>
+        <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} /></label>
+        <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} /></label>
+        <label>Suffix<input type="text" value={form.suffix} onChange={set('suffix')} /></label>
+        <label>City Address<input type="text" value={form.location} onChange={set('location')} /></label>
+        <label>Provincial Address<input type="text" value={form.address} onChange={set('address')} /></label>
+        <label>Cel #<input type="text" value={form.phone} onChange={set('phone')} /></label>
+        <label>Alternate Contact<input type="text" value={form.alternateContact} onChange={set('alternateContact')} /></label>
+        <label>Email<input type="email" value={form.email} onChange={set('email')} /></label>
         <label>
           Civil Status
           <select
@@ -276,14 +276,21 @@ export default function PublicApplyPage() {
             <option value="Separated">Separated</option>
           </select>
         </label>
-        <label>Age<input type="text" value={form.age} onChange={set('age')} placeholder="e.g. 25" /></label>
-        <label>Sex<input type="text" value={form.gender} onChange={set('gender')} placeholder="Male / Female" /></label>
+        <label>Age<input type="text" value={form.age} onChange={set('age')} /></label>
+        <label>
+          Sex
+          <select value={form.gender} onChange={set('gender')}>
+            <option value="">-- Select Sex --</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </label>
         <label>Date of Birth<input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} /></label>
-        <label>Place of Birth<input type="text" value={form.placeOfBirth} onChange={set('placeOfBirth')} placeholder="City, Province" /></label>
-        <label>Height<input type="text" placeholder={'e.g. 5\'6"'} value={form.height} onChange={set('height')} /></label>
-        <label>Weight<input type="text" placeholder="e.g. 60kg" value={form.weight} onChange={set('weight')} /></label>
-        <label>Religion<input type="text" value={form.religion} onChange={set('religion')} placeholder="Enter religion" /></label>
-        <label>Nationality<input type="text" value={form.nationality} onChange={set('nationality')} placeholder="e.g. Filipino" /></label>
+        <label>Place of Birth<input type="text" value={form.placeOfBirth} onChange={set('placeOfBirth')} /></label>
+        <label>Height<input type="text" value={form.height} onChange={set('height')} /></label>
+        <label>Weight<input type="text" value={form.weight} onChange={set('weight')} /></label>
+        <label>Religion<input type="text" value={form.religion} onChange={set('religion')} /></label>
+        <label>Nationality<input type="text" value={form.nationality} onChange={set('nationality')} /></label>
         <label>
           Position Interest
           <select value={form.category} onChange={set('category')}>
@@ -350,34 +357,53 @@ export default function PublicApplyPage() {
           )}
         </div>
 
-        <div className="edit-form-grid intake-grid">
+        <div className="edit-form-grid intake-grid intake-grid-2col">
           <label style={{ opacity: isNoSpouseActive ? 0.65 : 1 }}>
             Name of Spouse
             <input
               type="text"
               value={form.spouseName}
               onChange={set('spouseName')}
-              placeholder={isNoSpouseActive ? 'Not Applicable (N/A)' : 'Full name of spouse'}
               disabled={isNoSpouseActive}
             />
           </label>
           <label style={{ opacity: isNoSpouseActive ? 0.65 : 1 }}>
-            Occupation
+            Spouse's Occupation
             <input
               type="text"
               value={form.spouseOccupation}
               onChange={set('spouseOccupation')}
-              placeholder={isNoSpouseActive ? 'Not Applicable (N/A)' : "Spouse's occupation"}
               disabled={isNoSpouseActive}
             />
           </label>
-          <label>Father's Name<input type="text" value={form.fatherName} onChange={set('fatherName')} placeholder="Full name of father" /></label>
-          <label>Occupation<input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} placeholder="Father's occupation" /></label>
-          <label>Mother's Name<input type="text" value={form.motherName} onChange={set('motherName')} placeholder="Full name of mother" /></label>
-          <label>Occupation<input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} placeholder="Mother's occupation" /></label>
-          <label className="span-2">Family Address<input type="text" value={form.familyAddress} onChange={set('familyAddress')} placeholder="Complete family address" /></label>
-          <label>Emergency Contact Person<input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} placeholder="Full name" /></label>
-          <label>Address / Contact Number<input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} placeholder="Address or phone number" /></label>
+          <label>
+            Father's Name
+            <input type="text" value={form.fatherName} onChange={set('fatherName')} />
+          </label>
+          <label>
+            Father's Occupation
+            <input type="text" value={form.fatherOccupation} onChange={set('fatherOccupation')} />
+          </label>
+          <label>
+            Mother's Name
+            <input type="text" value={form.motherName} onChange={set('motherName')} />
+          </label>
+          <label>
+            Mother's Occupation
+            <input type="text" value={form.motherOccupation} onChange={set('motherOccupation')} />
+          </label>
+          <label className="span-2">
+            Family Address
+            <input type="text" value={form.familyAddress} onChange={set('familyAddress')} />
+          </label>
+          <label>
+            Emergency Contact Person
+            <input type="text" value={form.emergencyContactName} onChange={set('emergencyContactName')} />
+          </label>
+          <label>
+            Address / Contact Number
+            <input type="text" value={form.emergencyContactAddress} onChange={set('emergencyContactAddress')} />
+          </label>
         </div>
       </div>
     );
@@ -402,11 +428,9 @@ export default function PublicApplyPage() {
               type="text"
               value={educationRows[level].school}
               onChange={setEducationField(level, 'school')}
-              placeholder="School name"
             />
             <input
               type="text"
-              placeholder="Year"
               value={educationRows[level].yearGraduated}
               onChange={setEducationField(level, 'yearGraduated')}
             />
@@ -475,11 +499,11 @@ export default function PublicApplyPage() {
           </div>
           {employmentRows.map((row, i) => (
             <div className="intake-table-row intake-table-4col" key={i}>
-              <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} placeholder="MM/YYYY" />
-              <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} placeholder="MM/YYYY" />
-              <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} placeholder="Job title" />
+              <input type="text" value={row.from} onChange={setEmploymentField(i, 'from')} />
+              <input type="text" value={row.to} onChange={setEmploymentField(i, 'to')} />
+              <input type="text" value={row.position} onChange={setEmploymentField(i, 'position')} />
               <div className="intake-table-cell-with-remove">
-                <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} placeholder="Company name" />
+                <input type="text" value={row.company} onChange={setEmploymentField(i, 'company')} />
                 {employmentRows.length > 1 && (
                   <button type="button" onClick={() => removeEmploymentRow(i)}>x</button>
                 )}
@@ -573,10 +597,10 @@ export default function PublicApplyPage() {
           </div>
           {referenceRows.map((row, i) => (
             <div className="intake-table-row intake-table-3col" key={i}>
-              <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} placeholder="Full name" />
-              <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} placeholder="Occupation" />
+              <input type="text" value={row.name} onChange={setReferenceField(i, 'name')} />
+              <input type="text" value={row.occupation} onChange={setReferenceField(i, 'occupation')} />
               <div className="intake-table-cell-with-remove">
-                <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} placeholder="Contact info" />
+                <input type="text" value={row.contact} onChange={setReferenceField(i, 'contact')} />
                 {referenceRows.length > 1 && (
                   <button type="button" onClick={() => removeReferenceRow(i)}>x</button>
                 )}

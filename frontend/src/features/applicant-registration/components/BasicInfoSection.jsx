@@ -133,7 +133,7 @@ export default function BasicInfoSection({ candidate, role, onSave }) {
         <label>First Name<input type="text" value={form.firstName} onChange={set('firstName')} /></label>
         <label>Middle Name<input type="text" value={form.middleName} onChange={set('middleName')} /></label>
         <label>Last Name<input type="text" value={form.lastName} onChange={set('lastName')} /></label>
-        <label>Suffix<input type="text" placeholder="Jr., Sr., III..." value={form.suffix} onChange={set('suffix')} /></label>
+        <label>Suffix<input type="text" value={form.suffix} onChange={set('suffix')} /></label>
         <label>Date of Birth<input type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')} /></label>
         <label>
           Gender
