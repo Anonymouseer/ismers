@@ -62,10 +62,9 @@ export default function LandingFooter() {
         <div>
           <div className="lp-footer__col-title">We're Social</div>
           <ul className="lp-footer__links" role="list">
-            <li><a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Like Us on Facebook</a></li>
-            <li><a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Follow Us on LinkedIn</a></li>
-            <li><a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Subscribe to our YouTube</a></li>
-            <li><a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Find Us on TikTok</a></li>
+            <li><a href="https://www.facebook.com/pms.main.official" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Like Us on Facebook</a></li>
+            <li><a href="https://www.linkedin.com/company/primepower-manpower-services/" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Follow Us on LinkedIn</a></li>
+            <li><a href="https://www.tiktok.com/@primepowermanpower" target="_blank" rel="noopener noreferrer" className="lp-footer__link">Find Us on TikTok</a></li>
           </ul>
         </div>
       </div>

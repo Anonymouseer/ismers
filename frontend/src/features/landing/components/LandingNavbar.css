@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   z-index: 900;
-  height: 68px;
+  height: 74px;
   display: flex;
   align-items: center;
   padding: 0 32px;
@@ -36,17 +36,22 @@
 .lp-navbar__logo {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 13px;
   text-decoration: none;
   flex-shrink: 0;
   margin-right: auto;
 }
 
 .lp-navbar__logo-img {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
   flex-shrink: 0;
+  transition: transform 0.2s var(--lp-ease);
+}
+
+.lp-navbar__logo:hover .lp-navbar__logo-img {
+  transform: scale(1.05);
 }
 
 .lp-navbar__logo-text {
@@ -57,20 +62,20 @@
 
 .lp-navbar__logo-name {
   font-family: var(--lp-font-display);
-  font-size: 11.5px;
+  font-size: 15px;
   font-weight: 800;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   color: #db3c3c;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .lp-navbar__logo-sub {
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: rgba(180, 210, 235, 0.45);
+  color: rgba(180, 210, 235, 0.55);
   margin-top: 2px;
 }
 
@@ -209,7 +214,7 @@
 .lp-navbar__mobile-menu {
   display: none;
   position: fixed;
-  top: 68px;
+  top: 74px;
   left: 0;
   right: 0;
   background: rgba(10, 27, 46, 0.98);

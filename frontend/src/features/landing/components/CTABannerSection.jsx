@@ -1,9 +1,30 @@
-import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
 import './CTABannerSection.css';
+
+const QR_APPLY_URL = 'https://hris1.primepowersystem.com/apply';
 
 export default function CTABannerSection() {
   const ref = useRef(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+  useEffect(() => {
+    QRCode.toDataURL(QR_APPLY_URL, {
+      width: 260,
+      margin: 1,
+      color: {
+        dark: '#0a1b2e',
+        light: '#ffffff',
+      },
+      errorCorrectionLevel: 'M',
+    })
+      .then((url) => {
+        setQrCodeUrl(url);
+      })
+      .catch((err) => {
+        console.error('Failed to generate apply QR code', err);
+      });
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -39,19 +60,40 @@ export default function CTABannerSection() {
           your trusted partner.
         </p>
 
-        <div className="lp-cta-banner__actions lp-reveal lp-reveal-delay-3">
-          <Link
-            to="/apply"
-            className="lp-cta-banner__btn-primary"
-            id="cta-apply-now"
+        {/* Integrated QR Code Card */}
+        <div className="lp-cta-banner__qr-card lp-reveal lp-reveal-delay-3" id="cta-apply-qr">
+          <a
+            href={QR_APPLY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="lp-cta-banner__qr-code-wrap"
+            title="Scan with phone or click to open application form"
+            aria-label="QR code redirecting to applicant registration"
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-              <rect x="9" y="3" width="6" height="4" rx="1" />
-              <path d="m9 12 2 2 4-4" />
-            </svg>
-            Apply as a Candidate
-          </Link>
+            <div className="lp-cta-banner__qr-box">
+              {qrCodeUrl ? (
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code redirecting to PRIMEPOWER application form"
+                  className="lp-cta-banner__qr-img"
+                />
+              ) : (
+                <div className="lp-cta-banner__qr-skeleton" />
+              )}
+              <span className="lp-cta-banner__qr-corner lp-cta-banner__qr-corner--tl" aria-hidden="true" />
+              <span className="lp-cta-banner__qr-corner lp-cta-banner__qr-corner--tr" aria-hidden="true" />
+              <span className="lp-cta-banner__qr-corner lp-cta-banner__qr-corner--bl" aria-hidden="true" />
+              <span className="lp-cta-banner__qr-corner lp-cta-banner__qr-corner--br" aria-hidden="true" />
+            </div>
+            <span className="lp-cta-banner__qr-hint">Scan with Camera</span>
+          </a>
+
+          <div className="lp-cta-banner__qr-content">
+            <span className="lp-cta-banner__qr-title">APPLY NOW</span>
+            <p className="lp-cta-banner__qr-desc">
+              Scan this QR code with your mobile camera to redirect to the online application form.
+            </p>
+          </div>
         </div>
       </div>
     </section>

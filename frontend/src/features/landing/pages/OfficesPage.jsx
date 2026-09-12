@@ -11,6 +11,7 @@ const MAIN_OFFICE = {
   type: 'National Corporate Headquarters',
   address: '3197 Kalayaan Avenue cor. Harvard St., Brgy. Pinagkaisahan, Makati City, Metro Manila, Philippines',
   hotline: '+63 917 814 6352',
+  fbUrl: 'https://www.facebook.com/pms.main.official',
   recruiters: [
     { name: 'Ms. Pabie', phone: '0981-563-7989' },
     { name: 'Ms. Dhan', phone: '0904-803-5969' },
@@ -30,6 +31,7 @@ const REGIONAL_OFFICES = [
     id: 'bacolod',
     code: 'BACOLOD',
     title: 'Primepower Bacolod',
+    fbUrl: 'https://www.facebook.com/pms.bacolod.official/?ref=embed_page#',
     region: 'Visayas',
     followers: '96 followers',
     postTime: 'about a year ago',
@@ -51,6 +53,7 @@ const REGIONAL_OFFICES = [
     id: 'baguio',
     code: 'BAGUIO',
     title: 'Primepower Baguio',
+    fbUrl: 'https://www.facebook.com/pms.baguio.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '155 followers',
     postTime: 'about a year ago',
@@ -72,6 +75,7 @@ const REGIONAL_OFFICES = [
     id: 'bataan',
     code: 'BATAAN',
     title: 'Primepower Bataan',
+    fbUrl: 'https://www.facebook.com/pms.bataan.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '193 followers',
     postTime: 'about a year ago',
@@ -93,6 +97,7 @@ const REGIONAL_OFFICES = [
     id: 'bicol',
     code: 'BICOL',
     title: 'Primepower Bicol',
+    fbUrl: 'https://www.facebook.com/pms.bicol.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '153 followers',
     postTime: 'about 2 years ago',
@@ -114,6 +119,7 @@ const REGIONAL_OFFICES = [
     id: 'bohol',
     code: 'BOHOL',
     title: 'Primepower Bohol',
+    fbUrl: 'https://www.facebook.com/pms.bohol.official/?ref=embed_page#',
     region: 'Visayas',
     followers: '322 followers',
     postTime: 'about a year ago',
@@ -135,6 +141,7 @@ const REGIONAL_OFFICES = [
     id: 'boracay',
     code: 'BORACAY',
     title: 'Primepower Boracay',
+    fbUrl: 'https://www.facebook.com/pms.boracay.official?ref=embed_page',
     region: 'Visayas',
     followers: '414 followers',
     postTime: 'about 2 years ago',
@@ -156,6 +163,7 @@ const REGIONAL_OFFICES = [
     id: 'cdo',
     code: 'CDO',
     title: 'Primepower Cagayan de Oro',
+    fbUrl: 'https://www.facebook.com/pms.cdo.official/?ref=embed_page#',
     region: 'Mindanao',
     followers: '108 followers',
     postTime: 'about a year ago',
@@ -177,6 +185,7 @@ const REGIONAL_OFFICES = [
     id: 'cebu',
     code: 'CEBU',
     title: 'Primepower Cebu',
+    fbUrl: 'https://www.facebook.com/pms.cebu.official/?ref=embed_page#',
     region: 'Visayas',
     followers: '201 followers',
     postTime: 'about a year ago',
@@ -198,6 +207,7 @@ const REGIONAL_OFFICES = [
     id: 'davao',
     code: 'DAVAO',
     title: 'Primepower Davao',
+    fbUrl: 'https://www.facebook.com/pms.davao.official/?ref=embed_page#',
     region: 'Mindanao',
     followers: '437 followers',
     postTime: 'about a year ago',
@@ -219,6 +229,7 @@ const REGIONAL_OFFICES = [
     id: 'elnido',
     code: 'EL NIDO',
     title: 'Primepower El Nido',
+    fbUrl: 'https://www.facebook.com/pms.elnido.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '863 followers',
     postTime: 'about a year ago',
@@ -240,6 +251,7 @@ const REGIONAL_OFFICES = [
     id: 'iloilo',
     code: 'ILOILO',
     title: 'Primepower Iloilo',
+    fbUrl: 'https://www.facebook.com/pms.iloilo.official/?ref=embed_page#',
     region: 'Visayas',
     followers: '61 followers',
     postTime: 'about a year ago',
@@ -261,6 +273,7 @@ const REGIONAL_OFFICES = [
     id: 'pampanga',
     code: 'PAMPANGA',
     title: 'Primepower Pampanga',
+    fbUrl: 'https://www.facebook.com/pms.pampanga.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '103 followers',
     postTime: 'about a year ago',
@@ -282,6 +295,7 @@ const REGIONAL_OFFICES = [
     id: 'puerto-princesa',
     code: 'PUERTO PRINCESA',
     title: 'Primepower Puerto Princesa',
+    fbUrl: 'https://www.facebook.com/pms.puertoprincesa.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '190 followers',
     postTime: 'about a year ago',
@@ -303,6 +317,7 @@ const REGIONAL_OFFICES = [
     id: 'tagaytay',
     code: 'TAGAYTAY',
     title: 'Primepower Tagaytay',
+    fbUrl: 'https://www.facebook.com/pms.tagaytay.official/?ref=embed_page#',
     region: 'Luzon',
     followers: '497 followers',
     postTime: 'about a month ago',
@@ -494,6 +509,18 @@ export default function OfficesPage() {
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </Link>
+                  <a
+                    href={MAIN_OFFICE.fbUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lp-btn lp-btn--ghost"
+                    title="Visit PRIMEPOWER Official Facebook Page"
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="#1877f2" aria-hidden="true">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    <span>Official Facebook Page</span>
+                  </a>
                 </div>
               </div>
             </div>
@@ -611,24 +638,41 @@ export default function OfficesPage() {
                       <div className="lp-social-card">
                         {/* 1. Facebook Page Header */}
                         <div className="lp-social-card__header">
-                          <div className="lp-social-card__avatar">
+                          <a
+                            href={office.fbUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="lp-social-card__avatar"
+                            title={`Open ${office.title} on Facebook`}
+                          >
                             <img src={primepowerLogo} alt="" className="lp-social-card__avatar-img" />
-                          </div>
+                          </a>
                           <div className="lp-social-card__header-text">
-                            <h3 className="lp-social-card__name">{office.title}</h3>
+                            <h3 className="lp-social-card__name">
+                              <a
+                                href={office.fbUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`Open ${office.title} on Facebook`}
+                              >
+                                {office.title}
+                              </a>
+                            </h3>
                             <span className="lp-social-card__followers">{office.followers}</span>
                           </div>
                           <div className="lp-social-card__header-actions">
-                            <button
-                              onClick={() => toggleFollow(office.id)}
-                              className={`lp-social-card__btn-follow${isFollowed ? ' followed' : ''}`}
-                              title="Follow Branch Page"
+                            <a
+                              href={office.fbUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="lp-social-card__btn-follow"
+                              title={`Follow ${office.title} on Facebook`}
                             >
                               <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
                                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                               </svg>
-                              <span>{isFollowed ? 'Following' : 'Follow Page'}</span>
-                            </button>
+                              <span>Follow Page</span>
+                            </a>
                             <button
                               onClick={() => handleShare(office)}
                               className="lp-social-card__btn-share"
@@ -691,23 +735,38 @@ export default function OfficesPage() {
 
                         {/* 4. Social Post Metadata */}
                         <div className="lp-social-card__post-meta">
-                          <div className="lp-social-card__meta-left">
+                          <a
+                            href={office.fbUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="lp-social-card__meta-left"
+                            title={`Open ${office.title} on Facebook`}
+                          >
                             <img src={primepowerLogo} alt="" className="lp-social-card__post-avatar" />
                             <div>
                               <strong>{office.title}</strong>
                               <span>{office.postTime} &bull; Public</span>
                             </div>
-                          </div>
-                          <svg className="lp-social-card__fb-icon" viewBox="0 0 24 24" width="16" height="16" fill="#1877f2" aria-hidden="true">
-                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                          </svg>
+                          </a>
+                          <a
+                            href={office.fbUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="lp-social-card__fb-link"
+                            title={`Open official ${office.title} Facebook Page`}
+                            aria-label={`Open official ${office.title} Facebook Page`}
+                          >
+                            <svg className="lp-social-card__fb-icon" viewBox="0 0 24 24" width="16" height="16" fill="#1877f2" aria-hidden="true">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                          </a>
                         </div>
 
                         <p className="lp-social-card__caption">
                           {office.postSnippet}
                         </p>
 
-                        {/* 5. Engagement Bar (Like, Comment, Share) */}
+                        {/* 5. Engagement Bar (Like, Facebook Link, Inquire, Share) */}
                         <div className="lp-social-card__reactions-bar">
                           <button
                             onClick={() => toggleLike(office.id)}
@@ -721,6 +780,19 @@ export default function OfficesPage() {
                           </button>
 
                           <a
+                            href={office.fbUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="lp-social-card__reaction-btn"
+                            title={`Visit ${office.title} on Facebook`}
+                          >
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="#1877f2" aria-hidden="true">
+                              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            <span>Facebook</span>
+                          </a>
+
+                          <a
                             href={office.email ? `mailto:${office.email}` : '#'}
                             className="lp-social-card__reaction-btn"
                             title={`Inquire via email: ${office.email}`}
@@ -728,7 +800,7 @@ export default function OfficesPage() {
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                             </svg>
-                            <span>Contact Hub</span>
+                            <span>Inquire</span>
                           </a>
 
                           <button
@@ -747,7 +819,7 @@ export default function OfficesPage() {
                           </button>
                         </div>
 
-                        {/* 6. Action Button Linking to Apply */}
+                        {/* 6. Action Buttons Linking to Apply & Official Facebook */}
                         <div className="lp-social-card__footer">
                           <Link to="/apply" className="lp-social-card__apply-btn">
                             <span>Apply via {office.code} Hub</span>
@@ -755,6 +827,20 @@ export default function OfficesPage() {
                               <path d="M5 12h14M12 5l7 7-7 7" />
                             </svg>
                           </Link>
+                          {office.fbUrl && (
+                            <a
+                              href={office.fbUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="lp-social-card__fb-outline-btn"
+                              title={`Visit official ${office.title} Facebook Page`}
+                            >
+                              <svg viewBox="0 0 24 24" width="13" height="13" fill="#1877f2" aria-hidden="true">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                              </svg>
+                              <span>Official Facebook</span>
+                            </a>
+                          )}
                         </div>
                       </div>
                     </div>

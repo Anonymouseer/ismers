@@ -37,17 +37,18 @@
 .lp-footer__logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-decoration: none;
 }
 
 .lp-footer__logo-img {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 10px;
-  padding: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 6px;
+  flex-shrink: 0;
 }
 
 .lp-footer__logo-text {
@@ -58,7 +59,7 @@
 
 .lp-footer__logo-name {
   font-family: var(--lp-font-display);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -66,11 +67,11 @@
 }
 
 .lp-footer__logo-sub {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 1px;
+  letter-spacing: 1.1px;
   text-transform: uppercase;
-  color: rgba(180, 210, 235, 0.40);
+  color: rgba(180, 210, 235, 0.52);
   margin-top: 2px;
 }
 
